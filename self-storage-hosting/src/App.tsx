@@ -1,6 +1,6 @@
 // src/App.tsx
 import { Suspense, lazy } from "react";
-import { Routes, Route, Outlet, NavLink, Navigate } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 import SmallNavbar from "./components/SmallNavbar";
 import LargeNavbar from "./components/LargeNavbar";
 import Footer from "./components/Footer";

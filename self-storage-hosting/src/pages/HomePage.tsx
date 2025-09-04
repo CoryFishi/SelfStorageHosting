@@ -1,11 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import {
-  BiCloudUpload,
-  BiDownArrow,
-  BiRightArrowAlt,
-  BiUpArrow,
-} from "react-icons/bi";
+import { BiDownArrow, BiRightArrowAlt, BiUpArrow } from "react-icons/bi";
 
 export default function HomePage() {
   const [open, setOpen] = useState<number | null>(null);
