@@ -1,4 +1,4 @@
-export default function RegisterPage() {
+export default function CaseStudiesPage() {
   return (
     <div className="h-full w-full py-20">
       <div className="h-full items-center flex flex-col justify-center w-full gap-5">

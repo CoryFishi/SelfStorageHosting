@@ -3,6 +3,8 @@ import { Suspense, lazy } from "react";
 import { Routes, Route, Outlet, NavLink, Navigate } from "react-router-dom";
 import SmallNavbar from "./components/SmallNavbar";
 import LargeNavbar from "./components/LargeNavbar";
+import Footer from "./components/Footer";
+import Spinner from "./components/Spinner";
 
 // Lazy pages
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -16,6 +18,8 @@ const LoginPage = lazy(() => import("./pages/user/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/user/RegisterPage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const CaseStudiesPage = lazy(() => import("./pages/CaseStudiesPage"));
+const EventsPage = lazy(() => import("./pages/EventsPage"));
 
 export default function App() {
   return (
@@ -29,6 +33,8 @@ export default function App() {
           element={<AccessControlHostingPage />}
         />
         <Route path="about-us" element={<AboutUsPage />} />
+        <Route path="case-studies" element={<CaseStudiesPage />} />
+        <Route path="events" element={<EventsPage />} />
         <Route path="demo" element={<DemoPage />} />
         <Route path="user">
           <Route path="login" element={<LoginPage />} />
@@ -50,10 +56,12 @@ function RootLayout() {
       <LargeNavbar />
       {/* Page outlet; header stays during lazy loads */}
       <main className="flex-1">
-        <Suspense fallback={<div className="p-6">Loading…</div>}>
+        <Suspense fallback={<Spinner />}>
           <Outlet />
         </Suspense>
       </main>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
