@@ -1,5 +1,5 @@
 import { Router } from "express";
-import userRouter from "./user.routes";
+import authRouter from "./user.routes";
 
 const router = Router();
 
@@ -7,6 +7,6 @@ const router = Router();
 router.get("/health", (_req, res) => res.json({ ok: true }));
 
 // users endpoints
-router.use("/users", userRouter);
+router.use("/users", authRouter);
 
 export default router;
