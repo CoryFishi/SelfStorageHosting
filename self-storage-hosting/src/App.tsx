@@ -1,4 +1,3 @@
-// src/App.tsx
 import { Suspense, lazy } from "react";
 import { Routes, Route, Outlet } from "react-router-dom";
 import SmallNavbar from "./components/SmallNavbar";

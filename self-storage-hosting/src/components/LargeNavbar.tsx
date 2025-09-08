@@ -29,9 +29,12 @@ export default function LargeNavbar() {
           About Us
           <IoMdArrowDropdown className="text-accent-200" />
         </a>
-        <button className="cursor-pointer bg-accent-50 h-fit px-3 py-1 rounded-full mx-5 hover:bg-accent-400 text-text-950">
+        <a
+          href="/contact"
+          className="cursor-pointer bg-accent-50 h-fit px-3 py-1 rounded-full mx-5 hover:bg-accent-400 text-text-950"
+        >
           Talk to Sales
-        </button>
+        </a>
       </div>
     </div>
   );
