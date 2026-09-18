@@ -663,7 +663,7 @@ Expected: FAIL — cannot resolve `@/lib/site`.
 
 - [ ] **Step 3: Implement lib/site.ts**
 
-Routes not yet built are still listed here — Plan 2 creates their pages. The link test only checks that nav targets exist in `ROUTES`; the sitemap emits them too, so **Plan 2 must land before the site goes live.**
+Routes not yet built are still listed here — Plan 2 creates their pages. Listing them is what lets nav render the site's full shape, and the link-integrity test only checks that nav targets exist in `ROUTES`, not that they exist on disk. The sitemap does **not** emit them, because `indexableRoutes()` also requires `built`. So a preview deploy is safe to crawl, but **nav links to Plan 2's pages 404 until Plan 2 lands — do not merge to `main` before then.**
 
 ```ts
 export const SITE = {
