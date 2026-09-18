@@ -5,7 +5,7 @@ import next from "eslint-config-next";
 import { globalIgnores } from "eslint/config";
 
 export default tseslint.config([
-  globalIgnores([".next", "node_modules", "legacy-vite"]),
+  globalIgnores([".next", "node_modules"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, tseslint.configs.recommended, next],
