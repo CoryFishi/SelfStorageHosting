@@ -3395,6 +3395,15 @@ const PAIRS: [string, string, string, number][] = [
   ["hero CTA and 404 CTA", "text-950", "accent-500", 4.5],
   ["body copy", "text-900", "background-50", 4.5],
   ["hero subhead", "text-800", "background-50", 4.5],
+  // Non-text tier, WCAG 1.4.11 (3.0:1). A focus indicator is the only thing a
+  // keyboard user has to tell them where they are, and it is measured against
+  // the colours ADJACENT to it -- which is why every ring below is specified
+  // with `outline-offset-2`. At that offset the ring sits in the gap and has
+  // page background on both sides, so this one pair is the whole measurement.
+  // Drawn flush (offset 0) it would instead be adjacent to the button it
+  // outlines, where `accent-600` on `accent-500` is 1.52:1 and fails badly.
+  ["focus ring on light surfaces", "accent-600", "background-50", 3.0],
+  ["focus ring on dark chrome", "accent-200", "primary-700", 3.0],
 ];
 
 describe("WCAG AA contrast", () => {
@@ -3404,9 +3413,18 @@ describe("WCAG AA contrast", () => {
 });
 ```
 
-These seven pairs are the ones this controller already computed against the real palette, and all
+The seven text pairs are the ones this controller already computed against the real palette, and all
 seven pass (5.79, 4.54, 9.46, 17.57, 8.19, 15.13, 9.91). They are in the test to stop a later task
-drifting off them, not because they are in doubt.
+drifting off them, not because they are in doubt. The two ring pairs pass at 3.24 and 4.54.
+
+**The non-text tier exists because its absence let a real bug through.** With only the text pairs,
+this file tested every label on the site and no focus indicator at all -- and Task 13 shipped a hero
+CTA whose ring measured 1.95:1 against the page and 2.97:1 against its own button, paired with
+`focus:outline-none`, which removes the browser default and leaves that failing ring as the only
+indicator a keyboard user gets. The suite was green throughout. A guard that covers one shape of a
+problem while the bug ships in the other shape is worse than no guard, because it reads as coverage.
+Any new interactive surface adds its ring here, and **`focus:outline-none` without a compliant
+replacement is never acceptable.**
 
 **The test cannot see `opacity-*`.** It reads raw `--color-*` tokens, so a composited colour is
 invisible to it: `text-50` at `opacity-70` on `primary-700` measures 3.74:1 and the suite still goes
