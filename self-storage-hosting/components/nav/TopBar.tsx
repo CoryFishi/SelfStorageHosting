@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { NAV } from "@/lib/site";
+import { CHROME, FOCUS_RING } from "./chrome";
 
 export default function TopBar() {
   return (
-    <div className="w-full border-b border-background-500 bg-primary-700 text-text-50">
+    <div className={CHROME}>
       <nav
         aria-label="Utility"
         className="mx-auto flex h-7 max-w-7xl items-center justify-end px-4 text-xs sm:px-6"
@@ -12,7 +13,7 @@ export default function TopBar() {
           <Link
             key={l.href}
             href={l.href}
-            className="flex h-full items-center px-3 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-200"
+            className={`flex h-full items-center px-3 hover:underline ${FOCUS_RING}`}
           >
             {l.label}
           </Link>

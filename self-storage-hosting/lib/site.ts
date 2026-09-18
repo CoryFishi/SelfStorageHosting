@@ -24,6 +24,11 @@ export type NavItem = NavLink & { children?: NavLink[] };
 // pages -- advertising the other fourteen in sitemap.xml would hand Google a
 // list of URLs that 404. Plan 2 flips each `built` to true as it lands.
 export const ROUTES: Record<string, { title: string; indexable: boolean; built: boolean }> = {
+  // These three are Plan 1's own pages and are `built: true` ahead of their
+  // page.tsx on purpose -- Task 12 creates /, Task 13 /about-us and Task 16
+  // /contact, and Task 17's sitemap-coverage test asserts exactly this trio.
+  // Do not "correct" them to false to match the rule below: that empties the
+  // sitemap and fails that test. The rule below governs Plan 2's routes.
   "/": { title: "Home", indexable: true, built: true },
   "/about-us": { title: "About Us", indexable: true, built: true },
   "/contact": { title: "Contact", indexable: true, built: true },
