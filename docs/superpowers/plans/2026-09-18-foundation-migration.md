@@ -173,8 +173,13 @@ export function createApp() {
   app.use("/api", apiRouter);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = Number(err?.status) || 500;
+    // Client errors carry messages meant for the caller; 5xx messages can leak
+    // collection names, index names and field paths, so they are not forwarded.
     console.error(err);
-    res.status(err.status || 500).json({ error: err.message || "Server error" });
+    res.status(status).json({
+      error: status < 500 ? err?.message || "Request error" : "Server error",
+    });
   });
 
   return app;
