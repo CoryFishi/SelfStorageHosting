@@ -585,7 +585,8 @@ The route manifest is the single source of truth for navigation, the sitemap, an
 - Consumes: nothing.
 - Produces:
   - `SITE: { url, name, description, locale, social: string[], contactEmail: string }`
-  - `ROUTES: Record<string, { title: string; indexable: boolean }>`
+  - `ROUTES: Record<string, { title: string; indexable: boolean; built: boolean }>`
+  - `NON_ROUTE_PATHS: string[]`
   - `NAV: { utility: NavLink[]; main: NavItem[] }` where `NavLink = { href: string; label: string }` and `NavItem = NavLink & { children?: NavLink[] }`
   - `FOOTER: { heading: string; links: NavLink[] }[]`
   - `indexableRoutes(): string[]`
@@ -598,8 +599,6 @@ Create `tests/links.test.ts`:
 
 ```ts
 import { describe, it, expect } from "vitest";
-import { readdirSync } from "node:fs";
-import path from "node:path";
 import { ROUTES, NAV, FOOTER, indexableRoutes, SITE, NON_ROUTE_PATHS } from "@/lib/site";
 
 function internalHrefs(): string[] {
@@ -654,24 +653,6 @@ describe("link integrity", () => {
     expect(SITE.url).toMatch(/^https:\/\//);
     expect(SITE.url.endsWith("/")).toBe(false);
   });
-
-  // Spec §7.6 #2: every URL in the sitemap returns 200. indexableRoutes()
-  // is what feeds the sitemap, so every path it emits must have a page file.
-  it("every route the sitemap will emit has a page on disk", () => {
-    const pages = new Set<string>();
-    const walk = (dir: string, url: string) => {
-      for (const e of readdirSync(dir, { withFileTypes: true })) {
-        if (e.isDirectory()) {
-          // Route groups like (marketing) do not appear in the URL.
-          walk(path.join(dir, e.name), e.name.startsWith("(") ? url : url + "/" + e.name);
-        } else if (e.name === "page.tsx") {
-          pages.add(url === "" ? "/" : url);
-        }
-      }
-    };
-    walk(path.resolve(__dirname, "../app"), "");
-    expect(indexableRoutes().filter((r) => !pages.has(r))).toEqual([]);
-  });
 });
 ```
 
@@ -704,25 +685,38 @@ export const SITE = {
 export type NavLink = { href: string; label: string };
 export type NavItem = NavLink & { children?: NavLink[] };
 
-export const ROUTES: Record<string, { title: string; indexable: boolean }> = {
-  "/": { title: "Home", indexable: true },
-  "/solutions": { title: "Solutions", indexable: true },
-  "/solutions/access-control-hosting": { title: "Cloud Self-Storage Access Control", indexable: true },
-  "/solutions/web-hosting": { title: "Self-Storage Facility Websites", indexable: true },
-  "/about-us": { title: "About Us", indexable: true },
-  "/resources": { title: "Resources", indexable: true },
-  "/events": { title: "Industry Events", indexable: true },
-  "/support": { title: "Support & Diagnostics", indexable: true },
-  "/demo": { title: "Request a Demo", indexable: true },
-  "/contact": { title: "Contact", indexable: true },
-  "/legal/privacy": { title: "Privacy Policy", indexable: true },
-  "/legal/terms": { title: "Terms of Service", indexable: true },
-  "/legal/trademarks": { title: "Trademarks", indexable: true },
-  "/legal/accessibility": { title: "Accessibility Statement", indexable: true },
-  "/case-studies": { title: "Case Studies", indexable: false },
-  "/user/login": { title: "Log In", indexable: false },
-  "/user/register": { title: "Create an Account", indexable: false },
+// `indexable` is an SEO decision: may this URL be crawled and listed.
+// `built`    is a fact: does a page.tsx for it exist yet.
+// They are independent, and the sitemap needs BOTH. Nav renders from this
+// table in full so the site's shape is visible, but Plan 1 only builds three
+// pages -- advertising the other fourteen in sitemap.xml would hand Google a
+// list of URLs that 404. Plan 2 flips each `built` to true as it lands.
+export const ROUTES: Record<string, { title: string; indexable: boolean; built: boolean }> = {
+  "/": { title: "Home", indexable: true, built: true },
+  "/about-us": { title: "About Us", indexable: true, built: true },
+  "/contact": { title: "Contact", indexable: true, built: true },
+
+  // Plan 2 builds everything below. Flip `built` in the same commit that
+  // creates the page, never before.
+  "/solutions": { title: "Solutions", indexable: true, built: false },
+  "/solutions/access-control-hosting": { title: "Cloud Self-Storage Access Control", indexable: true, built: false },
+  "/solutions/web-hosting": { title: "Self-Storage Facility Websites", indexable: true, built: false },
+  "/resources": { title: "Resources", indexable: true, built: false },
+  "/events": { title: "Industry Events", indexable: true, built: false },
+  "/support": { title: "Support & Diagnostics", indexable: true, built: false },
+  "/demo": { title: "Request a Demo", indexable: true, built: false },
+  "/legal/privacy": { title: "Privacy Policy", indexable: true, built: false },
+  "/legal/terms": { title: "Terms of Service", indexable: true, built: false },
+  "/legal/trademarks": { title: "Trademarks", indexable: true, built: false },
+  "/legal/accessibility": { title: "Accessibility Statement", indexable: true, built: false },
+  "/case-studies": { title: "Case Studies", indexable: false, built: false },
+  "/user/login": { title: "Log In", indexable: false, built: false },
+  "/user/register": { title: "Create an Account", indexable: false, built: false },
 };
+
+// Paths that appear in FOOTER but are not app pages. Task 9 renders these as
+// a plain <a>, and the link-integrity test skips them when checking ROUTES.
+export const NON_ROUTE_PATHS = ["/sitemap.xml"];
 
 export const NAV: { utility: NavLink[]; main: NavItem[] } = {
   utility: [
@@ -783,7 +777,7 @@ export const FOOTER: { heading: string; links: NavLink[] }[] = [
 
 export function indexableRoutes(): string[] {
   return Object.entries(ROUTES)
-    .filter(([, meta]) => meta.indexable)
+    .filter(([, meta]) => meta.indexable && meta.built)
     .map(([path]) => path);
 }
 ```
@@ -791,7 +785,7 @@ export function indexableRoutes(): string[] {
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS, 5 tests.
+Expected: PASS, 6 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1379,7 +1373,7 @@ describe("sitemap", () => {
   });
 
   it("covers exactly the indexable routes in the manifest", () => {
-    const expected = Object.entries(ROUTES).filter(([, m]) => m.indexable).length;
+    const expected = Object.entries(ROUTES).filter(([, m]) => m.indexable && m.built).length;
     expect(urls.length).toBe(expected);
   });
 });
@@ -3401,6 +3395,59 @@ curl -sI https://www.selfstoragehosting.com | grep -iE "^(HTTP|location)"
 ```
 
 Expected after the fix: the apex returns 200, and `www` 301s to it. If the apex still redirects to `www`, flip the redirect in the Vercel project's domain settings so the apex is primary — this is a dashboard change requiring the owner's account access, not a code change. **Flag it to the owner if you cannot make it; do not silently change `SITE.url` to `www` instead, because §14 D1 records the apex as the chosen canonical host.**
+
+- [ ] **Step 6b: Assert every sitemap URL has a page on disk (spec §7.6 #2)**
+
+This is the check that `built` exists to serve, and it can only run here: it needs
+`/`, `/about-us` and `/contact` to all be on disk, which is first true after Task 16.
+
+Create `self-storage-hosting/tests/sitemap-coverage.test.ts`:
+
+```ts
+import { describe, it, expect } from "vitest";
+import { readdirSync } from "node:fs";
+import path from "node:path";
+import { ROUTES, indexableRoutes } from "@/lib/site";
+
+function pagesOnDisk(): Set<string> {
+  const pages = new Set<string>();
+  const walk = (dir: string, url: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) {
+        // Route groups like (marketing) do not appear in the URL.
+        walk(path.join(dir, e.name), e.name.startsWith("(") ? url : url + "/" + e.name);
+      } else if (e.name === "page.tsx") {
+        pages.add(url === "" ? "/" : url);
+      }
+    }
+  };
+  walk(path.resolve(__dirname, "../app"), "");
+  return pages;
+}
+
+describe("sitemap coverage", () => {
+  it("every route the sitemap emits has a page on disk", () => {
+    const pages = pagesOnDisk();
+    expect(indexableRoutes().filter((r) => !pages.has(r))).toEqual([]);
+  });
+
+  // The inverse: a page that exists but is flagged `built: false` is silently
+  // missing from the sitemap, which is the quieter and more likely mistake.
+  it("every page on disk that is in ROUTES is flagged built", () => {
+    const pages = pagesOnDisk();
+    const unflagged = [...pages].filter((u) => ROUTES[u] && !ROUTES[u].built);
+    expect(unflagged).toEqual([]);
+  });
+
+  it("is actually checking something", () => {
+    expect(indexableRoutes()).toEqual(["/", "/about-us", "/contact"]);
+  });
+});
+```
+
+Run: `npm test` — expected PASS. If the first case fails, a route is flagged
+`built: true` with no page; if the second fails, Task 13 or 16 created a page
+and forgot to flip its flag.
 
 - [ ] **Step 7: Full verification sweep**
 
