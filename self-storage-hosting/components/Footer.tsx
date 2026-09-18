@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FOOTER, SITE, NON_ROUTE_PATHS } from "@/lib/site";
+import { FOCUS_RING } from "@/components/ui/focus";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -14,8 +15,7 @@ export default function Footer() {
               </h2>
               <ul className="mt-4 space-y-2">
                 {col.links.map((l) => {
-                  const cls =
-                    "text-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-200";
+                  const cls = `text-sm hover:underline ${FOCUS_RING}`;
                   return (
                     <li key={l.href}>
                       {NON_ROUTE_PATHS.includes(l.href) ? (

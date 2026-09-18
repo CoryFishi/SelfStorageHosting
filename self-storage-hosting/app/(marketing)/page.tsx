@@ -4,6 +4,7 @@ import Image from "next/image";
 import { BiRightArrowAlt } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
 import Faq, { type FaqItem } from "@/components/Faq";
+import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export const metadata: Metadata = pageMeta({
   title: "Cloud Access Control for Self-Storage",
@@ -72,7 +73,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/demo"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-accent-500 px-5 py-3 font-semibold text-text-950 transition hover:bg-accent-400"
+            className={`mt-8 inline-flex items-center gap-2 rounded-full bg-accent-500 px-5 py-3 font-semibold text-text-950 transition hover:bg-accent-400 ${FOCUS_RING_LIGHT}`}
           >
             Get started
             <BiRightArrowAlt aria-hidden="true" />
@@ -100,7 +101,7 @@ export default function HomePage() {
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           <Link
             href="/solutions/web-hosting"
-            className="rounded-xl border border-background-200 bg-white/70 p-6 transition-colors hover:border-accent-700"
+            className={`rounded-xl border border-background-200 bg-white/70 p-6 transition-colors hover:border-accent-700 ${FOCUS_RING_LIGHT}`}
           >
             <div className="flex items-start justify-between gap-4">
               <h3 className="text-xl font-bold">Personalized web hosting services</h3>
@@ -110,7 +111,7 @@ export default function HomePage() {
           </Link>
           <Link
             href="/solutions/access-control-hosting"
-            className="rounded-xl border border-background-200 bg-white/70 p-6 transition-colors hover:border-accent-700"
+            className={`rounded-xl border border-background-200 bg-white/70 p-6 transition-colors hover:border-accent-700 ${FOCUS_RING_LIGHT}`}
           >
             <div className="flex items-start justify-between gap-4">
               <h3 className="text-xl font-bold">Cloud managed access control integrations</h3>
@@ -141,7 +142,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/demo"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-accent-50 px-5 py-3 font-semibold text-text-950 transition hover:bg-accent-200"
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full bg-accent-50 px-5 py-3 font-semibold text-text-950 transition hover:bg-accent-200 ${FOCUS_RING}`}
           >
             Request a demo
             <BiRightArrowAlt aria-hidden="true" />

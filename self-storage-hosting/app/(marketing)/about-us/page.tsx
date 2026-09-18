@@ -14,6 +14,7 @@ import { pageMeta } from "@/lib/seo";
 import { breadcrumbSchema } from "@/lib/schema";
 import JsonLd from "@/components/JsonLd";
 import Faq, { type FaqItem } from "@/components/Faq";
+import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export const metadata: Metadata = pageMeta({
   title: "About Us",
@@ -44,7 +45,7 @@ const values = [
   {
     icon: BiServer,
     title: "Operator-Grade Reliability",
-    desc: "Redundant regions, rolling updates, and health checks so your doors work when customers do.",
+    desc: "Rolling updates and health checks so your doors work when customers do.",
   },
 ];
 
@@ -144,13 +145,13 @@ export default function AboutUsPage() {
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href="/contact"
-                className="rounded-full bg-primary-700 px-6 py-3 text-text-50 shadow-lg transition hover:scale-[1.02] hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className={`rounded-full bg-primary-700 px-6 py-3 text-text-50 shadow-lg transition hover:scale-[1.02] hover:bg-primary-800 ${FOCUS_RING_LIGHT}`}
               >
                 Talk to us
               </Link>
               <Link
                 href="/solutions"
-                className="rounded-full border border-text-300 bg-background-50 px-6 py-3 text-text-900 transition hover:bg-background-100 focus:outline-none focus:ring-2 focus:ring-secondary-300"
+                className={`rounded-full border border-text-300 bg-background-50 px-6 py-3 text-text-900 transition hover:bg-background-100 ${FOCUS_RING_LIGHT}`}
               >
                 Explore solutions
               </Link>
@@ -194,7 +195,7 @@ export default function AboutUsPage() {
           <p className="mt-3 text-text-600">
             We’re not hiring right now, but we’re always glad to hear from
             people who care about self-storage operations.{" "}
-            <Link href="/contact" className="font-semibold underline">
+            <Link href="/contact" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
               Say hello
             </Link>{" "}
             and we’ll keep you in mind as the team grows.
@@ -248,10 +249,13 @@ export default function AboutUsPage() {
                 <BiServer className="h-5 w-5 text-accent-700" />
                 <h4 className="font-semibold">Reliability & Operations</h4>
               </div>
+              {/* Spec §14 D3 leaves a related outage-time behavior as an open
+                  owner question, so this list sticks to ordinary operational
+                  practice rather than answering it. Continuity while offline
+                  is already covered by the home page's FAQ. */}
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-600">
-                <li>Multi-AZ hosting with rolling updates</li>
+                <li>Rolling updates</li>
                 <li>Health checks and graceful fallbacks on site outages</li>
-                <li>Queue-backed command delivery and retries</li>
                 <li>Proactive monitoring and alerts</li>
               </ul>
             </div>
@@ -323,7 +327,7 @@ export default function AboutUsPage() {
             </p>
             <Link
               href="/contact"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-text-950 transition hover:bg-accent-400"
+              className={`mt-4 inline-flex items-center gap-2 rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-text-950 transition hover:bg-accent-400 ${FOCUS_RING_LIGHT}`}
             >
               Tell us which FMS you run
             </Link>
@@ -358,13 +362,13 @@ export default function AboutUsPage() {
           <div className="flex gap-3">
             <Link
               href="/contact"
-              className="rounded-full bg-background-50 px-6 py-3 text-primary-700 shadow transition hover:scale-[1.02] hover:bg-background-100"
+              className={`rounded-full bg-background-50 px-6 py-3 text-primary-700 shadow transition hover:scale-[1.02] hover:bg-background-100 ${FOCUS_RING}`}
             >
               Book a demo
             </Link>
             <Link
               href="/"
-              className="rounded-full border border-text-50/40 px-6 py-3 text-text-50 transition hover:bg-text-50/10"
+              className={`rounded-full border border-text-50/40 px-6 py-3 text-text-50 transition hover:bg-text-50/10 ${FOCUS_RING}`}
             >
               Go to homepage
             </Link>

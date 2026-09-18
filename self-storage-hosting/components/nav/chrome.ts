@@ -4,8 +4,8 @@
 // two string literals that can drift apart in a later edit.
 export const CHROME = "w-full border-b border-background-500 bg-primary-700 text-text-50";
 
-// One focus ring for every interactive element in the chrome. Keeping it in one
-// place is what stops a nav surface from quietly shipping without one -- which
-// is exactly how the mobile menu's links were missed.
-export const FOCUS_RING =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-200";
+// The chrome's focus ring now lives in components/ui/focus.ts alongside its
+// light-surface counterpart, so every page can pick the right one instead of
+// inlining a ring string. Re-exported here so this stays a one-line change
+// for TopBar and MainNav, which already import FOCUS_RING from this module.
+export { FOCUS_RING } from "@/components/ui/focus";

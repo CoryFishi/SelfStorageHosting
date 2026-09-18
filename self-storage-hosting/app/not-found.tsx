@@ -2,6 +2,7 @@ import Link from "next/link";
 import TopBar from "@/components/nav/TopBar";
 import MainNav from "@/components/nav/MainNav";
 import Footer from "@/components/Footer";
+import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export default function NotFound() {
   return (
@@ -25,7 +26,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="mt-8 rounded-full bg-accent-500 px-5 py-2.5 font-medium text-text-950 shadow-lg transition hover:bg-accent-400"
+          className={`mt-8 rounded-full bg-accent-500 px-5 py-2.5 font-medium text-text-950 shadow-lg transition hover:bg-accent-400 ${FOCUS_RING_LIGHT}`}
         >
           Go to homepage
         </Link>
