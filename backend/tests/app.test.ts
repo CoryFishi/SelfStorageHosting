@@ -89,6 +89,29 @@ describe("app wiring", () => {
       mongoose.set("bufferTimeoutMS", prevBufferTimeoutMS);
     }
   });
+
+  it("answers the global handler's sub-500 branch with the same envelope", async () => {
+    // The handler's `status < 500` branch looked like dead code: nothing in the
+    // mounted route tree calls next(err), and the one controller that does is
+    // imported nowhere. But express.json() is mounted ahead of the router, and
+    // a malformed body makes body-parser throw with .status = 400, which
+    // Express forwards straight here. So this branch is reachable by any
+    // client that posts broken JSON, and its envelope has to match the others.
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const res = await request(app)
+        .post("/api/users/register")
+        .set("Content-Type", "application/json")
+        .send('{"email": "broken"');
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.status).toBeLessThan(500);
+      expect(Object.keys(res.body).sort()).toEqual(["code", "message"]);
+      expect(typeof res.body.code).toBe("string");
+      expect(typeof res.body.message).toBe("string");
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });
 
 describe("User model", () => {
