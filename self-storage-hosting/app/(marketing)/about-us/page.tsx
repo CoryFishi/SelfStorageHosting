@@ -179,7 +179,7 @@ export default function AboutUsPage() {
               className="rounded-2xl border border-background-200 bg-background-50 p-6 shadow-sm"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50">
-                <Icon className="h-5 w-5 text-primary-700" />
+                <Icon aria-hidden="true" className="h-5 w-5 text-primary-700" />
               </div>
               <h3 className="mt-4 text-lg font-semibold">{title}</h3>
               <p className="mt-2 text-sm text-text-600">{desc}</p>
@@ -222,7 +222,7 @@ export default function AboutUsPage() {
             {pillars.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-4">
                 <div className="mt-1 rounded-lg bg-secondary-50 p-2">
-                  <Icon className="h-6 w-6 text-secondary-700" />
+                  <Icon aria-hidden="true" className="h-6 w-6 text-secondary-700" />
                 </div>
                 <div>
                   <h3 className="font-semibold">{title}</h3>
@@ -236,7 +236,7 @@ export default function AboutUsPage() {
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <div className="rounded-2xl border border-background-200 p-6">
               <div className="flex items-center gap-2">
-                <BiShieldAlt2 className="h-5 w-5 text-primary-700" />
+                <BiShieldAlt2 aria-hidden="true" className="h-5 w-5 text-primary-700" />
                 <h4 className="font-semibold">Security</h4>
               </div>
               {/* Spec §14 B: see the "Security First" card above for the policy. */}
@@ -246,7 +246,7 @@ export default function AboutUsPage() {
             </div>
             <div className="rounded-2xl border border-background-200 p-6">
               <div className="flex items-center gap-2">
-                <BiServer className="h-5 w-5 text-accent-700" />
+                <BiServer aria-hidden="true" className="h-5 w-5 text-accent-700" />
                 <h4 className="font-semibold">Reliability & Operations</h4>
               </div>
               {/* Spec §14 D3 leaves a related outage-time behavior as an open
@@ -306,7 +306,7 @@ export default function AboutUsPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-secondary-50 p-2">
-                  <BiRightArrowAlt className="h-6 w-6 text-secondary-700" />
+                  <BiRightArrowAlt aria-hidden="true" className="h-6 w-6 text-secondary-700" />
                 </div>
                 <div>
                   <div className="text-sm text-text-600">{from}</div>
