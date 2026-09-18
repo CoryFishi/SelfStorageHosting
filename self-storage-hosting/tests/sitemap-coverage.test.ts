@@ -26,6 +26,26 @@ function pageFiles(): Map<string, string> {
 // entry here must carry its own reason; it is never a silent catch-all.
 const UNMANAGED_PAGES: string[] = [];
 
+// The source text of the `pageMeta({ ... })` argument, braces balanced, or null
+// if the file does not call it. Scoping the path assertion to this slice is the
+// whole point: `path:` also appears in every breadcrumb entry, so searching the
+// file as a whole lets a page whose breadcrumb names the right route pass with
+// the WRONG canonical in pageMeta -- which is the one bug the assertion exists
+// to catch. Two of the three pages in this repo carry such a breadcrumb.
+// Brace counting is enough here because pageMeta's arguments are plain strings
+// with no braces in them; a template literal containing "{" would need a parser.
+function pageMetaArg(src: string): string | null {
+  const call = src.search(/pageMeta\s*\(\s*\{/);
+  if (call === -1) return null;
+  const open = src.indexOf("{", call);
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}" && --depth === 0) return src.slice(open, i + 1);
+  }
+  return null;
+}
+
 describe("sitemap coverage", () => {
   it("every route the sitemap emits has a page on disk", () => {
     const pages = pageFiles();
@@ -80,8 +100,8 @@ describe("canonical declarations", () => {
     for (const route of indexableRoutes()) {
       const file = pages.get(route);
       expect(file, `${route} has no page.tsx on disk`).toBeDefined();
-      const src = readFileSync(file!, "utf8");
-      expect(src, `${route} must call pageMeta`).toMatch(/pageMeta\(\{/);
+      const arg = pageMetaArg(readFileSync(file!, "utf8"));
+      expect(arg, `${route} must call pageMeta with an object literal`).not.toBeNull();
       // Built from a plain string with the backslash doubled, so the regex
       // engine receives `\s` (whitespace) rather than a literal "s". Inside a
       // template literal `\s` collapses the same way, and inside a
@@ -90,9 +110,10 @@ describe("canonical declarations", () => {
       // doubled backslash below survives into the RegExp as intended.
       // Routes contain only "/", letters and hyphens, so none of them carry
       // a regex metacharacter.
-      expect(src, `${route} must declare its own path`).toMatch(
-        new RegExp('path:\\s*["\']' + route + '["\']')
-      );
+      expect(
+        arg!,
+        `${route} must declare its own path inside the pageMeta call, not only in a breadcrumb`
+      ).toMatch(new RegExp('path:\\s*["\']' + route + '["\']'));
     }
   });
 });
