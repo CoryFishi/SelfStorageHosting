@@ -923,6 +923,14 @@ export function canonicalFor(path: string): string {
   if (!path.startsWith("/")) {
     throw new Error(`canonicalFor: path must start with "/", received "${path}"`);
   }
+  // A canonical URL identifies the page, so a fragment never belongs in one and
+  // a query string almost never does. Throwing surfaces the author error at
+  // build time instead of shipping a canonical that splits the page's signals.
+  if (/[?#]/.test(path)) {
+    throw new Error(
+      `canonicalFor: path must not carry a query or fragment, received "${path}"`
+    );
+  }
   if (path === "/") return SITE.url;
   return `${SITE.url}${path.replace(/\/$/, "")}`;
 }
@@ -1141,6 +1149,9 @@ export const FORBIDDEN_SCHEMA_TYPES = [
 ] as const;
 
 const FORBIDDEN_PROPS = ["aggregateRating", "review", "reviews"];
+const FORBIDDEN_LOWER = new Set(
+  FORBIDDEN_SCHEMA_TYPES.map((t) => t.toLowerCase())
+);
 
 export function assertNoForbiddenTypes(node: unknown): void {
   const walk = (n: unknown, path: string): void => {
@@ -1154,7 +1165,10 @@ export function assertNoForbiddenTypes(node: unknown): void {
       if (key === "@type") {
         const types = Array.isArray(value) ? value : [value];
         for (const t of types) {
-          if ((FORBIDDEN_SCHEMA_TYPES as readonly string[]).includes(String(t))) {
+          // Case-insensitive on purpose. Every @type this file emits today is
+          // a hardcoded literal, but Plan 3 folds article and event data in
+          // from outside, and "faqpage" must not slip past the one guard.
+          if (FORBIDDEN_LOWER.has(String(t).toLowerCase())) {
             throw new Error(
               `Forbidden JSON-LD type "${t}" at ${path}. See spec section 7.2 — this type no longer earns a rich result, or requires data we do not have.`
             );
