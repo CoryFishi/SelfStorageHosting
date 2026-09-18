@@ -14,6 +14,14 @@ dist-ssr
 
 .env
 
+# next.js
+/.next/
+/out/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
