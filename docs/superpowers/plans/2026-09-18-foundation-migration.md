@@ -1664,7 +1664,19 @@ export default function MainNav() {
         <div className="hidden items-center md:flex">
           {NAV.main.map((item) =>
             item.children ? (
-              <div key={item.href} className="relative" onMouseLeave={() => setOpenMenu(null)}>
+              <div
+                key={item.href}
+                className="relative"
+                onMouseLeave={() => setOpenMenu(null)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Escape" || openMenu !== item.href) return;
+                  setOpenMenu(null);
+                  // The panel is about to be `hidden`. Without moving focus back
+                  // to the trigger, focus falls to <body> and a keyboard user
+                  // loses their place in the nav entirely.
+                  e.currentTarget.querySelector("button")?.focus();
+                }}
+              >
                 <button
                   type="button"
                   aria-expanded={openMenu === item.href}
