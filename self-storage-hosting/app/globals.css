@@ -60,6 +60,8 @@
   --color-accent-800: #184a4e;
   --color-accent-900: #0c2527;
   --color-accent-950: #061314;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   /* .dark {
     --text-50: #091111;
     --text-100: #122121;
