@@ -12,14 +12,14 @@ import { SITE } from "@/lib/site";
 
 describe("schema builders", () => {
   it("emits Organization with absolute url and logo", () => {
-    const s = organizationSchema() as any;
+    const s = organizationSchema() as Record<string, unknown>;
     expect(s["@type"]).toBe("Organization");
     expect(s.url).toBe(SITE.url);
     expect(String(s.logo)).toMatch(/^https:\/\//);
   });
 
   it("omits sameAs and contactPoint while the owner facts are outstanding", () => {
-    const s = organizationSchema() as any;
+    const s = organizationSchema() as Record<string, unknown>;
     // These appear only once SITE.social / SITE.contactEmail are populated.
     // An empty sameAs array or a contactPoint with no address is invalid.
     expect("sameAs" in s).toBe(false);
@@ -27,7 +27,7 @@ describe("schema builders", () => {
   });
 
   it("emits WebSite with name and url only, never a SearchAction", () => {
-    const s = webSiteSchema() as any;
+    const s = webSiteSchema() as Record<string, unknown>;
     expect(s["@type"]).toBe("WebSite");
     expect(s.potentialAction).toBeUndefined();
   });
@@ -36,7 +36,7 @@ describe("schema builders", () => {
     const s = breadcrumbSchema([
       { name: "Home", path: "/" },
       { name: "Solutions", path: "/solutions" },
-    ]) as any;
+    ]) as { itemListElement: { position: number; item: string }[] };
     expect(s.itemListElement[0].position).toBe(1);
     expect(s.itemListElement[1].item).toBe(`${SITE.url}/solutions`);
   });
@@ -47,7 +47,7 @@ describe("schema builders", () => {
       description: "d",
       path: "/resources/x",
       datePublished: "2026-09-18",
-    }) as any;
+    }) as { dateModified: string };
     expect(s.dateModified).toBe("2026-09-18");
   });
 
@@ -59,7 +59,7 @@ describe("schema builders", () => {
       locationName: "The Star Grand Gold Coast",
       locationAddress: "Broadbeach, QLD, Australia",
       url: "https://www.selfstorage.org.au/",
-    }) as any;
+    }) as { "@type": string; location: { "@type": string } };
     expect(s["@type"]).toBe("Event");
     expect(s.location["@type"]).toBe("Place");
   });
