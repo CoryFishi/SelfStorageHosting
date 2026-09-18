@@ -26,8 +26,12 @@ const faqs: FaqItem[] = [
     a: "The on-site controller keeps enforcing the access rules it already has, so tenants can still get in and out while the connection is down.",
   },
   {
+    // The original wording named two access-management capabilities that spec
+    // 14 B lists as unsubstantiated -- the same ones the security answer below
+    // deliberately withholds. Stating them in plain English instead of jargon
+    // does not make them substantiated, so they are gone.
     q: "Is multi-site management supported?",
-    a: "Yes—single dashboard with roles and permissions, per-facility controls, and full audit logs.",
+    a: "Yes—a single dashboard with per-facility controls.",
   },
   {
     q: "Do you host small marketing websites too?",
@@ -37,11 +41,13 @@ const faqs: FaqItem[] = [
     q: "How do integrations work?",
     a: "REST/JSON API and webhooks, or pre-built connectors for common self-storage facility management software (FMS).",
   },
-  // Spec §14 B lists encryption at rest, RBAC, SSO and audit exports as facts
-  // the owner has not yet substantiated, and says anything unsubstantiated
-  // comes out. TLS is observable from the browser, so it stays; the rest is
-  // replaced with an invitation rather than a claim. Restore the specifics
-  // only when the owner confirms them.
+  // Spec §14 B lists several security capabilities the owner has not yet
+  // substantiated, and says anything unsubstantiated comes out. TLS is
+  // observable from the browser, so it stays; everything else is replaced with
+  // an invitation rather than a claim. Restore the specifics only once the
+  // owner confirms them -- they are deliberately not named here, because
+  // tests/content-policy.test.ts greps this file's source text and a comment
+  // quoting them would fail the guard it is describing.
   {
     q: "How is data secured?",
     a: "Every connection is served over TLS. For our current security posture in detail — storage, staff access, isolation and audit — ask us and we will walk you through it.",
