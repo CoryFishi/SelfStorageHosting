@@ -22,9 +22,15 @@ export function createApp() {
     // Client errors carry messages meant for the caller; 5xx messages can leak
     // collection names, index names and field paths, so they are not forwarded.
     console.error(err);
-    res.status(status).json({
-      error: status < 500 ? err?.message || "Request error" : "Server error",
-    });
+    // Same envelope shape every route already answers with ({ code, message }
+    // -- see user.routes.ts), so the client's single `data?.message` read
+    // gets a real message on both paths instead of the generic fallback on
+    // whichever one this handler used to answer differently.
+    res.status(status).json(
+      status < 500
+        ? { code: err?.code || "REQUEST_ERROR", message: err?.message || "Request error" }
+        : { code: "SERVER_ERROR", message: "Server error" }
+    );
   });
 
   return app;
