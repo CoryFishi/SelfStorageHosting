@@ -72,3 +72,40 @@ export function validateContact(input: unknown): ValidationResult {
     },
   };
 }
+
+export type SubmitOutcome = {
+  status: "sent" | "error";
+  message: string;
+  errors: Record<string, string>;
+};
+
+const SENT_MESSAGE = "Thanks — we have your message and will reply within one business day.";
+const FIELD_ERRORS_MESSAGE = "Please check the highlighted fields.";
+const GENERIC_ERROR_MESSAGE = "Something went wrong. Please try again.";
+
+// Only a plain object whose values are strings can drive per-field messages.
+// A string, an array, or nested objects are not field errors, and treating
+// them as such shows "check the highlighted fields" with nothing highlighted.
+function asFieldErrors(v: unknown): Record<string, string> | null {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return null;
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v)) {
+    if (typeof val === "string") out[k] = val;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** Turns a /api/contact response into what the form should display. Pure. */
+export function interpretResponse(ok: boolean, body: unknown): SubmitOutcome {
+  if (ok) return { status: "sent", message: SENT_MESSAGE, errors: {} };
+
+  const b = (body ?? {}) as Record<string, unknown>;
+  const errors = asFieldErrors(b.errors);
+  if (errors) return { status: "error", message: FIELD_ERRORS_MESSAGE, errors };
+
+  return {
+    status: "error",
+    message: typeof b.error === "string" ? b.error : GENERIC_ERROR_MESSAGE,
+    errors: {},
+  };
+}

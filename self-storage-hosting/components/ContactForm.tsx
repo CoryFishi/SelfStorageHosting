@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
+import { interpretResponse } from "@/lib/contact";
 
 type Errors = Record<string, string>;
 type Status = "idle" | "sending" | "sent" | "error";
@@ -20,31 +21,30 @@ export default function ContactForm({ subject = "general" }: { subject?: string 
 
     const data = Object.fromEntries(new FormData(form).entries());
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, subject }),
+        signal: controller.signal,
       });
       const body = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        setStatus("sent");
-        setMessage("Thanks — we have your message and will reply within one business day.");
-        form.reset();
-        return;
-      }
-      if (body.errors) {
-        setErrors(body.errors as Errors);
-        setStatus("error");
-        setMessage("Please check the highlighted fields.");
-        return;
-      }
+      const outcome = interpretResponse(res.ok, body);
+      setErrors(outcome.errors);
+      setStatus(outcome.status);
+      setMessage(outcome.message);
+      if (outcome.status === "sent") form.reset();
+    } catch (err) {
       setStatus("error");
-      setMessage(body.error ?? "Something went wrong. Please try again.");
-    } catch {
-      setStatus("error");
-      setMessage("We could not reach the server. Please check your connection and try again.");
+      setMessage(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "That took too long. Please try again."
+          : "We could not reach the server. Please check your connection and try again."
+      );
+    } finally {
+      clearTimeout(timer);
     }
   }
 

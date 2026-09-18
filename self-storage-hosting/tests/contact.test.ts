@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { validateContact } from "@/lib/contact";
+import { validateContact, interpretResponse } from "@/lib/contact";
 import { POST } from "@/app/api/contact/route";
 
 const valid = {
@@ -66,6 +66,64 @@ describe("validateContact", () => {
     expect(validateContact({ ...valid, name: "  Dana Reyes  " })).toMatchObject({
       ok: true,
       value: { name: "Dana Reyes" },
+    });
+  });
+});
+
+describe("interpretResponse", () => {
+  it("treats ok as sent, with the thank-you message and no errors", () => {
+    expect(interpretResponse(true, {})).toEqual({
+      status: "sent",
+      message: "Thanks — we have your message and will reply within one business day.",
+      errors: {},
+    });
+  });
+
+  it("treats a plain-object errors map as field errors", () => {
+    expect(interpretResponse(false, { errors: { message: "Required." } })).toEqual({
+      status: "error",
+      message: "Please check the highlighted fields.",
+      errors: { message: "Required." },
+    });
+  });
+
+  it("does not treat a string errors value as field errors", () => {
+    expect(interpretResponse(false, { errors: "rejected" })).toEqual({
+      status: "error",
+      message: "Something went wrong. Please try again.",
+      errors: {},
+    });
+  });
+
+  it("does not treat an array errors value as field errors", () => {
+    expect(interpretResponse(false, { errors: ["a"] })).toEqual({
+      status: "error",
+      message: "Something went wrong. Please try again.",
+      errors: {},
+    });
+  });
+
+  it("keeps only the string-valued entries of an errors object", () => {
+    expect(interpretResponse(false, { errors: { a: 1, b: "real" } })).toEqual({
+      status: "error",
+      message: "Please check the highlighted fields.",
+      errors: { b: "real" },
+    });
+  });
+
+  it("surfaces a top-level error string verbatim", () => {
+    expect(interpretResponse(false, { error: "We couldn't send that. Please try again." })).toEqual({
+      status: "error",
+      message: "We couldn't send that. Please try again.",
+      errors: {},
+    });
+  });
+
+  it("falls back to the generic message for an empty body", () => {
+    expect(interpretResponse(false, {})).toEqual({
+      status: "error",
+      message: "Something went wrong. Please try again.",
+      errors: {},
     });
   });
 });
@@ -154,7 +212,10 @@ describe("POST /api/contact", () => {
 
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toBe("https://api.resend.com/emails");
-    expect(calls[0].init.headers).toMatchObject({ Authorization: "Bearer test-key" });
+    expect(calls[0].init).toMatchObject({
+      method: "POST",
+      headers: { Authorization: "Bearer test-key", "Content-Type": "application/json" },
+    });
     const sent = JSON.parse(String(calls[0].init.body));
     expect(sent.to).toEqual(["ops@example.com"]);
     expect(sent.reply_to).toBe(valid.email);
