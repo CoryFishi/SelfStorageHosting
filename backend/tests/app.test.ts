@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
+import mongoose from "mongoose";
 import { createApp } from "../src/app";
 import { User } from "../src/models/User";
 
@@ -35,6 +36,29 @@ describe("app wiring", () => {
     expect(res.headers["access-control-allow-origin"]).toBe("http://localhost:3000");
     expect(res.headers["access-control-allow-credentials"]).toBe("true");
   });
+
+  it("hides internal error details from the client on 500s", async () => {
+    // No DB connection exists in this test process, so a real query against
+    // the User model fails for real (not a mock) once Mongoose's command
+    // buffer times out. Speed that timeout up so the test stays fast.
+    const prevBufferTimeoutMS = mongoose.get("bufferTimeoutMS");
+    mongoose.set("bufferTimeoutMS", 50);
+    try {
+      const res = await request(app)
+        .post("/api/users/register")
+        .send({ email: "leak-check@example.com", password: "x", name: "x" });
+
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: "Server error" });
+      // The real Mongoose error text (collection name + "buffering timed
+      // out") must never reach the response body.
+      const raw = JSON.stringify(res.body);
+      expect(raw).not.toMatch(/buffering timed out/i);
+      expect(raw).not.toMatch(/users\./i);
+    } finally {
+      mongoose.set("bufferTimeoutMS", prevBufferTimeoutMS);
+    }
+  });
 });
 
 describe("User model", () => {
@@ -49,10 +73,18 @@ describe("JWT secret", () => {
   it("refuses to load in production without JWT_SECRET", async () => {
     vi.resetModules();
     const prev = { env: process.env.NODE_ENV, secret: process.env.JWT_SECRET };
-    process.env.NODE_ENV = "production";
-    delete process.env.JWT_SECRET;
-    await expect(import("../src/middleware/token")).rejects.toThrow(/JWT_SECRET/);
-    process.env.NODE_ENV = prev.env;
-    if (prev.secret) process.env.JWT_SECRET = prev.secret;
+    try {
+      process.env.NODE_ENV = "production";
+      delete process.env.JWT_SECRET;
+      await expect(import("../src/middleware/token")).rejects.toThrow(/JWT_SECRET/);
+    } finally {
+      // Assigning `undefined` to a process.env key coerces it to the string
+      // "undefined" instead of deleting it, so restore with delete when there
+      // was no prior value.
+      if (prev.env) process.env.NODE_ENV = prev.env;
+      else delete process.env.NODE_ENV;
+      if (prev.secret) process.env.JWT_SECRET = prev.secret;
+      else delete process.env.JWT_SECRET;
+    }
   });
 });
