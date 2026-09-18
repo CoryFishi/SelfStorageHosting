@@ -3641,6 +3641,30 @@ Then start the production server:
 cd self-storage-hosting && npm start
 ```
 
+**If that reports `EADDRINUSE`, STOP — do not continue to the checks below.** A
+Next server reads its route manifest once, at boot, and then serves the build it
+booted with for as long as it lives. It does not notice that `.next` was rebuilt
+underneath it. So a server already holding port 3000 from an earlier build will
+answer every curl below with a stale snapshot, and any route added since it
+started returns a confident 404.
+
+This is not hypothetical. It happened in this project while Task 13 was being
+verified: `/about-us` returned **404** from the long-lived server on 3000 and
+**200** from a fresh `next start` on the same build output, with `npm run build`
+having just listed `/about-us` as a static route. Nothing was wrong with the
+page. Everything was wrong with the server being asked.
+
+Kill whatever holds the port and start again. Then prove the server you are
+about to measure is the one you just built, before trusting a single number:
+
+```bash
+curl -s -o /dev/null -w "%{http_code} expect 200 for a route added by this plan
+" localhost:3000/about-us
+```
+
+If that is 404 while `npm run build` listed `/about-us`, you are still talking to
+the old process. Fix that first; every check below is meaningless until you do.
+
 In a second shell, assert the live output. Each of these is a separate check so a failure names itself:
 
 ```bash
