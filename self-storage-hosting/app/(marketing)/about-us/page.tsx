@@ -100,7 +100,7 @@ const fmsBridges = [
 const faqs: FaqItem[] = [
   {
     q: "How does onboarding work?",
-    a: "We provision your cloud tenant, connect your hardware via secure connectors, sync your property data, and go live with staged rollouts by facility.",
+    a: "We provision your cloud tenant, connect your hardware, sync your property data, and go live with staged rollouts by facility.",
   },
   {
     q: "What if site internet goes down?",
@@ -134,10 +134,9 @@ export default function AboutUsPage() {
         <div className="relative mx-auto max-w-7xl px-6 pt-24 pb-16">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="mt-6 text-4xl font-bold leading-tight sm:text-5xl">
-              Run your access control from the cloud—fast, secure, and made for
-              self-storage
+              Run your access control from the cloud, built for self-storage
             </h1>
-            <p className="mt-4 text-lg text-text-600">
+            <p className="mt-4 text-lg text-text-700">
               We unify gates, smart locks, keypads, and sensors from one
               platform to the next via the cloud, to reduce your operational
               costs and risks.
@@ -151,7 +150,7 @@ export default function AboutUsPage() {
               </Link>
               <Link
                 href="/solutions"
-                className={`rounded-full border border-text-300 bg-background-50 px-6 py-3 text-text-900 transition hover:bg-background-100 ${FOCUS_RING_LIGHT}`}
+                className={`rounded-full border border-text-700 bg-background-50 px-6 py-3 text-text-900 transition hover:bg-background-100 ${FOCUS_RING_LIGHT}`}
               >
                 Explore solutions
               </Link>
@@ -164,7 +163,7 @@ export default function AboutUsPage() {
       <section id="story" className="mx-auto max-w-7xl px-6 py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-semibold">Why we exist</h2>
-          <p className="mt-3 text-text-600">
+          <p className="mt-3 text-text-700">
             Access control shouldn’t require on-site servers, duct-taped
             scripts, or late-night truck rolls. We bring a clean cloud layer to
             self-storage so you can deploy faster, operate reliably, and
@@ -182,7 +181,7 @@ export default function AboutUsPage() {
                 <Icon aria-hidden="true" className="h-5 w-5 text-primary-700" />
               </div>
               <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-              <p className="mt-2 text-sm text-text-600">{desc}</p>
+              <p className="mt-2 text-sm text-text-700">{desc}</p>
             </div>
           ))}
         </div>
@@ -192,7 +191,7 @@ export default function AboutUsPage() {
       <section id="careers" className="mx-auto max-w-7xl px-6 pb-8">
         <div className="mx-auto max-w-3xl rounded-3xl border border-background-200 bg-background-50 p-8 text-center shadow-sm">
           <h2 className="text-3xl font-semibold">Careers</h2>
-          <p className="mt-3 text-text-600">
+          <p className="mt-3 text-text-700">
             We’re not hiring right now, but we’re always glad to hear from
             people who care about self-storage operations.{" "}
             <Link href="/contact" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
@@ -207,7 +206,7 @@ export default function AboutUsPage() {
       <section id="news" className="mx-auto max-w-7xl px-6 pb-16">
         <div className="mx-auto max-w-3xl rounded-3xl border border-background-200 bg-background-50 p-8 text-center shadow-sm">
           <h2 className="text-3xl font-semibold">News</h2>
-          <p className="mt-3 text-text-600">
+          <p className="mt-3 text-text-700">
             We don’t have any announcements yet. When we do, they’ll show up
             here first.
           </p>
@@ -226,7 +225,7 @@ export default function AboutUsPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">{title}</h3>
-                  <p className="mt-1 text-sm text-text-600">{desc}</p>
+                  <p className="mt-1 text-sm text-text-700">{desc}</p>
                 </div>
               </div>
             ))}
@@ -240,7 +239,7 @@ export default function AboutUsPage() {
                 <h4 className="font-semibold">Security</h4>
               </div>
               {/* Spec §14 B: see the "Security First" card above for the policy. */}
-              <p className="mt-3 text-sm text-text-600">
+              <p className="mt-3 text-sm text-text-700">
                 Served over TLS. Ask us for our current security posture.
               </p>
             </div>
@@ -253,7 +252,7 @@ export default function AboutUsPage() {
                   owner question, so this list sticks to ordinary operational
                   practice rather than answering it. Continuity while offline
                   is already covered by the home page's FAQ. */}
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-600">
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-700">
                 <li>Rolling updates</li>
                 <li>Health checks and graceful fallbacks on site outages</li>
                 <li>Proactive monitoring and alerts</li>
@@ -267,7 +266,7 @@ export default function AboutUsPage() {
       <section className="mx-auto max-w-7xl px-6 py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-semibold">What we integrate</h2>
-          <p className="mt-3 text-text-600">
+          <p className="mt-3 text-text-700">
             Bring your existing hardware. We provide the glue—connectors, APIs,
             and a control plane—to orchestrate everything together.
           </p>
@@ -279,7 +278,7 @@ export default function AboutUsPage() {
               className="rounded-2xl border border-background-200 bg-background-50 p-6 shadow-sm"
             >
               <h3 className="text-lg font-semibold">{i.title}</h3>
-              <p className="mt-2 text-sm text-text-600">{i.desc}</p>
+              <p className="mt-2 text-sm text-text-700">{i.desc}</p>
             </div>
           ))}
         </div>
@@ -291,7 +290,7 @@ export default function AboutUsPage() {
           <h2 className="text-3xl font-semibold">
             We bridge facility management software to your access control
           </h2>
-          <p className="mt-3 text-text-600">
+          <p className="mt-3 text-text-700">
             Including OpenTech Alliance’s INSOMNIAC® CIA and DigiGate. Our FMS
             connectors keep tenants, units, access levels and lockouts in sync
             with your access control.
@@ -309,12 +308,12 @@ export default function AboutUsPage() {
                   <BiRightArrowAlt aria-hidden="true" className="h-6 w-6 text-secondary-700" />
                 </div>
                 <div>
-                  <div className="text-sm text-text-600">{from}</div>
-                  <div className="mt-1 text-sm text-text-600">to</div>
+                  <div className="text-sm text-text-700">{from}</div>
+                  <div className="mt-1 text-sm text-text-700">to</div>
                   <div className="text-lg font-semibold">{to}</div>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-text-600">
+              <p className="mt-4 text-sm text-text-700">
                 We can bridge {from} to {to}. Tell us your setup.
               </p>
             </div>
@@ -322,7 +321,7 @@ export default function AboutUsPage() {
 
           <div className="rounded-2xl border border-dashed border-background-300 bg-background-50 p-5 shadow-sm">
             <h3 className="text-lg font-semibold">Running something else?</h3>
-            <p className="mt-2 text-sm text-text-600">
+            <p className="mt-2 text-sm text-text-700">
               Tell us which FMS you run—we’ll scope a bridge for it.
             </p>
             <Link
@@ -339,7 +338,7 @@ export default function AboutUsPage() {
       <section className="mx-auto max-w-5xl px-6 pb-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-semibold">FAQs</h2>
-          <p className="mt-3 text-text-600">
+          <p className="mt-3 text-text-700">
             Quick answers to common questions from operators and installers.
           </p>
         </div>
@@ -368,7 +367,7 @@ export default function AboutUsPage() {
             </Link>
             <Link
               href="/"
-              className={`rounded-full border border-text-50/40 px-6 py-3 text-text-50 transition hover:bg-text-50/10 ${FOCUS_RING}`}
+              className={`rounded-full border border-text-50 px-6 py-3 text-text-50 transition hover:bg-text-50/10 ${FOCUS_RING}`}
             >
               Go to homepage
             </Link>

@@ -30,7 +30,7 @@ const FORBIDDEN: [RegExp, string, string?][] = [
     // marketing copy never says "RBAC" -- it says it in ordinary words.
     // `audit` is deliberately NOT matched bare: the approved security answer ends
     // "...isolation and audit - ask us", which is an invitation, not a claim.
-    /encryption at rest|encrypted at rest|\bRBAC\b|role-based access|roles and permissions|audit (?:exports?|logs?|trails?)|scoped tokens|\bSSO\b|single sign-on|bank-level|enterprise-grade|\bSOC ?2\b|ISO ?27001/i,
+    /encryption at rest|encrypted at rest|\bRBAC\b|role-based access|roles and permissions|audit (?:exports?|logs?|trails?)|scoped tokens|\bSSO\b|single sign-on|bank-level|enterprise-grade|\bSOC ?2\b|ISO ?27001|signed device tokens?|key rotation|per-facility isolation/i,
     "Unsubstantiated security claim (spec 14B) - only TLS is verified",
   ],
   [/\bPMS\b/, 'Use "FMS" — the industry term is facility management software'],
@@ -48,5 +48,15 @@ describe("content policy", () => {
       .filter((f) => f.file !== exempt && pattern.test(f.text))
       .map((f) => f.file);
     expect(offenders, `${why}. Found in: ${offenders.join(", ")}`).toEqual([]);
+  });
+
+  // Every case above is "no file matches a bad pattern," which also passes
+  // when `files` is empty -- e.g. if DIRS pointed at the wrong root, or
+  // walkFrom's directory resolution silently broke. Assert the walk actually
+  // found something, and something specific, so a broken walk fails loudly
+  // instead of reporting thirteen vacuous passes.
+  it("actually walked real files", () => {
+    expect(files.length).toBeGreaterThan(0);
+    expect(files.map((f) => f.file)).toContain(SCHEMA);
   });
 });

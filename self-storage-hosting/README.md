@@ -38,7 +38,9 @@ the process refuses to start without it.
   are blocked and will fail the build.
 - No unverified metrics in copy: no uptime percentage, latency figure or site
   count, and no security claim beyond TLS until the owner substantiates it.
-  `tests/content-policy.test.ts` enforces this.
+  `tests/content-policy.test.ts` catches the specific phrasings it knows
+  about — it is a backstop, not a substitute for reading new copy before it
+  ships.
 - No `opacity-*` utility on text sitting on the dark chrome —
   `tests/contrast.test.ts` reads raw tokens and cannot see a composited colour.
 - See `docs/superpowers/specs/2026-09-18-website-completion-seo-design.md`

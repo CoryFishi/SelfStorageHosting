@@ -44,6 +44,12 @@ const PAIRS: [string, string, string, number][] = [
   ["hero CTA and 404 CTA", "text-950", "accent-500", 4.5],
   ["body copy", "text-900", "background-50", 4.5],
   ["hero subhead", "text-800", "background-50", 4.5],
+  // about-us body copy (text-700, ratio 6.134:1) and the "Explore solutions"
+  // ghost button's only boundary (border-text-700, same background) -- both
+  // introduced when text-600 (3.859:1, item 1) and border-text-300 (1.649:1,
+  // item 8) were replaced. One row covers both usages: the token is the same,
+  // and background-50 is what both are actually drawn on.
+  ["about-us body copy and borders", "text-700", "background-50", 4.5],
   // Non-text tier, WCAG 1.4.11 (3.0:1). A focus indicator is the only thing a
   // keyboard user has to tell them where they are, and it is measured against
   // the colours ADJACENT to it -- which is why every ring below is specified
@@ -58,6 +64,23 @@ const PAIRS: [string, string, string, number][] = [
 describe("WCAG AA contrast", () => {
   it.each(PAIRS)("%s meets the minimum ratio", (_label, fg, bg, min) => {
     expect(ratio(token(fg), token(bg))).toBeGreaterThanOrEqual(min);
+  });
+
+  it("tests every text and border token the source actually uses", () => {
+    // The ratio rows above only prove the pairs someone remembered to list. This
+    // proves the list is complete, which is the half that was missing: text-600
+    // and text-300 both shipped failing because no row named them.
+    const used = new Set<string>();
+    for (const f of sources) {
+      const text = readFileSync(f, "utf8");
+      for (const m of text.matchAll(/\b(?:text|border)-(text-\d{2,3})\b/g)) used.add(m[1]);
+    }
+    const covered = new Set(PAIRS.map(([, fg]) => fg));
+    const untested = [...used].filter((t) => !covered.has(t)).sort();
+    expect(
+      untested,
+      `these tokens are used in source but no PAIRS row measures them: ${untested.join(", ")}`
+    ).toEqual([]);
   });
 });
 
@@ -97,5 +120,19 @@ describe("focus indicators", () => {
       offenders,
       `focus ring class inlined instead of imported from components/ui/focus.ts: ${offenders.join(", ")}`
     ).toEqual([]);
+  });
+});
+
+describe("theme-color meta", () => {
+  // app/layout.tsx hardcodes the viewport themeColor as a literal hex string
+  // rather than reading it from globals.css (there is no build step that
+  // exposes a CSS custom property to a Metadata object), so the two values
+  // can drift silently. This is the guard: it fails the day someone changes
+  // one without the other, rather than never.
+  it("matches the primary-700 token so the two cannot drift silently", () => {
+    const layoutSrc = readFileSync(path.resolve(__dirname, "../app/layout.tsx"), "utf8");
+    const m = layoutSrc.match(/themeColor:\s*["'](#[0-9a-fA-F]+)["']/);
+    expect(m, "app/layout.tsx must set themeColor to a literal hex string").not.toBeNull();
+    expect(m![1].toLowerCase()).toBe(token("primary-700").toLowerCase());
   });
 });

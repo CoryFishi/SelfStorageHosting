@@ -264,4 +264,35 @@ describe("POST /api/contact", () => {
       spy.mockRestore();
     }
   });
+
+  it("returns 502 rather than hanging when the mail provider never settles", async () => {
+    configured();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Stands in for the client's real 10-second wait: fires the abort almost
+    // immediately so this proves the code path -- a fetch that never settles
+    // on its own, wired to an AbortSignal.timeout, resolves to the friendly
+    // 502 rather than hanging until the caller gives up -- without an actual
+    // 10-second wait in the suite. AbortSignal itself is Node's own tested
+    // behavior; only its duration is faked here.
+    const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => realTimeout(0));
+    try {
+      vi.stubGlobal(
+        "fetch",
+        (_url: unknown, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () =>
+              reject(new DOMException("This operation was aborted.", "AbortError"))
+            );
+          })
+      );
+      const res = await POST(req(valid, "203.0.113.8"));
+      expect(res.status).toBe(502);
+      expect((await res.json()).error).toBeTruthy();
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      timeoutSpy.mockRestore();
+      spy.mockRestore();
+    }
+  });
 });

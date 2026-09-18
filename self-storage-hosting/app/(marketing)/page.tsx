@@ -20,7 +20,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "Which access control hardware do you support?",
-    a: "Most modern gate operators, keypads, and smart locks via APIs or adapters; connectors exist for common vendors.",
+    a: "Most modern gate operators, keypads and smart locks, via APIs or adapters. Tell us which hardware you run and we will confirm what integrating it involves.",
   },
   {
     q: "What happens if the site loses internet?",
@@ -40,7 +40,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "How do integrations work?",
-    a: "REST/JSON API and webhooks, or pre-built connectors for common self-storage facility management software (FMS).",
+    a: "REST/JSON API and webhooks. Tell us which facility management software (FMS) you use and we will confirm what integrating it involves.",
   },
   // Spec §14 B lists several security capabilities the owner has not yet
   // substantiated, and says anything unsubstantiated comes out. TLS is
@@ -118,8 +118,8 @@ export default function HomePage() {
               <BiRightArrowAlt aria-hidden="true" className="shrink-0 text-2xl text-accent-700" />
             </div>
             <p className="mt-2">
-              Let your gate and access control systems run from the cloud for easier operation and
-              less downtime.
+              Let your gate and access control systems run from the cloud, with one place to manage
+              every site.
             </p>
           </Link>
         </div>

@@ -3,6 +3,14 @@ import { validateContact } from "@/lib/contact";
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 5;
+// Comfortably inside ContactForm.tsx's 15-second client abort, so the route
+// answers (success, or the friendly 502 below) before the client gives up.
+// Without this, a slow provider lets the client abort while the send is
+// still in flight: the visitor sees "took too long," the form stays
+// populated because the success branch was never reached, they submit again
+// -- and the first message may already have been delivered. Two emails, one
+// visitor, for the one path the whole site funnels into.
+const MAIL_TIMEOUT_MS = 10_000;
 // A prune threshold, not a maximum. Naming it MAX_ would assert a bound the
 // sweep alone does not enforce.
 const PRUNE_ABOVE = 1000;
@@ -62,6 +70,7 @@ export async function POST(request: Request) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(MAIL_TIMEOUT_MS),
     body: JSON.stringify({
       from: "Self Storage Hosting <noreply@selfstoragehosting.com>",
       to: [to],

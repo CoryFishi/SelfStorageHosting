@@ -14,11 +14,15 @@ export function walk(dir: string, pattern = /\.(tsx?|mdx?)$/): string[] {
   return out;
 }
 
-/** Absolute paths under a package-relative directory; [] if it does not exist. */
+/**
+ * Absolute paths under a package-relative directory, matching `pattern`.
+ *
+ * Deliberately does not catch a missing/misspelled `rel`: every caller uses
+ * this to build the file list a guard measures against, and a walker that
+ * quietly returns [] on a bad path turns "the walk is broken" into "every
+ * assertion about that list passed vacuously." Let readdirSync's ENOENT
+ * surface instead.
+ */
 export function walkFrom(rel: string, pattern?: RegExp): string[] {
-  try {
-    return walk(path.join(PKG_ROOT, rel), pattern);
-  } catch {
-    return [];
-  }
+  return walk(path.join(PKG_ROOT, rel), pattern);
 }

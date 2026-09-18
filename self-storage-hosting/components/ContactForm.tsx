@@ -151,7 +151,7 @@ export default function ContactForm({ subject = "general" }: { subject?: string 
             id="gateSystem"
             name="gateSystem"
             type="text"
-            placeholder="e.g. DigiGate, PTI, Janus"
+            placeholder="e.g. DigiGate, Nokē Smart Entry, INSOMNIAC® CIA"
             className={field}
           />
         </div>

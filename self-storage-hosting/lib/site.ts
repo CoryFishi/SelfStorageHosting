@@ -1,5 +1,9 @@
 export const SITE = {
-  url: process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://selfstoragehosting.com",
+  // `??` only catches null/undefined, so a variable that is SET but empty
+  // (`NEXT_PUBLIC_SITE_URL=""`) would defeat the fallback and build every
+  // canonical, the sitemap and metadataBase from "". `||` treats "" the same
+  // as absent, which is the property actually wanted here.
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://selfstoragehosting.com").replace(/\/$/, ""),
   name: "Self Storage Hosting",
   description:
     "Cloud-hosted access control and facility websites for independent self-storage operators.",
