@@ -278,7 +278,7 @@ Confirm `.env` is still ignored: `grep -n '^\.env' backend/.gitignore`.
 - [ ] **Step 9: Run the tests and the type-checker**
 
 Run: `cd backend && npm test`
-Expected: PASS, 6 tests.
+Expected: PASS, 7 tests. (Six from this task, plus the 5xx-redaction test the fix round added.)
 
 Run: `cd backend && npx tsc --noEmit`
 Expected: no output. The widened `include` from Step 2 means this now covers `src/`, `tests/` and `vitest.config.ts`.
@@ -957,7 +957,7 @@ export function pageMeta(opts: PageMetaOpts): Metadata {
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS, 12 tests across both files.
+Expected: PASS, 14 tests across both files — 8 new in `seo.test.ts`, plus the 6 from Task 3.
 
 - [ ] **Step 5: Commit**
 
