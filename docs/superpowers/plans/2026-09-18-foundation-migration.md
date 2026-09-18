@@ -3445,6 +3445,60 @@ For the record, the pairs that FAIL and must not be reintroduced:
 
 Plan 2's pages must use the same `primary-700` chrome.
 
+- [ ] **Step 5b: Assert the focus ring is defined in exactly one place**
+
+The ratio test above proves the ring COLOURS are right. It cannot prove a
+component uses them, and it cannot see a component that disables the
+browser default and puts nothing back. Task 13 did exactly that, twice, and
+the suite was green. The class strings therefore live in
+`components/ui/focus.ts` and nowhere else, and this asserts it.
+
+Append to `self-storage-hosting/tests/contrast.test.ts`:
+
+```ts
+import { readFileSync } from "node:fs";
+
+// Every source file under app/ and components/, reusing `walk` from
+// tests/content-policy.test.ts's pattern.
+const sources = walk("app").concat(walk("components"))
+  .filter((f) => /\.tsx?$/.test(f));
+
+describe("focus indicators", () => {
+  it("never disables the browser default focus ring", () => {
+    // `outline-none` with nothing compliant in its place is strictly worse
+    // than leaving the UA ring alone: it removes the only thing a keyboard
+    // user has. If a design genuinely needs it, the replacement goes in
+    // components/ui/focus.ts and gets a row in PAIRS above.
+    const offenders = sources.filter((f) =>
+      /focus:outline-none|focus-visible:outline-none/.test(readFileSync(f, "utf8"))
+    );
+    expect(offenders, `outline-none found in: ${offenders.join(", ")}`).toEqual([]);
+  });
+
+  it("declares focus ring classes in exactly one module", () => {
+    // components/Faq.tsx is the one documented exception: its ring is inset
+    // (`outline-offset-[-2px]`) because a positive offset on that full-width
+    // button draws over the accordion's divider lines and clips at its
+    // rounded corners. Browser-verified; do not unify it away.
+    const ALLOWED = ["components/ui/focus.ts", "components/Faq.tsx"];
+    const offenders = sources.filter(
+      (f) =>
+        /focus-visible:outline-(?:accent|primary|secondary|text)-\d/.test(
+          readFileSync(f, "utf8")
+        ) && !ALLOWED.some((a) => f.split("\\").join("/").endsWith(a))
+    );
+    expect(
+      offenders,
+      `focus ring class inlined instead of imported from components/ui/focus.ts: ${offenders.join(", ")}`
+    ).toEqual([]);
+  });
+});
+```
+
+Run: `npx vitest run tests/contrast.test.ts`
+Expected: PASS. If the second test fails, the fix is to import `FOCUS_RING`
+or `FOCUS_RING_LIGHT`, never to add the offending file to `ALLOWED`.
+
 - [ ] **Step 6: Confirm the canonical host matches the live redirect (spec §7.3, §14 D1)**
 
 `SITE.url` is the apex, `https://selfstoragehosting.com`. The current production site 301s the **apex to `www`** — the opposite direction. Left as is, every canonical points at a URL that immediately redirects, which wastes crawl budget and splits signals.
