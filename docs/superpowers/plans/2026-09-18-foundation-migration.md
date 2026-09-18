@@ -31,6 +31,12 @@
 - **Never publish a security claim beyond TLS** until spec §14 B is answered, and **never publish a per-vendor integration status** until §14 F is answered. `tests/content-policy.test.ts` enforces the first.
 - **No `opacity-*` utility on text over the dark chrome.** The contrast test reads raw `--color-*` tokens and cannot see a composited colour.
 - The pre-Next Vite sources live at `self-storage-hosting/legacy-vite/`, **not** `src/`. Next 16 treats `src/pages/` as a Pages Router and refuses to build alongside a root `app/`.
+- **Canonicals come from `pageMeta()` on the page, and from nowhere else. No `layout.tsx` may set `alternates`.**
+  Next merges layout metadata into every descendant that does not override it, so a canonical declared in
+  `app/layout.tsx` silently becomes the whole site's default. That is strictly worse than no canonical: a page
+  whose author forgets `pageMeta()` does not merely lack one, it claims to BE the homepage and Google drops it
+  as a duplicate. Verified live before Task 11 — the `noindex` 404 was emitting `canonical -> /` from the root
+  layout, which are contradictory instructions. Task 17 Step 6c is the regression test.
 - **Dark mode is out of scope** (Spec D13).
 - Run `npm run lint` and `npm run build` before every commit that touches `self-storage-hosting/`.
 
@@ -3198,7 +3204,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 **Files:**
 - Delete: `self-storage-hosting/legacy-vite/`
 - Modify: `self-storage-hosting/eslint.config.js` (drop the `src` ignore), `self-storage-hosting/README.md`
-- Create: `self-storage-hosting/tests/content-policy.test.ts`, `self-storage-hosting/tests/contrast.test.ts`
+- Create: `self-storage-hosting/tests/content-policy.test.ts`, `self-storage-hosting/tests/contrast.test.ts`, `self-storage-hosting/tests/sitemap-coverage.test.ts`
 
 - [ ] **Step 1: Write the content-policy test**
 
@@ -3441,37 +3447,41 @@ Create `self-storage-hosting/tests/sitemap-coverage.test.ts`:
 
 ```ts
 import { describe, it, expect } from "vitest";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { ROUTES, indexableRoutes } from "@/lib/site";
 
-function pagesOnDisk(): Set<string> {
-  const pages = new Set<string>();
+const APP_DIR = path.resolve(__dirname, "../app");
+
+// Maps each routable URL to the page.tsx that serves it. Step 6c needs the file
+// path and Step 6b needs the URL, so the walk returns both rather than existing
+// twice in two shapes.
+function pageFiles(): Map<string, string> {
+  const pages = new Map<string, string>();
   const walk = (dir: string, url: string) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       if (e.isDirectory()) {
         // Route groups like (marketing) do not appear in the URL.
         walk(path.join(dir, e.name), e.name.startsWith("(") ? url : url + "/" + e.name);
       } else if (e.name === "page.tsx") {
-        pages.add(url === "" ? "/" : url);
+        pages.set(url === "" ? "/" : url, path.join(dir, e.name));
       }
     }
   };
-  walk(path.resolve(__dirname, "../app"), "");
+  walk(APP_DIR, "");
   return pages;
 }
 
 describe("sitemap coverage", () => {
   it("every route the sitemap emits has a page on disk", () => {
-    const pages = pagesOnDisk();
+    const pages = pageFiles();
     expect(indexableRoutes().filter((r) => !pages.has(r))).toEqual([]);
   });
 
   // The inverse: a page that exists but is flagged `built: false` is silently
   // missing from the sitemap, which is the quieter and more likely mistake.
   it("every page on disk that is in ROUTES is flagged built", () => {
-    const pages = pagesOnDisk();
-    const unflagged = [...pages].filter((u) => ROUTES[u] && !ROUTES[u].built);
+    const unflagged = [...pageFiles().keys()].filter((u) => ROUTES[u] && !ROUTES[u].built);
     expect(unflagged).toEqual([]);
   });
 
@@ -3484,6 +3494,63 @@ describe("sitemap coverage", () => {
 Run: `npm test` — expected PASS. If the first case fails, a route is flagged
 `built: true` with no page; if the second fails, Task 13 or 16 created a page
 and forgot to flip its flag.
+
+- [ ] **Step 6c: Assert no layout sets a default canonical (spec §7.3)**
+
+`app/layout.tsx` must NOT carry `alternates: { canonical: ... }`. Next merges
+layout metadata into every descendant that does not override it, so a canonical
+declared there becomes the silent default for the whole site. That is worse than
+having no canonical: a page whose author forgets `pageMeta()` does not merely lack
+a canonical, it affirmatively claims to BE the homepage, and Google drops it as a
+duplicate. It also put `canonical -> /` on the `noindex` 404, which are
+contradictory instructions. Canonicals come from `pageMeta()` per page, and from
+nowhere else.
+
+Append to `self-storage-hosting/tests/sitemap-coverage.test.ts`:
+
+```ts
+describe("canonical declarations", () => {
+  function layoutFiles(): string[] {
+    const found: string[] = [];
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (e.name === "layout.tsx") found.push(full);
+      }
+    };
+    walk(APP_DIR);
+    return found;
+  }
+
+  it("declares no default canonical in any layout", () => {
+    const offenders = layoutFiles()
+      .filter((f) => /alternates\s*:/.test(readFileSync(f, "utf8")))
+      .map((f) => path.relative(APP_DIR, f));
+    expect(offenders).toEqual([]);
+  });
+
+  it("gives every built, indexable route its own canonical via pageMeta", () => {
+    const pages = pageFiles();
+    for (const route of indexableRoutes()) {
+      const file = pages.get(route)!;
+      const src = readFileSync(file, "utf8");
+      expect(src, `${route} must call pageMeta`).toMatch(/pageMeta\(\{/);
+      // Built from a plain string rather than a template literal: inside a
+      // template literal `\s` collapses to a bare "s" and the assertion quietly
+      // stops checking anything. Routes contain only "/", letters and hyphens,
+      // so none of them carry a regex metacharacter.
+      expect(src, `${route} must declare its own path`).toMatch(
+        new RegExp('path:\s*["\']' + route + '["\']')
+      );
+    }
+  });
+});
+```
+
+Run: `npm test` — expected PASS. The second case is the one that matters long
+term: it fails the moment Plan 2 or Plan 3 adds an indexable page that forgot its
+own canonical — exactly the omission the removed default used to hide.
 
 - [ ] **Step 7: Full verification sweep**
 
