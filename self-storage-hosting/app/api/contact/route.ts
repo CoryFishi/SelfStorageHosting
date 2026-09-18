@@ -3,22 +3,31 @@ import { validateContact } from "@/lib/contact";
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 5;
-const MAX_TRACKED_IPS = 1000;
+// A prune threshold, not a maximum. Naming it MAX_ would assert a bound the
+// sweep alone does not enforce.
+const PRUNE_ABOVE = 1000;
 const hits = new Map<string, { count: number; resetAt: number }>();
 
 function rateLimited(ip: string): boolean {
   const now = Date.now();
-  // The Map would otherwise grow for the life of the instance.
-  if (hits.size > MAX_TRACKED_IPS) {
-    for (const [k, v] of hits) if (now > v.resetAt) hits.delete(k);
-  }
   const entry = hits.get(ip);
-  if (!entry || now > entry.resetAt) {
-    hits.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
+  if (entry && now <= entry.resetAt) {
+    entry.count += 1;
+    return entry.count > MAX_PER_WINDOW;
   }
-  entry.count += 1;
-  return entry.count > MAX_PER_WINDOW;
+
+  // Sweep only when opening a new window, so the common path stays O(1). If
+  // nothing had expired, the table is dropped rather than rescanned on every
+  // later request: per-IP limiting was never going to stop a distributed flood,
+  // and bounded memory and CPU on the only public write path matter more than
+  // preserving counters during one.
+  if (hits.size > PRUNE_ABOVE) {
+    for (const [k, v] of hits) if (now > v.resetAt) hits.delete(k);
+    if (hits.size > PRUNE_ABOVE) hits.clear();
+  }
+
+  hits.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+  return false;
 }
 
 export async function POST(request: Request) {
@@ -57,16 +66,24 @@ export async function POST(request: Request) {
       from: "Self Storage Hosting <noreply@selfstoragehosting.com>",
       to: [to],
       reply_to: result.value.email,
-      subject: `Website ${result.value.subject ?? "enquiry"} from ${result.value.name}`,
+      // A newline in a Subject is a header-injection vector. `message` may
+      // legitimately contain them and is body text; this is a header.
+      subject: `Website ${result.value.subject ?? "enquiry"} from ${result.value.name}`.replace(
+        /[\r\n]+/g,
+        " "
+      ),
       text: Object.entries(result.value)
         .filter(([, v]) => v)
         .map(([k, v]) => `${k}: ${v}`)
         .join("\n"),
     }),
-  });
+  }).catch(() => null);
 
-  if (!res.ok) {
-    console.error("Resend rejected the message:", res.status, await res.text().catch(() => ""));
+  // A rejected fetch and an error response are the same event from the
+  // visitor's side, so both get the same friendly 502 rather than an opaque 500.
+  if (!res || !res.ok) {
+    const detail = res ? `${res.status} ${await res.text().catch(() => "")}` : "unreachable";
+    console.error("Mail provider failed:", detail);
     return NextResponse.json({ error: "We couldn't send that. Please try again." }, { status: 502 });
   }
 

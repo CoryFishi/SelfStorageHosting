@@ -22,6 +22,16 @@ function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
+// Secondary fields have no business being long and they flow into the outbound
+// email. Truncating rather than rejecting keeps a genuine lead from being turned
+// away over a field nobody reads; 200 is far above any real value.
+const OPTIONAL_MAX = 200;
+
+function opt(v: unknown): string | undefined {
+  const s = str(v).slice(0, OPTIONAL_MAX);
+  return s || undefined;
+}
+
 export function validateContact(input: unknown): ValidationResult {
   const raw = (input ?? {}) as Record<string, unknown>;
   const errors: Record<string, string> = {};
@@ -53,12 +63,12 @@ export function validateContact(input: unknown): ValidationResult {
       name,
       email,
       message,
-      company: str(raw.company) || undefined,
-      phone: str(raw.phone) || undefined,
-      facilityCount: str(raw.facilityCount) || undefined,
-      fms: str(raw.fms) || undefined,
-      gateSystem: str(raw.gateSystem) || undefined,
-      subject: str(raw.subject) || undefined,
+      company: opt(raw.company),
+      phone: opt(raw.phone),
+      facilityCount: opt(raw.facilityCount),
+      fms: opt(raw.fms),
+      gateSystem: opt(raw.gateSystem),
+      subject: opt(raw.subject),
     },
   };
 }

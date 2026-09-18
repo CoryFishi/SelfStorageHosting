@@ -49,6 +49,16 @@ describe("validateContact", () => {
     expect(validateContact({ ...valid, message: "x".repeat(5001) }).ok).toBe(false);
   });
 
+  it("accepts a message at exactly the 5000-character limit", () => {
+    expect(validateContact({ ...valid, message: "x".repeat(5000) }).ok).toBe(true);
+  });
+
+  it("rejects a name over 200 characters", () => {
+    const r = validateContact({ ...valid, name: "x".repeat(201) });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.name).toBeTruthy();
+  });
+
   // The assertion must be unconditional. With only `if (r.ok) expect(...)`,
   // a validator that REJECTS padded input - the likeliest trim regression -
   // runs zero assertions and Vitest reports the case as passed.
@@ -79,6 +89,7 @@ describe("POST /api/contact", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     if (saved.to === undefined) delete process.env.CONTACT_TO_EMAIL;
     else process.env.CONTACT_TO_EMAIL = saved.to;
     if (saved.key === undefined) delete process.env.RESEND_API_KEY;
@@ -118,5 +129,78 @@ describe("POST /api/contact", () => {
       expect((await POST(req({}, ip))).status).toBe(400);
     }
     expect((await POST(req({}, ip))).status).toBe(429);
+
+    // A global counter bug would fail here; the single-IP assertions above
+    // would not catch it on their own.
+    expect((await POST(req({}, "203.0.113.20"))).status).toBe(400);
+  });
+
+  function configured() {
+    process.env.CONTACT_TO_EMAIL = "ops@example.com";
+    process.env.RESEND_API_KEY = "test-key";
+  }
+
+  it("posts the lead to the provider and returns 200 when it accepts", async () => {
+    configured();
+    const calls: Array<{ url: unknown; init: RequestInit }> = [];
+    vi.stubGlobal("fetch", async (url: unknown, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(JSON.stringify({ id: "abc" }), { status: 200 });
+    });
+
+    const res = await POST(req(valid, "203.0.113.4"));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe("https://api.resend.com/emails");
+    expect(calls[0].init.headers).toMatchObject({ Authorization: "Bearer test-key" });
+    const sent = JSON.parse(String(calls[0].init.body));
+    expect(sent.to).toEqual(["ops@example.com"]);
+    expect(sent.reply_to).toBe(valid.email);
+    expect(sent.text).toContain(valid.message);
+  });
+
+  it("strips control characters out of the Subject header", async () => {
+    configured();
+    let sent: { subject: string } | undefined;
+    vi.stubGlobal("fetch", async (_url: unknown, init: RequestInit) => {
+      sent = JSON.parse(String(init.body));
+      return new Response("{}", { status: 200 });
+    });
+
+    await POST(req({ ...valid, name: "Dana\r\nBcc: victim@example.com" }, "203.0.113.5"));
+    expect(sent?.subject).not.toMatch(/[\r\n]/);
+    expect(sent?.subject).toContain("Bcc: victim@example.com");
+  });
+
+  it("returns 502 when the provider rejects the message", async () => {
+    configured();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      vi.stubGlobal("fetch", async () => new Response("rejected", { status: 422 }));
+      const res = await POST(req(valid, "203.0.113.6"));
+      expect(res.status).toBe(502);
+      expect((await res.json()).error).toBeTruthy();
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("returns 502 rather than an opaque 500 when the provider is unreachable", async () => {
+    configured();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      vi.stubGlobal("fetch", async () => {
+        throw new TypeError("fetch failed");
+      });
+      const res = await POST(req(valid, "203.0.113.7"));
+      expect(res.status).toBe(502);
+      expect((await res.json()).error).toBeTruthy();
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
