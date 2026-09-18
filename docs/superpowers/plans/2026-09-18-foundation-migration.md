@@ -2386,7 +2386,7 @@ export const metadata: Metadata = pageMeta({
 - [ ] **Step 2: Verify no forbidden copy survives**
 
 ```bash
-cd self-storage-hosting && grep -rniE "storedge|digi gate|easy storage solutions|sitelink|\bPMS\b|in real time|99\.95|100\+|1.3 seconds|200 ?ms|encryption at rest|\bRBAC\b|audit exports" app/ components/ lib/
+cd self-storage-hosting && grep -rniE "storedge|digi gate|easy storage solutions|sitelink|\bPMS\b|in real time|99\.95|100\+|1.3 seconds|200 ?ms|encryption at rest|encrypted at rest|\bRBAC\b|role-based access|roles and permissions|audit (exports?|logs?|trails?)|scoped tokens|\bSSO\b|single sign-on|bank-level|enterprise-grade|\bSOC ?2\b|ISO ?27001" app/ components/ lib/
 ```
 
 Expected: **no matches.** Any hit is a Global Constraints violation that must be fixed before committing.
@@ -3247,7 +3247,12 @@ const FORBIDDEN: [RegExp, string][] = [
   [/\bStor-Guard\b/, 'Use "StorGuard" (one word)'],
   [/\bSiteLink\b/, 'Use "Sitelink by Storable"'],
   [
-    /encryption at rest|\bRBAC\b|audit exports|scoped tokens/i,
+    // Both the jargon and the plain-English form of every claim. The jargon-only
+    // version of this pattern let two of them ship on the home page, because
+    // marketing copy never says "RBAC" -- it says it in ordinary words.
+    // `audit` is deliberately NOT matched bare: the approved security answer ends
+    // "...isolation and audit - ask us", which is an invitation, not a claim.
+    /encryption at rest|encrypted at rest|\bRBAC\b|role-based access|roles and permissions|audit (?:exports?|logs?|trails?)|scoped tokens|\bSSO\b|single sign-on|bank-level|enterprise-grade|\bSOC ?2\b|ISO ?27001/i,
     "Unsubstantiated security claim (spec 14B) - only TLS is verified",
   ],
   [/\bPMS\b/, 'Use "FMS" — the industry term is facility management software'],
