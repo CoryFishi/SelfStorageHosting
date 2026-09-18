@@ -32,7 +32,8 @@ async function post(path: string, body: unknown) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [ready, setReady] = useState(false);
+  // When there is no API base there is nothing to await, so ready starts true.
+  const [ready, setReady] = useState(!API);
   const [error, setError] = useState<string | null>(null);
 
   const refreshProfile = useCallback(async () => {
@@ -54,8 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!API) {
       console.error("NEXT_PUBLIC_API_BASE is not set; auth requests will fail.");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setReady(true);
       return;
     }
     refreshProfile().catch(() => setReady(true));
@@ -84,9 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await post("/api/users/logout", {});
-    setUser(null);
     setError(null);
+    try {
+      await post("/api/users/logout", {});
+      setUser(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Logout failed");
+      throw e;
+    }
   }, []);
 
   const value = useMemo<AuthCtx>(

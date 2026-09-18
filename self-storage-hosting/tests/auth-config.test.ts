@@ -32,7 +32,11 @@ describe("auth client configuration", () => {
   });
 
   it("does not depend on a token in the response body", () => {
-    expect(src).not.toMatch(/data\??\.\s*token/);
+    // The cookie model means the client never handles a token at all, so assert
+    // the word is absent rather than one syntax for reading it: `data.token` was
+    // the only shape the old regex caught, and `const { token } = data` slipped
+    // straight through it.
+    expect(src).not.toMatch(/\btoken\b/i);
   });
 
   it("does not put auth state in localStorage", () => {
