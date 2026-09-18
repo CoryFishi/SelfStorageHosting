@@ -1556,10 +1556,20 @@ The variable names must differ (`--font-inter` from `next/font`, `--font-sans` f
 Run: `npm run build`, then `npm start` and:
 
 ```bash
-curl -s http://localhost:3000/ | grep -c 'application/ld+json'
+curl -s http://localhost:3000/ | grep -o '<script type="application/ld+json"' | wc -l
 ```
 
-Expected: build succeeds; the count is `2`.
+Expected: build succeeds; the count is `2` — one Organization, one WebSite.
+
+Count occurrences, not lines. Next serves the production HTML for `/` as a single
+line with no newlines in it, so `grep -c` reports `1` however many tags are present
+and looks like a failure when nothing is wrong. Confirm the contents too:
+
+```bash
+curl -s http://localhost:3000/ | grep -o '"@type":"[A-Za-z]*"' | sort | uniq -c
+```
+
+Expected: exactly one `Organization` and one `WebSite`.
 
 - [ ] **Step 4: Commit**
 
