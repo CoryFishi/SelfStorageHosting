@@ -21,6 +21,10 @@
   - OpenTech Alliance is the *company*; the product is **INSOMNIAC® CIA** (® once per page, at first use).
   - Never imply partnership or endorsement with PTI, OpenTech, Storable or Janus.
 - **noindex:** `/case-studies`, `/user/login`, `/user/register`.
+- **Dark chrome is `--color-primary-700` (`#2c686d`), never `primary-600`.** The controller computed the ratios
+  before Task 1: `text-50` on `primary-600` is 3.62:1 and `accent-200` on `primary-600` is 2.84:1 — both fail
+  WCAG AA. On `primary-700` the same pairs are 5.79:1 and 4.54:1. `primary-700` is also the `themeColor`.
+  Nav, the utility bar and the footer all use it, and Plan 2's pages must use the same pair.
 - **Do not** restore a `/* → 200` catch-all in any form.
 - **Dark mode is out of scope** (Spec D13).
 - Run `npm run lint` and `npm run build` before every commit that touches `self-storage-hosting/`.
@@ -1343,7 +1347,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 `generateViewport` replaces the `<meta name="viewport">` that lived in the deleted `index.html`. Deleting that file without this export is how a migration ships a desktop-only site to phones.
 
-Confirm `#2c686d` matches the site's `--color-primary-600`; if the theme uses a different value, use that one.
+`#2c686d` is `--color-primary-700`, the same shade the nav and footer use (see Global Constraints). Confirm it in `app/globals.css` before trusting it.
 
 - [ ] **Step 2: Wire the font into the Tailwind theme**
 
@@ -1413,7 +1417,7 @@ import { NAV } from "@/lib/site";
 
 export default function TopBar() {
   return (
-    <div className="w-full border-b border-background-500 bg-primary-600 text-text-50">
+    <div className="w-full border-b border-background-500 bg-primary-700 text-text-50">
       <nav
         aria-label="Utility"
         className="mx-auto flex h-7 max-w-7xl items-center justify-end px-4 text-xs sm:px-6"
@@ -1454,7 +1458,7 @@ export default function MainNav() {
   const pathname = usePathname();
 
   return (
-    <header className="w-full border-b border-background-500 bg-primary-600 text-text-50">
+    <header className="w-full border-b border-background-500 bg-primary-700 text-text-50">
       <nav
         aria-label="Main"
         className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6"
@@ -1483,11 +1487,11 @@ export default function MainNav() {
                 <div
                   id={`menu-${item.href.replace(/\//g, "-")}`}
                   hidden={openMenu !== item.href}
-                  className="absolute left-0 top-20 z-20 min-w-56 rounded-b-lg bg-primary-600 py-2 shadow-lg"
+                  className="absolute left-0 top-20 z-20 min-w-56 rounded-b-lg bg-primary-700 py-2 shadow-lg"
                 >
                   <Link
                     href={item.href}
-                    className="block px-4 py-2 font-medium hover:bg-primary-500"
+                    className="block px-4 py-2 font-medium hover:bg-primary-800"
                     onClick={() => setOpenMenu(null)}
                   >
                     All {item.label}
@@ -1496,7 +1500,7 @@ export default function MainNav() {
                     <Link
                       key={c.href}
                       href={c.href}
-                      className="block px-4 py-2 hover:bg-primary-500"
+                      className="block px-4 py-2 hover:bg-primary-800"
                       onClick={() => setOpenMenu(null)}
                     >
                       {c.label}
@@ -1625,7 +1629,7 @@ import { FOOTER, SITE } from "@/lib/site";
 export default function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-16 bg-primary-600 text-text-50">
+    <footer className="mt-16 bg-primary-700 text-text-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <nav aria-label="Footer" className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
           {FOOTER.map((col) => (
@@ -2030,7 +2034,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
-        <div className="flex flex-col items-start justify-between gap-6 rounded-2xl bg-primary-600 p-8 text-text-50 md:flex-row md:items-center">
+        <div className="flex flex-col items-start justify-between gap-6 rounded-2xl bg-primary-700 p-8 text-text-50 md:flex-row md:items-center">
           <div>
             <h2 className="text-2xl font-bold">Ready to make the move to the cloud?</h2>
             <p className="mt-1 opacity-90">
@@ -3010,15 +3014,18 @@ The API lives in `../backend` and must be running for the auth pages:
 
 - [ ] **Step 5: Check colour contrast (spec §7.5)**
 
-The palette is a single low-saturation teal ramp, so contrast is a real risk rather than a formality. Check these three pairs, which cover every text style on the two pages Plan 1 ships:
+The palette is a single low-saturation teal ramp, so contrast is a real risk rather than a formality. Check these six pairs, which cover every text style on the two pages Plan 1 ships:
 
 | Context | Foreground | Background |
 |---|---|---|
-| Nav and footer links | `--color-text-50` | `--color-primary-600` |
+| Nav and footer links | `--color-text-50` | `--color-primary-700` |
+| Footer column headings | `--color-accent-200` | `--color-primary-700` |
+| Hero CTA | `--color-text-950` | `--color-accent-500` |
+| Hero subhead | `--color-text-800` | `--color-background-50` |
 | Primary CTA ("Talk to Sales") | `--color-text-950` | `--color-accent-50` |
 | Body copy | `--color-text-900` | `--color-background-50` |
 
-Read the six hex values out of `app/globals.css` and compute the WCAG 2.1 contrast ratio for each pair. Required: **4.5:1** for body text, **3:1** for the large hero `<h1>`.
+Read those hex values out of `app/globals.css` and compute the WCAG 2.1 contrast ratio for each pair. All six must clear **4.5:1** — do not fall back to the 3:1 large-text allowance for the hero `<h1>`, because all six already pass at 4.5:1 with the shades above.
 
 Add `tests/contrast.test.ts` so this cannot regress:
 
@@ -3030,7 +3037,7 @@ import path from "node:path";
 const css = readFileSync(path.resolve(__dirname, "../app/globals.css"), "utf8");
 
 function token(name: string): string {
-  const m = css.match(new RegExp(`--color-${name}:\s*(#[0-9a-fA-F]{3,8})`));
+  const m = css.match(new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{3,8})`));
   if (!m) throw new Error(`Token --color-${name} not found in globals.css`);
   return m[1];
 }
@@ -3049,9 +3056,12 @@ function ratio(a: string, b: string): number {
 }
 
 const PAIRS: [string, string, string, number][] = [
-  ["nav and footer links", "text-50", "primary-600", 4.5],
-  ["primary CTA", "text-950", "accent-50", 4.5],
+  ["nav and footer links", "text-50", "primary-700", 4.5],
+  ["footer column headings", "accent-200", "primary-700", 4.5],
+  ["primary CTA on light", "text-950", "accent-50", 4.5],
+  ["hero CTA", "text-950", "accent-500", 4.5],
   ["body copy", "text-900", "background-50", 4.5],
+  ["hero subhead", "text-800", "background-50", 4.5],
 ];
 
 describe("WCAG AA contrast", () => {
@@ -3061,7 +3071,20 @@ describe("WCAG AA contrast", () => {
 });
 ```
 
-**If a pair fails, adjust the shade used in the component — do not lower the threshold.** For nav links on `primary-600`, moving the text to pure white or the background to `primary-700` is usually enough. Record whichever shade you land on, because Plan 2's pages must use the same pair.
+These six pairs are the ones this controller already computed against the real palette, and all six
+pass. They are in the test to stop a later task drifting off them, not because they are in doubt.
+
+**Do not change a component's shade to make this test pass, and never lower a threshold.** The shades
+in Tasks 8, 9 and 12 were already corrected to match: `primary-700` is the dark chrome throughout.
+For the record, the pairs that FAIL and must not be reintroduced:
+
+| Rejected pair | Ratio |
+|---|---|
+| `text-50` on `primary-600` | 3.62:1 — fails 4.5:1 |
+| `accent-200` on `primary-600` | 2.84:1 — fails even the 3:1 large-text floor |
+| pure white on `primary-600` | 3.97:1 — still fails |
+
+Plan 2's pages must use the same `primary-700` chrome.
 
 - [ ] **Step 6: Confirm the canonical host matches the live redirect (spec §7.3, §14 D1)**
 
