@@ -14,6 +14,7 @@
 
 - **Domain:** `https://selfstoragehosting.com`. All canonicals absolute, **no trailing slash**.
 - **Pinned versions:** `next@16.3.5`, `react@19.3.0`, `react-dom@19.3.0`, `tailwindcss@4.3.3`, `react-icons@5.7.0`. Pin exactly — Next 16 changed the `next/image` API.
+- **Vitest stays on v3 (`^3.2.7`) in both `backend/` and `self-storage-hosting/`.** A bare `npm install -D vitest` resolves to 5.x, which pulls rolldown and fails to install its native binding on Windows, and whose config loader prints an ESM-in-CommonJS deprecation warning on every run. Verified: 3.2.7 installs in 7s, runs the same tests, and its output is pristine. Always install it as `vitest@^3.2.7`.
 - **Never emit these JSON-LD types:** `FAQPage`, `SoftwareApplication`, `Product`, `aggregateRating`, `review`, `SearchAction`, `LocalBusiness`. (Spec §7.2 — FAQ rich results retired 2026-05-07; sitelinks searchbox deprecated 2024-11-21.)
 - **Never publish** invented customers, testimonials, logos, case studies or metrics (Spec D2), and **never publish an unverified performance number** — no uptime percentage, latency figure, round-trip time, or site count (Spec D3).
 - **Copy rules** (Spec §13), apply to all new and ported copy:
@@ -349,7 +350,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
     "tailwindcss": "4.3.3",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }
 ```
