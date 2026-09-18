@@ -40,7 +40,7 @@ The Next.js migration resolves this structurally: unmatched routes return a real
 | `HomePage.tsx:38` | Uses `--color-bg-website` / `--color-text-website`, never defined |
 | `Spinner.tsx:8` | Uses `--color-accent-website`, never defined — the animated ring is invisible |
 | `LargeNavbar.tsx:16,23,30` | Three dropdown carets on links that have no dropdown |
-| `backend/index.ts:19` | `app.listen()` called twice — the second throws `EADDRINUSE` |
+| `backend/index.ts:22,27` | `app.listen()` called twice — the second throws `EADDRINUSE` |
 
 ---
 
@@ -347,7 +347,7 @@ Target: **Next.js 16.3.5**, `tailwindcss@4.3.3`, `react@19.3.0`, `react-icons@5.
 | 2 | Frontend requires `data.token` in the body; backend returns `{user}` and sets an httpOnly cookie | Login throws even at the correct URL |
 | 3 | `requireAuth` reads `req.cookies?.token`; `cookie-parser` is not installed or mounted | `/profile` always returns `401 NO_TOKEN` |
 | 4 | No `cors` middleware, but the browser calls cross-origin with `credentials: "include"` | Browser blocks the request |
-| 5 | `backend/index.ts:19` calls `app.listen()` twice | Second call throws `EADDRINUSE` |
+| 5 | `backend/index.ts:22,27` calls `app.listen()` twice | Second call throws `EADDRINUSE` |
 
 Nos. 1–3 are mutually contradictory: the frontend is built around a localStorage bearer token, the backend around an httpOnly cookie. **Resolution: adopt the cookie model** and drop localStorage token handling.
 

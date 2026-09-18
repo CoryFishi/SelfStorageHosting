@@ -26,6 +26,10 @@
   WCAG AA. On `primary-700` the same pairs are 5.79:1 and 4.54:1. `primary-700` is also the `themeColor`.
   Nav, the utility bar and the footer all use it, and Plan 2's pages must use the same pair.
 - **Do not** restore a `/* → 200` catch-all in any form.
+- **The contact honeypot field is `website`, never a field the form really collects.** Spec §6.5 requires `company` as a real, visible input; naming the trap after it drops a required field and silently 200s any lead a browser autofills. Plan 2's `/demo` reuses the same `ContactForm`.
+- **Never publish a security claim beyond TLS** until spec §14 B is answered, and **never publish a per-vendor integration status** until §14 F is answered. `tests/content-policy.test.ts` enforces the first.
+- **No `opacity-*` utility on text over the dark chrome.** The contrast test reads raw `--color-*` tokens and cannot see a composited colour.
+- The pre-Next Vite sources live at `self-storage-hosting/legacy-vite/`, **not** `src/`. Next 16 treats `src/pages/` as a Pages Router and refuses to build alongside a root `app/`.
 - **Dark mode is out of scope** (Spec D13).
 - Run `npm run lint` and `npm run build` before every commit that touches `self-storage-hosting/`.
 
@@ -36,9 +40,13 @@
 Independent of the migration. Do it first so the frontend has a working API to target.
 
 **Files:**
-- Modify: `backend/index.ts` (whole file — currently calls `app.listen()` twice)
+- Modify: `backend/index.ts` (whole file — the two `app.listen(PORT, ...)` calls are at lines 22 and 27)
 - Modify: `backend/package.json` (add `cors`, `cookie-parser`, test deps + script)
+- Modify: `backend/src/models/User.ts` (give `role` a default — see Step 6)
+- Modify: `backend/src/middleware/token.ts` (refuse the dev secret in production — see Step 6)
+- Modify: `backend/tsconfig.json` (widen `include` so the new test and config are type-checked)
 - Create: `backend/src/app.ts`
+- Create: `backend/.env.example`
 - Test: `backend/tests/app.test.ts`
 - Create: `backend/vitest.config.ts`
 
@@ -56,6 +64,12 @@ cd backend && npm install cors cookie-parser && npm install -D @types/cors @type
 
 In `backend/package.json`, add to `"scripts"`: `"test": "vitest run"`.
 
+In `backend/tsconfig.json`, widen line 11 so the new files are inside the TypeScript program — today it reads `"include": ["index.ts"]`, which leaves `tests/` and `vitest.config.ts` untyped (Vitest strips types with esbuild and never checks them):
+
+```json
+  "include": ["index.ts", "src", "tests", "vitest.config.ts"],
+```
+
 Create `backend/vitest.config.ts`:
 
 ```ts
@@ -71,7 +85,7 @@ export default defineConfig({
 
 - [ ] **Step 3: Write the failing test**
 
-These assertions need no MongoDB connection: `/api/health` short-circuits, and `requireAuth` rejects before any DB call.
+These assertions need no MongoDB connection: `/api/health` short-circuits, `requireAuth` rejects before any DB call, and Mongoose's `validateSync()` runs the schema offline.
 
 Create `backend/tests/app.test.ts`:
 
@@ -79,6 +93,7 @@ Create `backend/tests/app.test.ts`:
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app";
+import { User } from "../src/models/User";
 
 describe("app wiring", () => {
   const app = createApp();
@@ -113,9 +128,19 @@ describe("app wiring", () => {
     expect(res.headers["access-control-allow-credentials"]).toBe("true");
   });
 });
+
+describe("User model", () => {
+  it("defaults role so registration passes schema validation", () => {
+    const u = new User({ email: "a@example.com", passwordHash: "x", name: "A" });
+    expect(u.role).toBe("user");
+    expect(u.validateSync()).toBeUndefined();
+  });
+});
 ```
 
-If `requireAuth` in `backend/src/middleware/auth.ts` does not already return the code `BAD_TOKEN` for a malformed token, add that branch — the third test is the only direct evidence that cookie-parser is mounted.
+If `requireAuth` in `backend/src/middleware/auth.ts` does not already return the code `BAD_TOKEN` for a malformed token, add that branch — the third test is the only direct evidence that cookie-parser is mounted. (It does already: `backend/src/middleware/auth.ts` returns `NO_TOKEN` when the cookie is absent and `BAD_TOKEN` from the catch.)
+
+The fifth test is the one that matters most. `backend/src/models/User.ts:14` declares `role: { type: String, required: true }` with **no default**, and `backend/src/routes/user.routes.ts:32` calls `User.create({ email, passwordHash, name })` — `role` is never supplied anywhere in the codebase. Every registration therefore fails Mongoose validation and Express 5 forwards the rejection to the error handler, so `POST /api/users/register` answers 500 `{error: "User validation failed: role: Path `role` is required."}`. Registration is 100% broken today and Task 14's mocked tests would never notice.
 
 - [ ] **Step 4: Run the test to verify it fails**
 
@@ -155,7 +180,54 @@ export function createApp() {
 }
 ```
 
-- [ ] **Step 6: Rewrite the entrypoint with a single listen**
+- [ ] **Step 6: Give `role` a default**
+
+In `backend/src/models/User.ts`, change line 14 to:
+
+```ts
+    role: { type: String, required: true, default: "user" },
+```
+
+Do not touch anything else in the schema. `required: true` with a `default` is the correct pairing: the field stays non-nullable, and the default satisfies it.
+
+Then fix the second half of the same problem. `backend/src/middleware/token.ts:5` reads:
+
+```ts
+const JWT_SECRET: Secret = process.env.JWT_SECRET ?? "dev-secret";
+```
+
+Both `signToken` and `verifyToken` use it, so any deploy that forgets `JWT_SECRET` signs and accepts tokens anyone can forge with a string that is now in this repo's history. Keep the convenience in development, refuse it in production:
+
+```ts
+const JWT_SECRET: Secret = (() => {
+  const fromEnv = process.env.JWT_SECRET;
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET must be set in production.");
+  }
+  return "dev-secret";
+})();
+```
+
+Add a test for it in `backend/tests/app.test.ts` — the module reads the value at load, so reset the registry between cases:
+
+```ts
+describe("JWT secret", () => {
+  it("refuses to load in production without JWT_SECRET", async () => {
+    vi.resetModules();
+    const prev = { env: process.env.NODE_ENV, secret: process.env.JWT_SECRET };
+    process.env.NODE_ENV = "production";
+    delete process.env.JWT_SECRET;
+    await expect(import("../src/middleware/token")).rejects.toThrow(/JWT_SECRET/);
+    process.env.NODE_ENV = prev.env;
+    if (prev.secret) process.env.JWT_SECRET = prev.secret;
+  });
+});
+```
+
+Import `vi` alongside the other Vitest helpers at the top of the file.
+
+- [ ] **Step 7: Rewrite the entrypoint with a single listen**
 
 Replace the entire contents of `backend/index.ts`:
 
@@ -181,12 +253,31 @@ main().catch((err) => {
 
 Check the exact export name in `backend/src/database/db.ts` and match it; if it default-exports, adjust the import.
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [ ] **Step 8: Document the backend environment**
+
+The backend has no `.env.example` and `.gitignore` hides `.env`, so nobody can tell what the API needs. Task 1 also just added `CORS_ORIGINS`, and the new entrypoint exits 1 when Mongo is unreachable rather than limping along on the stray `listen` it removes.
+
+Create `backend/.env.example` (values are placeholders — **never commit a real secret**):
+
+```
+PORT=4000
+MONGODB_URI=mongodb://127.0.0.1:27017
+MONGODB_DB=selfstoragehosting
+JWT_SECRET=change-me-in-production
+CORS_ORIGINS=http://localhost:3000
+```
+
+Confirm `.env` is still ignored: `grep -n '^\.env' backend/.gitignore`.
+
+- [ ] **Step 9: Run the tests and the type-checker**
 
 Run: `cd backend && npm test`
-Expected: PASS, 4 tests.
+Expected: PASS, 6 tests.
 
-- [ ] **Step 8: Commit**
+Run: `cd backend && npx tsc --noEmit`
+Expected: no output. The widened `include` from Step 2 means this now covers `src/`, `tests/` and `vitest.config.ts`.
+
+- [ ] **Step 10: Commit**
 
 ```bash
 git add backend/ && git commit -m "fix(backend): repair auth contract - cors, cookie-parser, single listen"
@@ -201,6 +292,11 @@ Full message body:
 - Add cookie-parser; requireAuth reads req.cookies?.token, which was
   always undefined, so /profile returned 401 NO_TOKEN unconditionally
 - Remove the duplicate app.listen() that threw EADDRINUSE at boot
+- Default User.role to "user"; it was required with no default and never
+  supplied by register(), so every registration failed schema validation
+- Add backend/.env.example; the env surface was undocumented
+- Refuse to boot in production when JWT_SECRET is unset, instead of falling
+  back to the literal "dev-secret" that both signs and verifies tokens
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
@@ -227,6 +323,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
   "name": "self-storage-hosting",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -327,14 +424,14 @@ Replace `tsconfig.json` entirely:
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "plugins": [{ "name": "next" }],
     "paths": { "@/*": ["./*"] }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
 ```
@@ -389,13 +486,37 @@ export default function Page() {
 }
 ```
 
-- [ ] **Step 5: Delete Vite artifacts**
+- [ ] **Step 5: Delete Vite artifacts and move the rest out of the way**
 
 ```bash
 cd self-storage-hosting && rm -f vite.config.ts index.html tsconfig.app.json tsconfig.node.json src/vite-env.d.ts src/assets/react.svg public/_redirects
 ```
 
-Leave `src/pages/`, `src/components/` and `src/auth/` in place for now — later tasks port from them, and Task 16 deletes them.
+Then move the remaining Vite tree out of the Next project's reach:
+
+```bash
+cd self-storage-hosting && git mv src legacy-vite
+```
+
+**This move is mandatory, not tidiness.** Next 16 scans for a Pages Router at both `pages/` and `src/pages/`. With `self-storage-hosting/src/pages/` present and `app/` at the project root, `next build` and `next dev` both abort before compiling anything:
+
+```
+Error: > `pages` and `app` directories should be under the same folder
+```
+
+Verified by A/B against this repo: moving `src/pages` away clears the error, restoring it brings it back. A tsconfig `exclude` does **not** help — the detection is filesystem-based and runs before TypeScript.
+
+Moving it is still not sufficient on its own. `tsconfig.json`'s `"include": ["**/*.ts", "**/*.tsx", ...]` pulls the legacy tree into the program, and Task 2 has just dropped `react-router-dom` and deleted `src/vite-env.d.ts`, so `next build` then fails its type check with eight errors (`TS2307 Cannot find module 'react-router-dom'` × 4, `TS2339 Property 'VITE_API_BASE' does not exist on type 'ImportMetaEnv'` × 4). Add the directory to `exclude` as well — see Step 5b.
+
+Tasks 8, 12, 13 and 14 read from `legacy-vite/` when they port; Task 17 deletes it.
+
+- [ ] **Step 5b: Exclude the legacy tree from the TypeScript program**
+
+In `self-storage-hosting/tsconfig.json`, change the `exclude` line to:
+
+```json
+  "exclude": ["node_modules", "legacy-vite"]
+```
 
 - [ ] **Step 6: Update the eslint config**
 
@@ -409,7 +530,7 @@ import next from "eslint-config-next";
 import { globalIgnores } from "eslint/config";
 
 export default tseslint.config([
-  globalIgnores([".next", "node_modules", "src"]),
+  globalIgnores([".next", "node_modules", "legacy-vite"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, tseslint.configs.recommended, next],
@@ -418,12 +539,16 @@ export default tseslint.config([
 ]);
 ```
 
-`src` is ignored because it holds the not-yet-ported Vite sources; Task 16 removes both the directory and this ignore entry. If `eslint-config-next` does not export a flat config under this import shape for 16.3.5, fall back to its documented flat-config export and keep everything else identical.
+`legacy-vite` is ignored because it holds the not-yet-ported Vite sources; Task 17 removes both the directory and this ignore entry. The `import next from "eslint-config-next"` shape is verified correct for 16.3.5 — do not substitute another form.
 
 - [ ] **Step 7: Verify the build**
 
 Run: `cd self-storage-hosting && npm run build`
-Expected: build succeeds. Then run `npm run dev` and confirm the placeholder `<h1>` renders in **accent teal, not black**. Black means `globals.css` was not imported or was truncated — fix before continuing.
+Expected: build succeeds. If it instead says ``> `pages` and `app` directories should be under the same folder``, Step 5's `git mv` did not happen. If it says `Failed to type check` with `react-router-dom` errors, Step 5b did not happen.
+
+Then run `npx tsc --noEmit` — expected: no output. `next build` type-checks, but running tsc directly gives a readable error list when it does not.
+
+Then run `npm run lint` — expected: no errors, and **no `MODULE_TYPELESS_PACKAGE_JSON` warning**; that warning means `"type": "module"` is missing from `package.json`. Then run `npm run dev` and confirm the placeholder `<h1>` renders in **accent teal, not black**. Black means `globals.css` was not imported or was truncated — fix before continuing.
 
 - [ ] **Step 8: Commit**
 
@@ -459,7 +584,7 @@ The route manifest is the single source of truth for navigation, the sitemap, an
   - `FOOTER: { heading: string; links: NavLink[] }[]`
   - `indexableRoutes(): string[]`
 
-Tasks 6, 8 and 9 consume all of these.
+`SITE` → Tasks 4, 5, 6, 7 and 9. `ROUTES` → this task's test and Task 6's test. `indexableRoutes` → Task 6. `NAV` → Task 8. `FOOTER` and `NON_ROUTE_PATHS` → Task 9.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -467,9 +592,9 @@ Create `tests/links.test.ts`:
 
 ```ts
 import { describe, it, expect } from "vitest";
-import { ROUTES, NAV, FOOTER, indexableRoutes, SITE } from "@/lib/site";
-
-const NON_ROUTE_PATHS = ["/sitemap.xml"];
+import { readdirSync } from "node:fs";
+import path from "node:path";
+import { ROUTES, NAV, FOOTER, indexableRoutes, SITE, NON_ROUTE_PATHS } from "@/lib/site";
 
 function internalHrefs(): string[] {
   const out: string[] = [];
@@ -496,6 +621,19 @@ describe("link integrity", () => {
     expect(internalHrefs().filter((h) => h === "#" || h.startsWith("#"))).toEqual([]);
   });
 
+  // Every other case here is filter-then-expect-[], which also passes when
+  // NAV and FOOTER are empty. This is the case that fails on a truncated
+  // lib/site.ts.
+  it("actually has links to check", () => {
+    expect(internalHrefs().length).toBeGreaterThanOrEqual(18);
+    expect(FOOTER.map((c) => c.heading)).toEqual([
+      "Solutions",
+      "Resources",
+      "Company",
+      "Legal",
+    ]);
+  });
+
   it("exposes /contact, which four live links point at", () => {
     expect(ROUTES).toHaveProperty("/contact");
   });
@@ -509,6 +647,24 @@ describe("link integrity", () => {
   it("uses an absolute site url with no trailing slash", () => {
     expect(SITE.url).toMatch(/^https:\/\//);
     expect(SITE.url.endsWith("/")).toBe(false);
+  });
+
+  // Spec §7.6 #2: every URL in the sitemap returns 200. indexableRoutes()
+  // is what feeds the sitemap, so every path it emits must have a page file.
+  it("every route the sitemap will emit has a page on disk", () => {
+    const pages = new Set<string>();
+    const walk = (dir: string, url: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        if (e.isDirectory()) {
+          // Route groups like (marketing) do not appear in the URL.
+          walk(path.join(dir, e.name), e.name.startsWith("(") ? url : url + "/" + e.name);
+        } else if (e.name === "page.tsx") {
+          pages.add(url === "" ? "/" : url);
+        }
+      }
+    };
+    walk(path.resolve(__dirname, "../app"), "");
+    expect(indexableRoutes().filter((r) => !pages.has(r))).toEqual([]);
   });
 });
 ```
@@ -656,7 +812,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 - Test: `self-storage-hosting/tests/seo.test.ts`
 
 **Interfaces:**
-- Consumes: `SITE` from `@/lib/site`.
+- Consumes: `SITE` and `ROUTES` from `@/lib/site`.
 - Produces: `canonicalFor(path: string): string` and `pageMeta(opts: PageMetaOpts): Metadata` where
 
 ```ts
@@ -665,7 +821,7 @@ type PageMetaOpts = {
   description: string;
   path: string;         // e.g. "/contact"; must start with "/"
   ogType?: "website" | "article";
-  noindex?: boolean;
+  noindex?: boolean;    // omit to inherit ROUTES[path].indexable
   image?: string;
 };
 ```
@@ -700,16 +856,36 @@ describe("pageMeta", () => {
     expect(m.alternates?.canonical).toBe(SITE.url);
   });
 
+  // `Metadata["openGraph"]` is a 13-member union and its OpenGraphMetadata
+  // member has no `type` property, so `.openGraph?.type` is TS2339 under
+  // next@16.3.5. Vitest would pass it anyway (it strips types); `next build`
+  // type-checks tests/ and would fail. toMatchObject compiles and asserts the
+  // same thing.
   it("defaults og:type to website but allows article", () => {
-    expect(pageMeta({ title: "a", description: "d", path: "/a" }).openGraph?.type).toBe("website");
     expect(
-      pageMeta({ title: "a", description: "d", path: "/a", ogType: "article" }).openGraph?.type
-    ).toBe("article");
+      pageMeta({ title: "a", description: "d", path: "/a" }).openGraph
+    ).toMatchObject({ type: "website" });
+    expect(
+      pageMeta({ title: "a", description: "d", path: "/a", ogType: "article" }).openGraph
+    ).toMatchObject({ type: "article" });
   });
 
   it("emits noindex, nofollow when asked", () => {
     const m = pageMeta({ title: "Log In", description: "d", path: "/user/login", noindex: true });
     expect(m.robots).toMatchObject({ index: false, follow: false });
+  });
+
+  // Spec §7.1 names three noindex routes. ROUTES already flags them; without
+  // this default, Plan 2 can ship /user/login indexable and every Plan 1 test
+  // still passes. Plan 1 owns both modules, so Plan 1 owns the enforcement.
+  it("defaults noindex from the route manifest", () => {
+    for (const path of ["/case-studies", "/user/login", "/user/register"]) {
+      const m = pageMeta({ title: "t", description: "d", path });
+      expect(m.robots).toMatchObject({ index: false, follow: false });
+    }
+    expect(
+      pageMeta({ title: "t", description: "d", path: "/about-us" }).robots
+    ).toMatchObject({ index: true, follow: true });
   });
 
   it("is indexable by default", () => {
@@ -732,7 +908,7 @@ Expected: FAIL — cannot resolve `@/lib/seo`.
 
 ```ts
 import type { Metadata } from "next";
-import { SITE } from "./site";
+import { SITE, ROUTES } from "./site";
 
 export type PageMetaOpts = {
   title: string;
@@ -752,7 +928,10 @@ export function canonicalFor(path: string): string {
 }
 
 export function pageMeta(opts: PageMetaOpts): Metadata {
-  const { title, description, path, ogType = "website", noindex = false, image } = opts;
+  const { title, description, path, ogType = "website", image } = opts;
+  // Default from the route manifest so a page cannot ship indexable when
+  // ROUTES says otherwise; an explicit `noindex` still wins.
+  const noindex = opts.noindex ?? ROUTES[path]?.indexable === false;
   const url = canonicalFor(path);
   const images = image ? [{ url: image }] : undefined;
 
@@ -1221,7 +1400,6 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${SITE.url}/sitemap.xml`,
-    host: SITE.url,
   };
 }
 ```
@@ -1393,7 +1571,7 @@ The current site has no mobile navigation at all and uses `<a href>`, which hard
 **Files:**
 - Create: `self-storage-hosting/components/nav/TopBar.tsx` (server), `self-storage-hosting/components/nav/MainNav.tsx` (client)
 - Modify: `self-storage-hosting/public/Logo.png`
-- Reference (do not edit): `self-storage-hosting/src/components/SmallNavbar.tsx`, `src/components/LargeNavbar.tsx`
+- Reference (do not edit): `self-storage-hosting/legacy-vite/components/SmallNavbar.tsx`, `legacy-vite/components/LargeNavbar.tsx`
 
 **Interfaces:**
 - Consumes: `NAV` from `@/lib/site`.
@@ -1610,10 +1788,10 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 **Files:**
 - Create: `self-storage-hosting/components/Footer.tsx`
-- Reference (do not edit): `self-storage-hosting/src/components/Footer.tsx`
+- Reference (do not edit): `self-storage-hosting/legacy-vite/components/Footer.tsx`
 
 **Interfaces:**
-- Consumes: `FOOTER`, `SITE` from `@/lib/site`.
+- Consumes: `FOOTER`, `SITE`, `NON_ROUTE_PATHS` from `@/lib/site`.
 - Produces: `<Footer />` default export, consumed by Task 10.
 
 - [ ] **Step 1: Create the component**
@@ -1622,9 +1800,14 @@ Every link comes from `FOOTER`, which Task 3's test already proves resolves to a
 
 Social links are omitted entirely rather than pointing at the current `href="#twitter"` placeholders — add them in Plan 2 once real profile URLs exist (spec §14 C).
 
+Two details that are easy to get wrong:
+
+- `/sitemap.xml` is in `FOOTER` but it is not an app page — it is generated by `app/sitemap.ts`. `next/link` viewport-prefetches its target as an RSC payload and then has to fall back to a full document load, so render anything in `NON_ROUTE_PATHS` as a plain `<a>`.
+- **No `opacity-*` utility on chrome text.** The contrast test reads raw `--color-*` tokens out of `globals.css` and cannot see a composited colour, so `text-xs opacity-70` on `primary-700` ships at 3.74:1 with a green suite. Use a full-opacity token.
+
 ```tsx
 import Link from "next/link";
-import { FOOTER, SITE } from "@/lib/site";
+import { FOOTER, SITE, NON_ROUTE_PATHS } from "@/lib/site";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -1638,23 +1821,34 @@ export default function Footer() {
                 {col.heading}
               </h2>
               <ul className="mt-4 space-y-2">
-                {col.links.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-200"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((l) => {
+                  const cls =
+                    "text-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-200";
+                  return (
+                    <li key={l.href}>
+                      {NON_ROUTE_PATHS.includes(l.href) ? (
+                        <a href={l.href} className={cls}>
+                          {l.label}
+                        </a>
+                      ) : (
+                        <Link href={l.href} className={cls}>
+                          {l.label}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
         </nav>
-        <div className="border-t border-white/10 py-6">
-          <p className="text-xs opacity-70">
+        <div className="space-y-2 border-t border-white/10 py-6">
+          <p className="text-xs text-accent-200">
             {year} © {SITE.name}. All rights reserved.
+          </p>
+          <p className="text-xs text-accent-200">
+            All third-party product names and marks are the property of their
+            owners. No affiliation or endorsement is implied.
           </p>
         </div>
       </div>
@@ -1691,7 +1885,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 **Files:**
 - Create: `self-storage-hosting/app/(marketing)/layout.tsx`, `self-storage-hosting/app/not-found.tsx`
 - Move: `app/page.tsx` → `app/(marketing)/page.tsx`
-- Reference (do not edit): `self-storage-hosting/src/pages/NotFoundPage.tsx`
+- Reference (do not edit): `self-storage-hosting/legacy-vite/pages/NotFoundPage.tsx`
 
 **Interfaces:**
 - Consumes: `TopBar`, `MainNav`, `Footer`.
@@ -1734,6 +1928,8 @@ cd self-storage-hosting && mkdir -p "app/(marketing)" && git mv app/page.tsx "ap
 
 Port the existing copy verbatim — it already exists and reads well.
 
+`not-found.tsx` sits at `app/`, outside the `(marketing)` group, so it does **not** get the layout's skip link or `<main id="main">`. Reproduce both here, or a keyboard user hitting a 404 has to tab the whole utility bar and nav before reaching the content, with no skip target to jump to.
+
 ```tsx
 import Link from "next/link";
 import TopBar from "@/components/nav/TopBar";
@@ -1743,9 +1939,15 @@ import Footer from "@/components/Footer";
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent-50 focus:px-4 focus:py-2 focus:text-text-950"
+      >
+        Skip to content
+      </a>
       <TopBar />
       <MainNav />
-      <main className="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-20 text-center">
+      <main id="main" className="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-20 text-center">
         <p className="text-7xl font-bold sm:text-9xl" aria-hidden="true">
           Oops!
         </p>
@@ -1756,7 +1958,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="mt-8 rounded-full bg-accent-400 px-5 py-2.5 font-medium text-text-50 shadow-lg transition hover:bg-accent-500"
+          className="mt-8 rounded-full bg-accent-500 px-5 py-2.5 font-medium text-text-950 shadow-lg transition hover:bg-accent-400"
         >
           Go to homepage
         </Link>
@@ -1884,7 +2086,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 **Files:**
 - Modify: `self-storage-hosting/app/(marketing)/page.tsx`
 - Modify: `self-storage-hosting/public/HeroImage.png`
-- Reference (do not edit): `self-storage-hosting/src/pages/HomePage.tsx`
+- Reference (do not edit): `self-storage-hosting/legacy-vite/pages/HomePage.tsx`
 
 **Interfaces:**
 - Consumes: `pageMeta` from `@/lib/seo`, `Faq`/`FaqItem` from `@/components/Faq`.
@@ -1950,9 +2152,14 @@ const faqs: FaqItem[] = [
     q: "How do integrations work?",
     a: "REST/JSON API and webhooks, or pre-built connectors for common self-storage facility management software (FMS).",
   },
+  // Spec §14 B lists encryption at rest, RBAC, SSO and audit exports as facts
+  // the owner has not yet substantiated, and says anything unsubstantiated
+  // comes out. TLS is observable from the browser, so it stays; the rest is
+  // replaced with an invitation rather than a claim. Restore the specifics
+  // only when the owner confirms them.
   {
     q: "How is data secured?",
-    a: "TLS in transit, encryption at rest, MFA/SSO for staff, per-tenant isolation, and detailed audit trails.",
+    a: "Every connection is served over TLS. For our current security posture in detail — storage, staff access, isolation and audit — ask us and we will walk you through it.",
   },
 ];
 
@@ -2092,7 +2299,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 **Files:**
 - Create: `self-storage-hosting/app/(marketing)/about-us/page.tsx`
-- Reference (do not edit): `self-storage-hosting/src/pages/AboutUsPage.tsx`
+- Reference (do not edit): `self-storage-hosting/legacy-vite/pages/AboutUsPage.tsx`
 
 **Interfaces:**
 - Consumes: `pageMeta` from `@/lib/seo`, `breadcrumbSchema` from `@/lib/schema`, `JsonLd` from `@/components/JsonLd`, `Faq` from `@/components/Faq`.
@@ -2100,12 +2307,12 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 - [ ] **Step 1: Port the page with every required correction**
 
-Carry over the structure from `src/pages/AboutUsPage.tsx`, applying all of:
+Carry over the structure from `legacy-vite/pages/AboutUsPage.tsx`, applying all of:
 
 1. **Delete the stats band entirely** — the `stats` array and the grid rendering it. "100+ Managed Sites", "99.95%", "< 200 ms" and "US & AU" are placeholders (spec D3).
 2. **Apply the §13 copy table** to the `pmsBridges` array and all prose:
    - `"StorEdge"` → `"Storable Edge"`, `"Easy Storage Solutions"` → `"Storable Easy"`, `"Digi Gate"` → `"DigiGate"`
-   - `"OpenTech Alliance"` used as a *product* → `"INSOMNIAC® CIA"` (® at first use on the page); keep "OpenTech Alliance" where it means the company
+   - `"OpenTech Alliance"` used as a *product* → `"INSOMNIAC CIA"`; keep "OpenTech Alliance" where it means the company. **Do not put the ® in the bridge rows.** Two surviving rows carry the identical string (`AboutUsPage.tsx:84` and `:88`), so a blanket substitution prints ® twice and spec §13 allows it once per page. Put the single `INSOMNIAC® CIA` in the prose above the grid, at its first mention; the rows read `INSOMNIAC CIA`.
    - Every `"PMS"` → `"FMS"`, including the section heading and the `pmsBridges` variable name → `fmsBridges`
 3. **Delete the fifth bridge row** `{ from: "Your PMS", to: "OpenTech Alliance", status: "Planned" }` and replace that card with a "Tell us which FMS you run" link to `/contact`.
 4. **Remove "in real time"** from "Our FMS connectors feed your … access control in real time." Replace with: "Our FMS connectors keep tenants, units, access levels and lockouts in sync with your access control."
@@ -2113,6 +2320,8 @@ Carry over the structure from `src/pages/AboutUsPage.tsx`, applying all of:
 6. Add `id="story"`, `id="careers"` and `id="news"` to the corresponding sections. If there is no careers or news content, write a short honest section for each — a one-line "we're not hiring right now, but say hello" is acceptable; a footer link to a section that does not exist is not.
 7. Replace the inline FAQ block, if present, with `<Faq items={faqs} />` under an `<h2>`.
 8. Add breadcrumbs.
+9. **Cut the unsubstantiated security list** (spec §14 B). The source says "Encryption in transit/at rest, scoped tokens, RBAC, per-facility isolation, and comprehensive audit exports" at `AboutUsPage.tsx:114`, and repeats it near `:218`. Spec §14 B names every one of those except TLS as an owner fact that does not exist yet. Replace both with: "Served over TLS. Ask us for our current security posture." Do not soften it into "enterprise-grade security" — that is the same unverified claim with the specifics hidden.
+10. **Drop the per-vendor "Available" badges** (spec §14 F, §15.4). The surviving bridge rows publish a `status` of "Available" against named third-party products. Spec §14 F records as an *open* question whether Storable's and OpenTech's terms permit a third party to build and commercially operate these bridges, and §15.4 forbids implying partnership. Until the owner answers, remove the `status` field and render each row as a capability offer — "We can bridge <FMS> to <system>. Tell us your setup." — with the trademark disclaimer already in the footer covering the marks.
 
 ```tsx
 export const metadata: Metadata = pageMeta({
@@ -2135,7 +2344,7 @@ export const metadata: Metadata = pageMeta({
 - [ ] **Step 2: Verify no forbidden copy survives**
 
 ```bash
-cd self-storage-hosting && grep -rniE "storedge|digi gate|easy storage solutions|\bPMS\b|in real time|99\.95|100\+|1.3 seconds|200 ?ms" app/ components/ lib/
+cd self-storage-hosting && grep -rniE "storedge|digi gate|easy storage solutions|sitelink|\bPMS\b|in real time|99\.95|100\+|1.3 seconds|200 ?ms|encryption at rest|\bRBAC\b|audit exports" app/ components/ lib/
 ```
 
 Expected: **no matches.** Any hit is a Global Constraints violation that must be fixed before committing.
@@ -2163,6 +2372,8 @@ Full message body:
 - OpenTech Alliance is the company; the product is INSOMNIAC(R) CIA
 - Drop the unqualified 'in real time' claim
 - Replace the open-ended 'Your PMS' bridge promise with a qualification CTA
+- Cut the security capability list to TLS; the rest is unsubstantiated (spec 14B)
+- Drop the per-vendor 'Available' badges pending the entitlement answer (14F)
 - Add #story, #careers and #news anchors the footer links to
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
@@ -2175,7 +2386,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 **Files:**
 - Create: `self-storage-hosting/lib/auth-context.tsx`
 - Test: `self-storage-hosting/tests/auth-config.test.ts`
-- Reference (do not edit): `self-storage-hosting/src/auth/AuthContext.tsx`
+- Reference (do not edit): `self-storage-hosting/legacy-vite/auth/AuthContext.tsx`
 
 **Interfaces:**
 - Consumes: Task 1's endpoints at `/api/users/*`.
@@ -2194,7 +2405,18 @@ import path from "node:path";
 
 const src = readFileSync(path.resolve(__dirname, "../lib/auth-context.tsx"), "utf8");
 
+// These are source-text checks, which is the right shape here - the module is
+// a client component and the point is the wire contract, not the render. But a
+// suite made only of "does not contain X" and ">= 0" passes on an empty file.
+// The first case below and the tightened counts are what make it non-vacuous:
+// a 9-line stub with just the four path strings passes everything else.
 describe("auth client configuration", () => {
+  it("actually exports a provider and a hook", async () => {
+    const mod = await import("@/lib/auth-context");
+    expect(typeof mod.AuthProvider).toBe("function");
+    expect(typeof mod.useAuth).toBe("function");
+  });
+
   it("targets the real backend paths, not /app/auth", () => {
     expect(src).not.toContain("/app/auth");
     for (const p of ["/api/users/login", "/api/users/register", "/api/users/profile", "/api/users/logout"]) {
@@ -2205,7 +2427,9 @@ describe("auth client configuration", () => {
   it("sends credentials on every request, including register", () => {
     const fetches = src.match(/fetch\(/g) ?? [];
     const creds = src.match(/credentials: "include"/g) ?? [];
-    expect(creds.length).toBeGreaterThanOrEqual(fetches.length);
+    // Without the floor, 0 >= 0 passes on a file with no fetch at all.
+    expect(fetches.length).toBeGreaterThanOrEqual(2);
+    expect(creds.length).toBe(fetches.length);
   });
 
   it("does not depend on a token in the response body", () => {
@@ -2375,7 +2599,9 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 - [ ] **Step 1: Write the failing test**
 
-`company` is the honeypot — hidden from users, so any value means a bot. It is named plausibly so naive bots take the bait.
+`website` is the honeypot — hidden from users, so any value means a bot. It is named plausibly so naive bots take the bait.
+
+**Do not use `company` for this.** Spec §6.5 requires `company` as a real, visible field on `/contact` (name, company, email, phone, facility count, FMS, gate system, message). Burning the name on a trap both drops a required field and puts a silent 200 in front of any browser that autofills it — a lead that vanishes while the visitor is told "Thanks", on the one page whose whole job is converting.
 
 Create `tests/contact.test.ts`:
 
@@ -2387,7 +2613,8 @@ const valid = {
   name: "Dana Reyes",
   email: "dana@example.com",
   message: "We run four facilities on Storable Easy and want to move off the office PC.",
-  company: "",
+  company: "Reyes Storage Group",
+  website: "",
 };
 
 describe("validateContact", () => {
@@ -2408,18 +2635,35 @@ describe("validateContact", () => {
   });
 
   it("rejects a filled honeypot as spam", () => {
-    const r = validateContact({ ...valid, company: "buy-cheap-pills" });
+    const r = validateContact({ ...valid, website: "buy-cheap-pills" });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors.company).toBeTruthy();
+    if (!r.ok) expect(r.errors.website).toBeTruthy();
+  });
+
+  it("keeps company, which the spec requires as a real field", () => {
+    const r = validateContact(valid);
+    expect(r).toMatchObject({ ok: true, value: { company: "Reyes Storage Group" } });
+  });
+
+  it("carries the subject through so /demo is distinguishable from /contact", () => {
+    expect(validateContact({ ...valid, subject: "demo" })).toMatchObject({
+      ok: true,
+      value: { subject: "demo" },
+    });
   });
 
   it("rejects an over-long message", () => {
     expect(validateContact({ ...valid, message: "x".repeat(5001) }).ok).toBe(false);
   });
 
+  // The assertion must be unconditional. With only `if (r.ok) expect(...)`,
+  // a validator that REJECTS padded input - the likeliest trim regression -
+  // runs zero assertions and Vitest reports the case as passed.
   it("trims whitespace from accepted values", () => {
-    const r = validateContact({ ...valid, name: "  Dana Reyes  " });
-    if (r.ok) expect(r.value.name).toBe("Dana Reyes");
+    expect(validateContact({ ...valid, name: "  Dana Reyes  " })).toMatchObject({
+      ok: true,
+      value: { name: "Dana Reyes" },
+    });
   });
 });
 ```
@@ -2436,10 +2680,14 @@ export type ContactPayload = {
   name: string;
   email: string;
   message: string;
+  company?: string;
   phone?: string;
   facilityCount?: string;
   fms?: string;
   gateSystem?: string;
+  // Which form this came from, so /contact and Plan 2's /demo are
+  // distinguishable in the inbox. Not user input - the component sets it.
+  subject?: string;
 };
 
 export type ValidationResult =
@@ -2456,8 +2704,9 @@ export function validateContact(input: unknown): ValidationResult {
   const raw = (input ?? {}) as Record<string, unknown>;
   const errors: Record<string, string> = {};
 
-  if (str(raw.company)) {
-    errors.company = "Rejected.";
+  // Honeypot. `website` is never shown to a person, so any value is a bot.
+  if (str(raw.website)) {
+    errors.website = "Rejected.";
     return { ok: false, errors };
   }
 
@@ -2482,10 +2731,12 @@ export function validateContact(input: unknown): ValidationResult {
       name,
       email,
       message,
+      company: str(raw.company) || undefined,
       phone: str(raw.phone) || undefined,
       facilityCount: str(raw.facilityCount) || undefined,
       fms: str(raw.fms) || undefined,
       gateSystem: str(raw.gateSystem) || undefined,
+      subject: str(raw.subject) || undefined,
     },
   };
 }
@@ -2523,7 +2774,7 @@ export async function POST(request: Request) {
 
   if (!result.ok) {
     // A tripped honeypot gets a 200 so bots cannot tell it failed.
-    if (result.errors.company) return NextResponse.json({ ok: true });
+    if (result.errors.website) return NextResponse.json({ ok: true });
     return NextResponse.json({ errors: result.errors }, { status: 400 });
   }
 
@@ -2533,7 +2784,10 @@ export async function POST(request: Request) {
   if (!to || !key) {
     console.error("Contact form not configured: set CONTACT_TO_EMAIL and RESEND_API_KEY.");
     return NextResponse.json(
-      { error: "The contact form is not configured yet. Please email us directly." },
+      // Do NOT say "email us directly": SITE.contactEmail is "" until the
+      // owner supplies one (spec §14 A), so the page publishes no address
+      // and that instruction is impossible to follow.
+      { error: "We could not send that right now. Please try again shortly." },
       { status: 503 }
     );
   }
@@ -2545,7 +2799,7 @@ export async function POST(request: Request) {
       from: "Self Storage Hosting <noreply@selfstoragehosting.com>",
       to: [to],
       reply_to: result.value.email,
-      subject: `Website enquiry from ${result.value.name}`,
+      subject: `Website ${result.value.subject ?? "enquiry"} from ${result.value.name}`,
       text: Object.entries(result.value)
         .filter(([, v]) => v)
         .map(([k, v]) => `${k}: ${v}`)
@@ -2659,10 +2913,11 @@ export default function ContactForm({ subject = "general" }: { subject?: string 
 
   return (
     <form onSubmit={onSubmit} noValidate className="max-w-xl">
-      {/* Honeypot: hidden from users, irresistible to bots. */}
+      {/* Honeypot: hidden from users, irresistible to bots. Never name this
+          after a field the form really collects - see lib/contact.ts. */}
       <div className="sr-only" aria-hidden="true">
-        <label htmlFor="company">Company</label>
-        <input id="company" name="company" type="text" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="website">Website</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -2685,6 +2940,19 @@ export default function ContactForm({ subject = "general" }: { subject?: string 
               {errors.name}
             </p>
           )}
+        </div>
+
+        <div className="sm:col-span-2">
+          <label htmlFor="company" className="font-medium">
+            Company <span className="font-normal opacity-70">(optional)</span>
+          </label>
+          <input
+            id="company"
+            name="company"
+            type="text"
+            autoComplete="organization"
+            className={field}
+          />
         </div>
 
         <div>
@@ -2850,7 +3118,7 @@ curl -s -X POST http://localhost:3000/api/contact -H "Content-Type: application/
 Expected: a 400 body naming all three required fields.
 
 ```bash
-curl -s -o /dev/null -w "honeypot -> %{http_code}\n" -X POST http://localhost:3000/api/contact -H "Content-Type: application/json" --data-raw "{\"name\":\"A\",\"email\":\"a@b.co\",\"message\":\"hi\",\"company\":\"bot\"}"
+curl -s -o /dev/null -w "honeypot -> %{http_code}\n" -X POST http://localhost:3000/api/contact -H "Content-Type: application/json" --data-raw "{\"name\":\"A\",\"email\":\"a@b.co\",\"message\":\"hi\",\"website\":\"bot\"}"
 ```
 
 Expected: `200`. The honeypot returns success so bots cannot detect the rejection.
@@ -2859,7 +3127,7 @@ Expected: `200`. The honeypot returns success so bots cannot detect the rejectio
 
 With `CONTACT_TO_EMAIL` and `RESEND_API_KEY` unset, a valid submission must surface the "not configured yet" message from the 503 branch — a silent failure here is the bug this step exists to catch.
 
-Then: submit with the message field empty and confirm the server's error text appears beneath the field and is linked by `aria-describedby`. Tab through the whole form and confirm the honeypot is **never** focused.
+Then: submit with the message field empty and confirm the server's error text appears beneath the field and is linked by `aria-describedby`. Tab through the whole form and confirm the honeypot is **never** focused, and that the visible **Company** field *is* in the tab order.
 
 - [ ] **Step 5: Verify the broken links now resolve**
 
@@ -2892,7 +3160,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ### Task 17: Remove Vite sources and run the verification sweep
 
 **Files:**
-- Delete: `self-storage-hosting/src/`
+- Delete: `self-storage-hosting/legacy-vite/`
 - Modify: `self-storage-hosting/eslint.config.js` (drop the `src` ignore), `self-storage-hosting/README.md`
 - Create: `self-storage-hosting/tests/content-policy.test.ts`, `self-storage-hosting/tests/contrast.test.ts`
 
@@ -2935,6 +3203,11 @@ const FORBIDDEN: [RegExp, string][] = [
   [/\bDigi Gate\b/, 'Use "DigiGate" (one word)'],
   [/\bEasy Storage Solutions\b/, 'Use "Storable Easy" (renamed 2025-03-06)'],
   [/\bStor-Guard\b/, 'Use "StorGuard" (one word)'],
+  [/\bSiteLink\b/, 'Use "Sitelink by Storable"'],
+  [
+    /encryption at rest|\bRBAC\b|audit exports|scoped tokens/i,
+    "Unsubstantiated security claim (spec 14B) - only TLS is verified",
+  ],
   [/\bPMS\b/, 'Use "FMS" — the industry term is facility management software'],
   [/99\.95\s*%/, "Unsubstantiated uptime claim — spec D3"],
   [/100\+\s*(managed\s*)?sites?/i, "Unsubstantiated scale claim — spec D3"],
@@ -2966,10 +3239,10 @@ Everything has been ported: `HomePage` → Task 12, `AboutUsPage` → Task 13, `
 The remaining eight page stubs are byte-identical "Under Development" placeholders. Plan 2 writes real pages; nothing is lost.
 
 ```bash
-cd self-storage-hosting && git rm -r src/
+cd self-storage-hosting && git rm -r legacy-vite/
 ```
 
-Then remove `"src"` from the `globalIgnores` array in `eslint.config.js`.
+Then remove `"legacy-vite"` from the `globalIgnores` array in `eslint.config.js`, and drop it from `tsconfig.json`'s `exclude` so only `node_modules` remains.
 
 - [ ] **Step 4: Replace the README**
 
@@ -2988,7 +3261,15 @@ Next.js 16 App Router marketing site for selfstoragehosting.com.
 
 The API lives in `../backend` and must be running for the auth pages:
 
-    cd ../backend && npm run dev
+    cd ../backend
+    cp .env.example .env         # then fill in the values
+    npm install
+    npm run dev
+
+The API needs a reachable MongoDB (a local `mongod` or an Atlas URI in
+`MONGODB_URI`); it exits with `Failed to start API` if it cannot connect.
+`JWT_SECRET` is optional in development and **required in production** —
+the process refuses to start without it.
 
 ## Scripts
 
@@ -3007,25 +3288,29 @@ The API lives in `../backend` and must be running for the auth pages:
   `Product`, `aggregateRating`, `review`, `SearchAction` and `LocalBusiness`
   are blocked and will fail the build.
 - No unverified metrics in copy: no uptime percentage, latency figure or site
-  count. `tests/content-policy.test.ts` enforces this.
+  count, and no security claim beyond TLS until the owner substantiates it.
+  `tests/content-policy.test.ts` enforces this.
+- No `opacity-*` utility on text sitting on the dark chrome —
+  `tests/contrast.test.ts` reads raw tokens and cannot see a composited colour.
 - See `docs/superpowers/specs/2026-09-18-website-completion-seo-design.md`
   for the full content and copy rules.
 ```
 
 - [ ] **Step 5: Check colour contrast (spec §7.5)**
 
-The palette is a single low-saturation teal ramp, so contrast is a real risk rather than a formality. Check these six pairs, which cover every text style on the two pages Plan 1 ships:
+The palette is a single low-saturation teal ramp, so contrast is a real risk rather than a formality. Check these seven pairs, which cover every text style on the four surfaces Plan 1 ships (`/`, `/about-us`, `/contact` and the 404):
 
 | Context | Foreground | Background |
 |---|---|---|
 | Nav and footer links | `--color-text-50` | `--color-primary-700` |
 | Footer column headings | `--color-accent-200` | `--color-primary-700` |
-| Hero CTA | `--color-text-950` | `--color-accent-500` |
+| Nav dropdown hover | `--color-text-50` | `--color-primary-800` |
+| Hero CTA and the 404 CTA | `--color-text-950` | `--color-accent-500` |
 | Hero subhead | `--color-text-800` | `--color-background-50` |
 | Primary CTA ("Talk to Sales") | `--color-text-950` | `--color-accent-50` |
 | Body copy | `--color-text-900` | `--color-background-50` |
 
-Read those hex values out of `app/globals.css` and compute the WCAG 2.1 contrast ratio for each pair. All six must clear **4.5:1** — do not fall back to the 3:1 large-text allowance for the hero `<h1>`, because all six already pass at 4.5:1 with the shades above.
+Read those hex values out of `app/globals.css` and compute the WCAG 2.1 contrast ratio for each pair. All seven must clear **4.5:1** — do not fall back to the 3:1 large-text allowance for the hero `<h1>`, because all six already pass at 4.5:1 with the shades above.
 
 Add `tests/contrast.test.ts` so this cannot regress:
 
@@ -3058,8 +3343,9 @@ function ratio(a: string, b: string): number {
 const PAIRS: [string, string, string, number][] = [
   ["nav and footer links", "text-50", "primary-700", 4.5],
   ["footer column headings", "accent-200", "primary-700", 4.5],
+  ["nav dropdown hover", "text-50", "primary-800", 4.5],
   ["primary CTA on light", "text-950", "accent-50", 4.5],
-  ["hero CTA", "text-950", "accent-500", 4.5],
+  ["hero CTA and 404 CTA", "text-950", "accent-500", 4.5],
   ["body copy", "text-900", "background-50", 4.5],
   ["hero subhead", "text-800", "background-50", 4.5],
 ];
@@ -3071,8 +3357,13 @@ describe("WCAG AA contrast", () => {
 });
 ```
 
-These six pairs are the ones this controller already computed against the real palette, and all six
-pass. They are in the test to stop a later task drifting off them, not because they are in doubt.
+These seven pairs are the ones this controller already computed against the real palette, and all
+seven pass (5.79, 4.54, 9.46, 17.57, 8.19, 15.13, 9.91). They are in the test to stop a later task
+drifting off them, not because they are in doubt.
+
+**The test cannot see `opacity-*`.** It reads raw `--color-*` tokens, so a composited colour is
+invisible to it: `text-50` at `opacity-70` on `primary-700` measures 3.74:1 and the suite still goes
+green. Do not use opacity utilities on text sitting on chrome.
 
 **Do not change a component's shade to make this test pass, and never lower a threshold.** The shades
 in Tasks 8, 9 and 12 were already corrected to match: `primary-700` is the dark chrome throughout.
@@ -3083,6 +3374,9 @@ For the record, the pairs that FAIL and must not be reintroduced:
 | `text-50` on `primary-600` | 3.62:1 — fails 4.5:1 |
 | `accent-200` on `primary-600` | 2.84:1 — fails even the 3:1 large-text floor |
 | pure white on `primary-600` | 3.97:1 — still fails |
+| `text-50` on `accent-400` | 1.79:1 — the original 404 CTA |
+| `text-50` on `accent-500` | 2.13:1 — its hover state |
+| `text-50` on `primary-500` | 2.39:1 — the original dropdown hover |
 
 Plan 2's pages must use the same `primary-700` chrome.
 
@@ -3140,7 +3434,53 @@ curl -s localhost:3000/ | grep -o "<title>[^<]*</title>"
 curl -s localhost:3000/ | grep -c "application/ld+json"
 ```
 
-Expected, in order: lint clean · all tests pass · build succeeds · `text/plain` · `application/xml` · **404** · `contact 200` · exactly one brand occurrence in the title · `2` JSON-LD blocks.
+Spec §7.6 #2 — every URL the sitemap advertises must return 200. Task 3's test proves each has a page file; this proves each actually serves:
+
+```bash
+curl -s localhost:3000/sitemap.xml | grep -oE "<loc>[^<]+</loc>" | sed -E "s#</?loc>##g; s#https?://[^/]+##" | while read -r u; do printf "%s %s
+" "$(curl -s -o /dev/null -w "%{http_code}" "localhost:3000$u")" "$u"; done
+```
+
+Spec §7.6 #9 — first-paint image weight on `/` under 100 KB. Sum the bytes actually served for every `<img src>` the home page emits:
+
+```bash
+curl -s localhost:3000/ | grep -oE 'src="/[^"]+\.(png|jpg|jpeg|webp|avif|svg)[^"]*"' | sed -E 's/src="//; s/"$//' | sort -u | while read -r i; do curl -s -o /dev/null -w "%{size_download} $i
+" "localhost:3000$i"; done | awk '{t+=$1; print} END {print t" TOTAL bytes"}'
+```
+
+Spec §7.6 #4 — exactly one `<h1>` per page, and a distinct title and description on each:
+
+```bash
+for u in / /about-us /contact; do printf "%s h1=%s
+" "$u" "$(curl -s "localhost:3000$u" | grep -c "<h1")"; done
+```
+
+```bash
+for u in / /about-us /contact; do curl -s "localhost:3000$u" | grep -oE "<title>[^<]*</title>|<meta name=\"description\" content=\"[^\"]*\""; done | sort | uniq -d
+```
+
+Expected, in order: lint clean · all tests pass · build succeeds · `text/plain` · `application/xml` · **404** · `contact 200` · exactly one brand occurrence in the title · `2` JSON-LD blocks · TOTAL under 102400 bytes · every sitemap URL `200` · `h1=1` on all three pages · **no output** from the duplicate check (an empty result means every title and description is unique).
+
+- [ ] **Step 7b: Hand the owner the deploy-time checks**
+
+Four of spec §7.6's ten assertions cannot run from this worktree — they need the live domain and the owner's accounts. Do not mark them done and do not quietly drop them. Write them into `docs/deploy-checklist.md` and name the owner as the blocker:
+
+```markdown
+# Deploy-time checks (spec §7.6)
+
+Run after the first production deploy. Each needs owner access.
+
+- [ ] #7  Rich Results Test on `/` and `/about-us` — Organization and
+      BreadcrumbList parse with no errors or warnings.
+- [ ] #8  Lighthouse on `/` — record LCP, CLS and INP. No target is asserted
+      here; record the numbers so later changes have a baseline.
+- [ ] #10 Search Console — verify the property, submit `/sitemap.xml`, and
+      confirm it is collecting data. Spec §16 names this as the point of
+      the whole first phase.
+- [ ] #5  Re-run the apex/`www` redirect check (Step 6) against production.
+```
+
+Commit it with the rest of Step 8.
 
 - [ ] **Step 8: Commit**
 
@@ -3168,16 +3508,26 @@ Before Plan 2 begins, all of these must hold:
 - [ ] `npm test` passes in `backend/`
 - [ ] An unknown URL returns **HTTP 404**, not 200
 - [ ] `/contact` returns 200, and the four links that pointed at it resolve
-- [ ] Posting an empty body to `/api/contact` returns 400 with all three field errors; a filled honeypot returns 200
+- [ ] Posting an empty body to `/api/contact` returns 400 with all three field errors; a filled `website` honeypot returns 200, and a submission with a real `company` value is accepted
 - [ ] `/robots.txt` is `text/plain`; `/sitemap.xml` is `application/xml`
 - [ ] Home and About render correctly at 375px width with a working mobile menu
 - [ ] No page title contains the brand name twice
 - [ ] Combined first-paint image weight on `/` is under 100 KB
-- [ ] The content-policy test passes — no outdated vendor names, no removed stats, no latency claims
-- [ ] The contrast test passes at WCAG AA for nav, CTA and body text
+- [ ] The content-policy test passes — no outdated vendor names, no removed stats, no latency claims, no unsubstantiated security claims
+- [ ] The contrast test passes at WCAG AA for all seven pairs
+- [ ] Every URL in `/sitemap.xml` returns 200
+- [ ] `/`, `/about-us` and `/contact` each have exactly one `<h1>` and a title and description unique among the three
+- [ ] `docs/deploy-checklist.md` exists and carries the four owner-blocked §7.6 checks
 - [ ] The apex host returns 200 and `www` 301s to it, matching `SITE.url` — or the discrepancy is flagged to the owner
 
-**Not yet true at the end of Plan 1, by design:** the sitemap lists routes whose pages Plan 2 creates. The site must not be deployed to production between Plan 1 and Plan 2 — those URLs would 404 while being advertised in the sitemap. Preview deploys are fine.
+**Blocked on the owner, not on this plan.** These are recorded, not resolved:
+
+- `CONTACT_TO_EMAIL` and `RESEND_API_KEY` (spec §14 A). Until both are set, `/api/contact` answers 503 on every submission and the site has **no working contact channel**. This is the single highest-value thing the owner can unblock.
+- The business email, phone and mailing address `/contact` is meant to publish, and the `sameAs`/`contactPoint` data `organizationSchema()` currently omits (§14 A, C).
+- Whether the security specifics cut in Tasks 12 and 13 are substantiable (§14 B), and whether Storable's and OpenTech's terms permit the bridges (§14 F).
+- The apex/`www` redirect direction, which is a Vercel dashboard change (§14 D1).
+
+**Nav links to Plan 2's pages 404 until Plan 2 lands, by design.** The sitemap does not advertise them — `indexableRoutes()` filters on `built` — so a preview deploy is safe to crawl. **Do not merge this branch to `main` until Plan 2's pages exist.**
 
 ## What Plan 2 covers
 
