@@ -14,6 +14,14 @@ export function canonicalFor(path: string): string {
   if (!path.startsWith("/")) {
     throw new Error(`canonicalFor: path must start with "/", received "${path}"`);
   }
+  // A canonical URL identifies the page, so a fragment never belongs in one and
+  // a query string almost never does. Throwing surfaces the author error at
+  // build time instead of shipping a canonical that splits the page's signals.
+  if (/[?#]/.test(path)) {
+    throw new Error(
+      `canonicalFor: path must not carry a query or fragment, received "${path}"`
+    );
+  }
   if (path === "/") return SITE.url;
   return `${SITE.url}${path.replace(/\/$/, "")}`;
 }

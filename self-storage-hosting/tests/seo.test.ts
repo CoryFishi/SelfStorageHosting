@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pageMeta } from "@/lib/seo";
+import { pageMeta, canonicalFor } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 
 describe("pageMeta", () => {
@@ -58,5 +58,10 @@ describe("pageMeta", () => {
 
   it("rejects a path that does not start with a slash", () => {
     expect(() => pageMeta({ title: "a", description: "d", path: "contact" })).toThrow();
+  });
+
+  it("rejects a canonical path carrying a query or fragment", () => {
+    expect(() => canonicalFor("/contact?ref=x")).toThrow();
+    expect(() => canonicalFor("/contact#top")).toThrow();
   });
 });

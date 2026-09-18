@@ -90,6 +90,10 @@ describe("forbidden schema guard", () => {
     ).toThrow(/aggregateRating/);
   });
 
+  it("matches a forbidden type case-insensitively", () => {
+    expect(() => assertNoForbiddenTypes({ "@type": "faqpage" })).toThrow(/faqpage/);
+  });
+
   it("passes every schema this site actually emits", () => {
     expect(() => assertNoForbiddenTypes(organizationSchema())).not.toThrow();
     expect(() => assertNoForbiddenTypes(webSiteSchema())).not.toThrow();
