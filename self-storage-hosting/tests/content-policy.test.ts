@@ -32,8 +32,9 @@ const FORBIDDEN: [RegExp, string, string?][] = [
     // Both the jargon and the plain-English form of every claim. The jargon-only
     // version of this pattern let two of them ship on the home page, because
     // marketing copy never says "RBAC" -- it says it in ordinary words.
-    // `audit` is deliberately NOT matched bare: the approved security answer ends
-    // "...isolation and audit - ask us", which is an invitation, not a claim.
+    // `audit` is deliberately NOT matched bare: /legal/accessibility says its
+    // statement rests on "our own checks, not an outside audit", which denies
+    // a claim rather than making one.
     /encryption at rest|encrypted at rest|\bRBAC\b|role-based access|roles and permissions|audit (?:exports?|logs?|trails?)|scoped tokens|\bSSO\b|single sign-on|bank-level|enterprise-grade|\bSOC ?2\b|ISO ?27001|signed device tokens?|key rotation|per-facility isolation/i,
     "Unsubstantiated security claim (spec 14B) - only TLS is verified",
   ],
