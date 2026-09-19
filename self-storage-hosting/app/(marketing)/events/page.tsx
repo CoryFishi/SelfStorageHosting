@@ -16,16 +16,18 @@ export const revalidate = 86400;
 export const metadata: Metadata = pageMeta({
   title: "Industry Events",
   description:
-    "Confirmed self-storage industry conferences and trade shows, each verified against the organizer's own listing.",
+    "Confirmed self-storage industry conferences and trade shows, each linked to the organizer's own listing.",
   path: "/events",
 });
 
 const host = (url: string) => new URL(url).host.replace(/^www\./, "");
 
 function place(e: IndustryEvent): string {
-  const { addressLocality, addressRegion, addressCountry } = e.address;
+  const { streetAddress, addressLocality, addressRegion, postalCode, addressCountry } = e.address;
   const country = addressCountry === "US" ? "" : addressCountry === "AU" ? ", Australia" : `, ${addressCountry}`;
-  return `${e.venue}, ${addressLocality}, ${addressRegion}${country}`;
+  const regionZip = postalCode ? `${addressRegion} ${postalCode}` : addressRegion;
+  const parts = [e.venue, streetAddress, addressLocality, regionZip].filter(Boolean);
+  return `${parts.join(", ")}${country}`;
 }
 
 export default function EventsPage() {
@@ -93,8 +95,8 @@ export default function EventsPage() {
           </ol>
         )}
         <p className="mt-8 text-sm text-text-700">
-          We are not affiliated with any organizer listed here. Event names belong to their
-          organizers.
+          Listing an event here does not mean we attend, sponsor or exhibit at it. Event names
+          belong to their organizers.
         </p>
       </section>
 

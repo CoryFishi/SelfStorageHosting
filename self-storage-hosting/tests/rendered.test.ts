@@ -32,6 +32,38 @@ function jsonLd(html: string): unknown[] {
   );
 }
 
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+// The plain text a reader sees for one row: its own ld+json script removed
+// (so a check can't pass by matching the still-embedded JSON rather than the
+// visible DOM), tags and HTML comments stripped (React inserts "<!-- -->"
+// between adjacent text nodes, e.g. "Organizer: <!-- -->SSAM"), entities
+// decoded, and whitespace collapsed.
+function rowText(rowHtml: string): string {
+  const noScripts = rowHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, " ");
+  const noComments = noScripts.replace(/<!--[\s\S]*?-->/g, "");
+  const noTags = noComments.replace(/<[^>]+>/g, " ");
+  return decodeEntities(noTags).replace(/\s+/g, " ").trim();
+}
+
+type EventBlock = {
+  name: string;
+  url: string;
+  startDate: string;
+  endDate: string;
+  organizer: { name: string };
+  location: { name: string; address: Record<string, string> };
+};
+
+const isEventBlock = (b: unknown): b is EventBlock => (b as { "@type"?: unknown })["@type"] === "Event";
+
 describe.skipIf(!RUN)("rendered HTML", () => {
   it("has a prerendered file for every built route", () => {
     expect(built.length).toBeGreaterThanOrEqual(3);
@@ -94,19 +126,41 @@ describe.skipIf(!RUN)("rendered HTML", () => {
 
   it("shows a visible row for every Event it marks up on /events", () => {
     const html = read("/events");
-    const shown = visible(html);
-    const events = jsonLd(html).filter(
-      (b): b is { name: string; url: string; startDate: string; endDate: string } =>
-        (b as { "@type"?: unknown })["@type"] === "Event"
-    );
+    const events = jsonLd(html).filter(isEventBlock);
     // When this fails, every listed event has passed. It is not a code bug:
     // lib/events.ts is due its quarterly review (spec 14 E1).
     expect(events.length, "/events rendered no upcoming events; review lib/events.ts").toBeGreaterThan(0);
-    for (const e of events) {
-      expect(shown, `${e.name}: no visible link to ${e.url}`).toContain(`href="${e.url}"`);
-      expect(shown, `${e.name}: the visible dates do not match the markup`).toContain(
-        formatDateRange(e.startDate, e.endDate)
-      );
+
+    // Breadcrumbs renders its own <ol> earlier in the page; target the
+    // upcoming-events list specifically by its class, not the first <ol>.
+    const olMatch = /<ol\b[^>]*\bclass="mt-8 space-y-4"[^>]*>[\s\S]*?<\/ol>/.exec(html);
+    expect(olMatch, "/events has no <ol> of upcoming events").not.toBeNull();
+    const olHtml = olMatch![0];
+    const rows = [...olHtml.matchAll(/<li\b[^>]*>[\s\S]*?<\/li>/g)].map((m) => m[0]);
+    const blocksInOl = jsonLd(olHtml).filter(isEventBlock);
+    expect(
+      rows.length,
+      `/events has ${rows.length} rows but ${blocksInOl.length} Event blocks inside the list`
+    ).toBe(blocksInOl.length);
+
+    for (const row of rows) {
+      const block = jsonLd(row).find(isEventBlock);
+      expect(block, "a row in the events list has no Event block of its own").toBeDefined();
+      const e = block!;
+      const text = rowText(row);
+      const wanted: [string, string][] = [
+        ["name", e.name],
+        ["dates", formatDateRange(e.startDate, e.endDate)],
+        ["venue", e.location.name],
+        ...Object.entries(e.location.address)
+          .filter(([k]) => k !== "@type" && k !== "addressCountry")
+          .map(([k, v]) => [k, v] as [string, string]),
+        ["organizer", e.organizer.name],
+      ];
+      for (const [field, value] of wanted) {
+        expect(text, `${e.name}: ${field} "${value}" is missing from the visible row`).toContain(value);
+      }
+      expect(row, `${e.name}: no visible link to ${e.url}`).toContain(`href="${e.url}"`);
     }
   });
 

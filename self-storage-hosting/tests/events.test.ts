@@ -33,6 +33,12 @@ describe("formatDateRange", () => {
       "Range ends before it starts: 2026-11-12 to 2026-11-10"
     );
   });
+
+  it("rejects a malformed end date", () => {
+    expect(() => formatDateRange("2026-11-10", "2026-11-31")).toThrow(
+      'Not an ISO calendar date: "2026-11-31"'
+    );
+  });
 });
 
 // A complete event with throwaway details, for testing the filter.
@@ -60,8 +66,12 @@ describe("upcomingEvents", () => {
   });
 
   it("sorts by start date without reordering its input", () => {
-    expect(upcomingEvents("2026-01-01", sample).map((e) => e.name)).toEqual(["A", "B"]);
-    expect(sample.map((e) => e.name)).toEqual(["B", "A"]);
+    // "Alpha" sorts before "Zeta" alphabetically, but Zeta starts first, so a
+    // sort by name gives the wrong order. Zeta also starts earlier yet ends
+    // later than Alpha, so a sort by end date gives the wrong order too.
+    const unordered = [ev("Alpha", "2026-11-10", "2026-11-12"), ev("Zeta", "2026-10-07", "2027-01-01")];
+    expect(upcomingEvents("2026-01-01", unordered).map((e) => e.name)).toEqual(["Zeta", "Alpha"]);
+    expect(unordered.map((e) => e.name)).toEqual(["Alpha", "Zeta"]);
   });
 });
 
@@ -71,8 +81,10 @@ function eventsText(): string {
   return readFileSync(path.join(PKG_ROOT, "lib", "events.ts"), "utf8") + readFileSync(page!, "utf8");
 }
 
+const today = new Date().toISOString().slice(0, 10);
+
 describe("EVENTS", () => {
-  it("lists every event verified in Appendix A.1", () => {
+  it("keeps at least the 13 events verified in Appendix A.1", () => {
     expect(EVENTS.length).toBeGreaterThanOrEqual(13);
   });
 
@@ -83,6 +95,8 @@ describe("EVENTS", () => {
     // Checked while it was still ahead. An event checked after it began was
     // never confirmed as upcoming.
     expect(e.verifiedOn <= e.startDate, `${e.name} was checked after it started`).toBe(true);
+    // Checked in the past, not claimed from the future.
+    expect(e.verifiedOn <= today, `${e.name} has a verifiedOn date in the future`).toBe(true);
     for (const v of [e.venue, e.organizer, e.address.addressLocality, e.address.addressRegion]) {
       expect(v.trim()).not.toBe("");
     }
@@ -90,12 +104,13 @@ describe("EVENTS", () => {
 
   it("leaves out every event no organizer confirmed (spec 12, 15)", () => {
     // \b keeps "NCSSA" (confirmed) from matching "CSSA" (not confirmed).
-    const found = eventsText().match(/\bNeSSA\b|\bFSSA\b|\bCSSA\b|Holiday Gala|Fall Retreat|Executive Summit/g) ?? [];
+    const found =
+      eventsText().match(/\bNeSSA\b|\bFSSA\b|\bCSSA\b|Holiday Gala|Fall Retreat|Executive Summit/gi) ?? [];
     expect(found, `unconfirmed events named: ${found.join(", ")}`).toEqual([]);
   });
 
   it("says nothing unverified about an event's history (spec 12)", () => {
-    const found = eventsText().match(/\b(?:renamed|rebranded|discontinued|sold to|acquired by)\b/gi) ?? [];
+    const found = eventsText().match(/\b(?:renam|rebrand|discontinu|formerly|previously|sold|acquir)\w*/gi) ?? [];
     expect(found, `unverified history claims: ${found.join(", ")}`).toEqual([]);
   });
 });
