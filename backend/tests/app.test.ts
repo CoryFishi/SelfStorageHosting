@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
+import { readdirSync, readFileSync } from "fs";
+import path from "path";
 import { createApp } from "../src/app";
 import { User } from "../src/models/User";
 
@@ -92,10 +94,9 @@ describe("app wiring", () => {
 
   it("answers the global handler's sub-500 branch with the same envelope", async () => {
     // The handler's `status < 500` branch looked like dead code: nothing in the
-    // mounted route tree calls next(err), and the one controller that does is
-    // imported nowhere. But express.json() is mounted ahead of the router, and
-    // a malformed body makes body-parser throw with .status = 400, which
-    // Express forwards straight here. So this branch is reachable by any
+    // route tree calls next(err). But express.json() is mounted ahead of the
+    // router, and a malformed body makes body-parser throw with .status = 400,
+    // which Express forwards straight here. So this branch is reachable by any
     // client that posts broken JSON, and its envelope has to match the others.
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
@@ -111,6 +112,22 @@ describe("app wiring", () => {
     } finally {
       spy.mockRestore();
     }
+  });
+
+  it("leaves no source file answering with a legacy { error } body", () => {
+    // The tests above can only reach mounted code. An unmounted controller
+    // once answered { error } -- a third shape the client's `data?.message`
+    // read turns into the generic fallback -- and would have shipped it the
+    // day someone mounted it. So check every source file, reachable or not.
+    // Matches `error` as a key (first, or after a comma) in the object
+    // literal passed to .json(), across line breaks.
+    const legacyErrorBody = /\.json\(\s*\{(?:[^{}]*,)?\s*["']?error["']?\s*[:,}]/;
+    const srcDir = path.resolve(__dirname, "../src");
+    const offenders = readdirSync(srcDir, { recursive: true, encoding: "utf8" })
+      .filter((f) => f.endsWith(".ts"))
+      .filter((f) => legacyErrorBody.test(readFileSync(path.join(srcDir, f), "utf8")))
+      .map((f) => f.split(path.sep).join("/"));
+    expect(offenders).toEqual([]);
   });
 });
 
