@@ -45,8 +45,10 @@ Each needs owner access.
       1. Deploy `backend/` over HTTPS with `MONGODB_URI`, `JWT_SECRET`,
          `NODE_ENV=production`, and `CORS_ORIGINS` set to the site's origins,
          comma-separated: `https://selfstoragehosting.com,https://www.selfstoragehosting.com`
-         while #5 is open. In production the sign-in cookie is sent with
-         `Secure` and `SameSite=None`.
+         while #5 is open. Leave `JWT_EXPIRES` unset, or set it to `7d` — the
+         privacy policy says sign-in lasts seven days, and the cookie's own
+         lifetime is fixed at seven days in code. In production the sign-in
+         cookie is sent with `Secure` and `SameSite=None`.
       2. Serve the backend from a subdomain of the site's own domain, such as
          `api.selfstoragehosting.com`. A cookie from a different domain is a
          third-party cookie, which some browsers block by default. Safari is
@@ -79,4 +81,7 @@ Each needs owner access.
       and `/solutions/access-control-hosting` (BreadcrumbList). In Search
       Console, request indexing for the new indexable pages. `/sitemap.xml`
       already lists them.
-- [ ] **Run the tests before every deploy.** No CI runs them today: `netlify.toml` runs only `npm run build`. Run `npm test` in `self-storage-hosting/` and in `backend/` before each deploy, or add both to a CI job.
+- [ ] **Run the tests before every deploy.** No CI runs them today:
+      `netlify.toml` runs only `npm run build`. Run `npm test` in
+      `self-storage-hosting/` and in `backend/` before each deploy,
+      or add both to a CI job.

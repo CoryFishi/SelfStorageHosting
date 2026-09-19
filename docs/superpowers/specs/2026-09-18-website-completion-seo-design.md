@@ -50,7 +50,7 @@ Owner-confirmed. Not open for re-litigation during implementation.
 
 | # | Decision |
 |---|---|
-| D1 | Migrate to **Next.js App Router**, deploy on **Vercel**. Domain `selfstoragehosting.com`. |
+| D1 | Migrate to **Next.js App Router**, ~~deploy on **Vercel**~~ **Amended 2026-09-19: deploys on Netlify behind Cloudflare — see `netlify.toml`.** Domain `selfstoragehosting.com`. |
 | D2 | **No fabricated customers, testimonials, logos or named case studies. Ever.** |
 | D3 | The About-page stats band (100+ sites, 99.95% uptime, <200 ms, US & AU) is **placeholder — remove it entirely**. |
 | D4 | The four FMS→access-control bridges are **built and running in production**. They may be presented as available. |
@@ -171,7 +171,7 @@ Four columns — Solutions, Resources, Company, Legal. Every current dead link r
 |---|---|---|---|
 | `/` | self storage access control software *(aspirational)* | `Self Storage Hosting — Cloud Access Control` *(absolute)* | Cloud-hosted access control and facility websites for independent self-storage operators. No on-site server. Request a quote. |
 | `/solutions` | self storage software solutions | `Solutions` | Cloud access control hosting and facility websites built for independent self-storage operators. Compare both solutions. |
-| `/solutions/access-control-hosting` | self storage access control systems | `Cloud Self-Storage Access Control` | Host your gate controllers, keypads and smart locks in the cloud. Works offline, reconciles the audit trail on reconnect. |
+| `/solutions/access-control-hosting` | self storage access control systems | `Cloud Self-Storage Access Control` | Run gate controllers, keypads and smart locks from the cloud instead of an office PC. Built for independent self-storage operators. Request a quote. **Amended 2026-09-19:** replaces the original wording here, which is removed rather than struck through because it used a banned phrase for record-keeping during an outage and led with offline operation instead of the office-PC problem the page actually leads with. |
 | `/solutions/web-hosting` | self storage facility website | `Self-Storage Facility Websites` | Fast, secure websites for storage facilities with SSL, CDN, lead capture and optional online move-ins. Request a quote. |
 | `/about-us` | — (brand) | `About Us` | Why we built cloud access control for independent self-storage operators, and how our FMS-to-gate bridges work. |
 | `/resources` | self storage access control guides | `Resources` | Practical guides on self-storage access control, gate-to-software syncing and migrating off end-of-life hardware. |
@@ -242,7 +242,7 @@ Only events confirmed against the organizer's own site (§12). Each row carries 
 
 ### 6.11 Legal pages
 
-`/legal/privacy` must disclose the actual data flows this site creates: form submissions and where they are sent, `@vercel/analytics` and Speed Insights if enabled, the auth cookie, and any email provider. **These pages need the owner's review or counsel — I will draft structure and the data-flow inventory, but generated boilerplate must not be presented as legal advice.** `/legal/trademarks` disclaims all third-party marks referenced across the site (DigiGate, StorLogix, Falcon, INSOMNIAC® CIA, Storable Edge, Storable Easy, Sitelink, Nokē and others).
+`/legal/privacy` must disclose the actual data flows this site creates: form submissions and where they are sent, ~~`@vercel/analytics` and Speed Insights if enabled,~~ **Amended 2026-09-19: the site has no analytics dependency or script — nothing to disclose here.** the auth cookie, and any email provider. **These pages need the owner's review or counsel — I will draft structure and the data-flow inventory, but generated boilerplate must not be presented as legal advice.** `/legal/trademarks` disclaims all third-party marks referenced across the site (DigiGate, StorLogix, Falcon, INSOMNIAC® CIA, Storable Edge, Storable Easy, Sitelink, Nokē and others).
 
 ---
 

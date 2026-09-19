@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMeta } from "@/lib/seo";
 import { SOURCES } from "@/lib/sources";
-import { OUTAGE_BEHAVIOR } from "@/lib/claims";
+import { OUTAGE_BEHAVIOR, HARDWARE_INTEGRATIONS, FMS_BRIDGES } from "@/lib/claims";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
 import Faq, { type FaqItem } from "@/components/Faq";
@@ -45,33 +45,6 @@ const flow = [
     name: "Your gate, keypads and locks",
     desc: "Enforce the rules at the gate and at the unit door.",
   },
-];
-
-// The same four categories, and the same capabilities, as /about-us.
-const hardware = [
-  {
-    name: "Gate controllers",
-    desc: "Tenant access, schedules and zones, with remote open, lockout and suspend.",
-  },
-  {
-    name: "Keypads and readers",
-    desc: "PIN, card or mobile credentials, with time profiles and holiday rules.",
-  },
-  { name: "Smart locks", desc: "Unit-level control, with a record of every action." },
-  {
-    name: "Door alarms and sensors",
-    desc: "Alarms, motion sensors and battery monitoring, with muted and maintenance modes.",
-  },
-];
-
-// Spec 14 F is open: these are capability offers, never integration status.
-// INSOMNIAC(R) carries its mark once, in the prose above this list, which
-// renders first.
-const bridges = [
-  { from: "Storable Edge", to: "INSOMNIAC CIA" },
-  { from: "Storable Edge", to: "DigiGate" },
-  { from: "Storable Easy", to: "INSOMNIAC CIA" },
-  { from: "Storable Easy", to: "DigiGate" },
 ];
 
 // Outage behaviour is answered once, under "How it works", not repeated here.
@@ -207,7 +180,7 @@ export default function AccessControlHostingPage() {
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
         <h2 className="text-2xl font-semibold sm:text-3xl">Hardware we work with</h2>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {hardware.map((h) => (
+          {HARDWARE_INTEGRATIONS.map((h) => (
             <li
               key={h.name}
               className="rounded-2xl border border-background-200 bg-background-50 p-5 shadow-sm"
@@ -237,7 +210,7 @@ export default function AccessControlHostingPage() {
           .
         </p>
         <ul className="mt-6 space-y-2 text-text-800">
-          {bridges.map(({ from, to }) => (
+          {FMS_BRIDGES.map(({ from, to }) => (
             <li key={`${from}-${to}`}>
               We can bridge {from} to {to}. Tell us your setup.
             </li>

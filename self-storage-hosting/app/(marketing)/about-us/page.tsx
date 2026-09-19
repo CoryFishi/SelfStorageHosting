@@ -11,7 +11,7 @@ import {
   BiRightArrowAlt,
 } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
-import { OUTAGE_BEHAVIOR } from "@/lib/claims";
+import { OUTAGE_BEHAVIOR, HARDWARE_INTEGRATIONS, FMS_BRIDGES } from "@/lib/claims";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
 import Faq, { type FaqItem } from "@/components/Faq";
@@ -66,36 +66,6 @@ const pillars = [
     title: "Installer Friendly",
     desc: "Zero-touch provisioning, site templates, and remote diagnostics to cut truck rolls.",
   },
-];
-
-const integrations = [
-  {
-    title: "Gate Controllers",
-    desc: "Sync tenant access, schedules, and zones. Remotely open, lockout, or suspend.",
-  },
-  {
-    title: "Smart Locks",
-    desc: "Unit-level control and telemetry, with a record of every action.",
-  },
-  {
-    title: "Keypads & Readers",
-    desc: "PIN, card, or mobile credentials with time profiles and holiday rules.",
-  },
-  {
-    title: "Door Alarms & Sensors",
-    desc: "Alarms, PIR, and battery monitoring with muted/maintenance modes.",
-  },
-];
-
-// Spec §13: vendor names normalized (Storable Edge, Storable Easy, DigiGate,
-// INSOMNIAC CIA — introduced with its (R) once, in the prose above this
-// grid). Spec §14 F: entitlement to operate these bridges commercially is
-// still open, so each row reads as a capability offer, not a status claim.
-const fmsBridges = [
-  { from: "Storable Edge", to: "INSOMNIAC CIA" },
-  { from: "Storable Edge", to: "DigiGate" },
-  { from: "Storable Easy", to: "INSOMNIAC CIA" },
-  { from: "Storable Easy", to: "DigiGate" },
 ];
 
 const faqs: FaqItem[] = [
@@ -274,12 +244,12 @@ export default function AboutUsPage() {
           </p>
         </div>
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {integrations.map((i) => (
+          {HARDWARE_INTEGRATIONS.map((i) => (
             <div
-              key={i.title}
+              key={i.name}
               className="rounded-2xl border border-background-200 bg-background-50 p-6 shadow-sm"
             >
-              <h3 className="text-lg font-semibold">{i.title}</h3>
+              <h3 className="text-lg font-semibold">{i.name}</h3>
               <p className="mt-2 text-sm text-text-700">{i.desc}</p>
             </div>
           ))}
@@ -301,7 +271,7 @@ export default function AboutUsPage() {
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {fmsBridges.map(({ from, to }) => (
+          {FMS_BRIDGES.map(({ from, to }) => (
             <div
               key={`${from}-${to}`}
               className="rounded-2xl border border-background-200 bg-background-50 p-5 shadow-sm"

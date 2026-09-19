@@ -52,7 +52,7 @@ const faqs: FaqItem[] = [
   // quoting them would fail the guard it is describing.
   {
     q: "How is data secured?",
-    a: "Every connection is served over TLS. For our current security posture in detail — storage, staff access, isolation and audit — ask us and we will walk you through it.",
+    a: "Served over TLS. Ask us for our current security posture.",
   },
 ];
 
