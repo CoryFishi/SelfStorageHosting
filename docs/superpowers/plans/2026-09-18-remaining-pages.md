@@ -1261,7 +1261,7 @@ Expected: FAIL. `TIMELINE_OPTIONS` is not exported, and a demo request with no m
 
 - [ ] **Step 3: Implement in `lib/contact.ts`**
 
-1. Add `timeline?: string;` to `ContactPayload`, directly after `gateSystem?: string;`.
+1. Add `timeline?: string;` to `ContactPayload`, directly after `subject?: string;`. That keeps the comment above `subject` next to the field it describes.
 2. Directly above `export type ValidationResult`, add:
 
 ```ts
@@ -1918,7 +1918,7 @@ In `self-storage-hosting/tests/content-policy.test.ts`, add after the `SCHEMA` c
 const CLAIMS = path.join("lib", "claims.ts");
 ```
 
-Add this row to `FORBIDDEN`, directly after the `\bPMS\b` row:
+Add this row to `FORBIDDEN`, directly after the "real time" row that Task 2 added (it sits after the `\bPMS\b` row):
 
 ```ts
   [
@@ -4640,7 +4640,7 @@ A test keeps the list complete: every name on a shared watchlist that appears an
 
 The ® rule is checked in the built HTML, not the source, because the first use on a page can come from data in another file. INSOMNIAC appears on /about-us, /contact, /demo, /solutions/access-control-hosting, /support and /legal/trademarks. On each built page, the first INSOMNIAC must carry ®, and no later one may.
 
-The accessibility statement claims only what this codebase does and checks today. It claims no conformance level, because there has been no outside audit. Every claim on it is backed by one of these:
+The accessibility statement claims only what this codebase does and checks today. It names WCAG 2.2 AA as the target it builds to, and claims no achieved conformance, because there has been no outside audit. Every claim on it is backed by one of these:
 
 | Claim | Backed by |
 |---|---|
