@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { createApp } from "../src/app";
 import { User } from "../src/models/User";
+import bcrypt from "bcryptjs";
 
 describe("app wiring", () => {
   const app = createApp();
@@ -48,7 +49,7 @@ describe("app wiring", () => {
     try {
       const res = await request(app)
         .post("/api/users/register")
-        .send({ email: "leak-check@example.com", password: "x", name: "x" });
+        .send({ email: "leak-check@example.com", password: "long-enough-1", name: "x" });
 
       expect(res.status).toBe(500);
       expect(res.body).toEqual({ code: "SERVER_ERROR", message: "Server error" });
@@ -78,7 +79,7 @@ describe("app wiring", () => {
     try {
       const globalHandlerLevel = await request(app)
         .post("/api/users/register")
-        .send({ email: "leak-check-2@example.com", password: "x", name: "x" });
+        .send({ email: "leak-check-2@example.com", password: "long-enough-1", name: "x" });
       expect(globalHandlerLevel.status).toBe(500);
 
       for (const res of [routeLevel, globalHandlerLevel]) {
@@ -128,6 +129,96 @@ describe("app wiring", () => {
       .filter((f) => legacyErrorBody.test(readFileSync(path.join(srcDir, f), "utf8")))
       .map((f) => f.split(path.sep).join("/"));
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("auth input", () => {
+  const app = createApp();
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Stands in for the database. Every case below is decided before a query
+  // runs, or by what the query returns, so none of them needs a connection.
+  // The spies also record the filter each query received, which is the thing
+  // an operator-injection fix has to control.
+  function stubUsers() {
+    const findOne = vi.spyOn(User, "findOne").mockResolvedValue(null as never);
+    const create = vi.spyOn(User, "create").mockImplementation((async (doc: { email: string; name?: string }) => ({
+      _id: "u1",
+      email: doc.email,
+      name: doc.name,
+      createdAt: new Date("2026-09-18T00:00:00.000Z"),
+    })) as never);
+    return { findOne, create };
+  }
+
+  it.each<[string, Record<string, unknown>]>([
+    ["an operator object as the email", { email: { $ne: null }, password: "whatever-123" }],
+    ["an operator object as the password", { email: "dana@example.com", password: { $ne: null } }],
+    ["a missing password", { email: "dana@example.com" }],
+    ["a blank email", { email: "   ", password: "whatever-123" }],
+  ])("login refuses %s before querying", async (_label, body) => {
+    const { findOne } = stubUsers();
+    const res = await request(app).post("/api/users/login").send(body);
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("BAD_INPUT");
+    expect(findOne).not.toHaveBeenCalled();
+  });
+
+  it.each<[string, Record<string, unknown>, RegExp]>([
+    ["an operator object as the email", { email: { $gt: "" }, password: "long-enough-1" }, /email/i],
+    ["a malformed email", { email: "dana-at-example", password: "long-enough-1" }, /email/i],
+    ["a password under 8 characters", { email: "dana@example.com", password: "short" }, /8 characters/],
+    // 40 characters, but 80 bytes: the limit is bcrypt's, and bcrypt counts bytes.
+    ["a password over 72 bytes", { email: "dana@example.com", password: "é".repeat(40) }, /too long/i],
+    ["a name that is not text", { email: "dana@example.com", password: "long-enough-1", name: { $ne: "" } }, /name/i],
+    ["a name over 100 characters", { email: "dana@example.com", password: "long-enough-1", name: "a".repeat(101) }, /name/i],
+  ])("register refuses %s before querying", async (_label, body, message) => {
+    const { findOne, create } = stubUsers();
+    const res = await request(app).post("/api/users/register").send(body);
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("BAD_INPUT");
+    expect(res.body.message).toMatch(message);
+    expect(findOne).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("looks the email up trimmed and lower-cased", async () => {
+    const { findOne } = stubUsers();
+    const res = await request(app)
+      .post("/api/users/login")
+      .send({ email: "  Dana@Example.COM ", password: "whatever-123" });
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe("INVALID_LOGIN");
+    expect(findOne).toHaveBeenCalledWith({ email: "dana@example.com" });
+  });
+
+  it("registers a valid account with a hashed password and sets the sign-in cookie", async () => {
+    const { create } = stubUsers();
+    const res = await request(app)
+      .post("/api/users/register")
+      .send({ email: "Dana@Example.com", password: "long-enough-1", name: "  Dana  " });
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({ id: "u1", email: "dana@example.com", name: "Dana" });
+    const doc = create.mock.calls[0][0] as unknown as { email: string; passwordHash: string; name?: string };
+    expect(doc.email).toBe("dana@example.com");
+    expect(doc.name).toBe("Dana");
+    expect(await bcrypt.compare("long-enough-1", doc.passwordHash)).toBe(true);
+    expect(String(res.headers["set-cookie"])).toMatch(/^token=/);
+  });
+
+  it("answers a duplicate-key race with EMAIL_TAKEN, not a 500", async () => {
+    // Two requests for the same new email can both pass the findOne check.
+    // The unique index on email stops the second one inside create().
+    const { create } = stubUsers();
+    create.mockRejectedValueOnce(Object.assign(new Error("E11000 duplicate key error"), { code: 11000 }));
+    const res = await request(app)
+      .post("/api/users/register")
+      .send({ email: "dana@example.com", password: "long-enough-1" });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ code: "EMAIL_TAKEN", message: "Email already registered" });
   });
 });
 
