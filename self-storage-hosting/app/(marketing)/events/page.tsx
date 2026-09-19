@@ -57,11 +57,13 @@ export default function EventsPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
-        <h2 className="text-2xl font-semibold sm:text-3xl">Upcoming events</h2>
+        <h2 id="upcoming-events" className="text-2xl font-semibold sm:text-3xl">
+          Upcoming events
+        </h2>
         {events.length === 0 ? (
           <p className="mt-6 text-text-800">No confirmed events are listed right now.</p>
         ) : (
-          <ol className="mt-8 space-y-4">
+          <ol className="mt-8 space-y-4" aria-labelledby="upcoming-events">
             {events.map((e) => (
               <li
                 key={`${e.name}-${e.startDate}`}

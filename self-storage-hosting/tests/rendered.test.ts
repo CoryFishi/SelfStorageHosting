@@ -131,12 +131,23 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     // lib/events.ts is due its quarterly review (spec 14 E1).
     expect(events.length, "/events rendered no upcoming events; review lib/events.ts").toBeGreaterThan(0);
 
-    // Breadcrumbs renders its own <ol> earlier in the page; target the
-    // upcoming-events list specifically by its class, not the first <ol>.
-    const olMatch = /<ol\b[^>]*\bclass="mt-8 space-y-4"[^>]*>[\s\S]*?<\/ol>/.exec(html);
-    expect(olMatch, "/events has no <ol> of upcoming events").not.toBeNull();
+    // Breadcrumbs renders its own <ol> earlier in the page; find the
+    // upcoming-events list by its accessible label, not a class string
+    // that says nothing about what the element is. Fail loudly if it is
+    // missing while events exist, rather than silently matching nothing.
+    const olMatch = /<ol\b[^>]*\baria-labelledby="upcoming-events"[^>]*>[\s\S]*?<\/ol>/.exec(html);
+    expect(olMatch, '/events has no <ol aria-labelledby="upcoming-events"> of upcoming events').not.toBeNull();
     const olHtml = olMatch![0];
     const rows = [...olHtml.matchAll(/<li\b[^>]*>[\s\S]*?<\/li>/g)].map((m) => m[0]);
+
+    // Every Event block on the whole page must correspond to a visible row,
+    // not just every Event block inside the <ol>: a stray block rendered
+    // outside the list would otherwise go unnoticed by an in-list-only count.
+    expect(
+      rows.length,
+      `/events marks up ${events.length} Events but shows ${rows.length} rows`
+    ).toBe(events.length);
+
     const blocksInOl = jsonLd(olHtml).filter(isEventBlock);
     expect(
       rows.length,
