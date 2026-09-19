@@ -4,29 +4,7 @@ import path from "node:path";
 import { VENDORS } from "@/lib/vendors";
 import { PKG_ROOT } from "./helpers/walk";
 import { pageFiles, pageMetaArg } from "./helpers/pages";
-
-// Every vendor, company and product name that appears on /support, one word
-// each. Spec D8: none may appear in the page's title, description or h1.
-const WATCHLIST = [
-  "PTI",
-  "StorLogix",
-  "FalconXT",
-  "CloudController",
-  "DigiGate",
-  "OpenTech",
-  "INSOMNIAC",
-  "Storable",
-  "Sitelink",
-  "Janus",
-  "Nokē",
-  "Noke",
-  "DoorKing",
-  "DKS",
-];
-
-// Lower-cased words. Splitting on anything that is not a letter or a digit
-// keeps "Nokē" whole, where a \b-bounded regex would not match it at all.
-const words = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9ē]+/).filter(Boolean));
+import { WATCHLIST, words } from "./helpers/brands";
 
 // Words that show up next to a brand name in `company`/`products` but are not
 // themselves a name: generic company-suffix words, connectors and generic

@@ -10,7 +10,7 @@ import { pageFiles } from "./helpers/pages";
 
 // Every legal page these guards read. A new /legal/ route must be added here:
 // the first test fails until it is.
-const LEGAL_PAGES = ["/legal/privacy", "/legal/terms"];
+const LEGAL_PAGES = ["/legal/privacy", "/legal/terms", "/legal/trademarks", "/legal/accessibility"];
 
 function source(route: string): string {
   const file = pageFiles().get(route);

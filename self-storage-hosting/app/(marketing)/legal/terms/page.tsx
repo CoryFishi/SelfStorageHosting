@@ -57,7 +57,11 @@ export default function TermsPage() {
           We name other companies&apos; products to describe what our services work with, and we link
           to those companies&apos; own pages for support and events. We check those facts against the
           companies&apos; own pages, but they can change. We do not control those
-          websites.
+          websites. Their names belong to their owners: see our{" "}
+          <Link href="/legal/trademarks" className={link}>
+            trademarks page
+          </Link>
+          .
         </p>
 
         <h2 className="mt-10 text-2xl font-semibold">Using the forms</h2>

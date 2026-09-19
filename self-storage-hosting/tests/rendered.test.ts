@@ -252,6 +252,26 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     expect(offsite, `off-site resources: ${offsite.join(", ")}`).toEqual([]);
   });
 
+  it("marks INSOMNIAC with ® at its first use on each page, and only there (spec 13)", () => {
+    const checked: string[] = [];
+    const bad: string[] = [];
+    for (const r of built) {
+      const html = read(r);
+      // The body without any script. The RSC payload and JSON-LD repeat text
+      // that is not a separate use on the page. Attributes stay in, because a
+      // placeholder is visible text.
+      const body = html.slice(html.indexOf("<body")).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");
+      const uses = [...body.matchAll(/INSOMNIAC(®|&reg;|&#174;)?/g)].map((m) => m[1] !== undefined);
+      if (uses.length === 0) continue;
+      checked.push(r);
+      if (!uses[0]) bad.push(`${r}: the first INSOMNIAC has no ®`);
+      if (uses.slice(1).some(Boolean)) bad.push(`${r}: ® repeated after the first use`);
+    }
+    // /about-us, /contact, /demo, access control hosting, /support, /legal/trademarks.
+    expect(checked.length).toBeGreaterThanOrEqual(5);
+    expect(bad, bad.join("; ")).toEqual([]);
+  });
+
   it("shows the exact outage wording where it is promised (spec 14 D3)", () => {
     for (const r of ["/", "/about-us", "/solutions/access-control-hosting"]) {
       expect(

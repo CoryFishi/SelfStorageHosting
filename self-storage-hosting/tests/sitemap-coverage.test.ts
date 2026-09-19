@@ -53,6 +53,8 @@ describe("sitemap coverage", () => {
       "/demo",
       "/legal/privacy",
       "/legal/terms",
+      "/legal/trademarks",
+      "/legal/accessibility",
     ]);
   });
 });

@@ -6,4 +6,6 @@
 export const LEGAL_UPDATED = {
   privacy: "2026-09-19",
   terms: "2026-09-19",
+  trademarks: "2026-09-19",
+  accessibility: "2026-09-19",
 } as const;
