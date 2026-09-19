@@ -95,7 +95,7 @@ export default function SupportPage() {
       <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
         <h2 className="text-2xl font-semibold sm:text-3xl">Which system am I running?</h2>
         <p className="mt-4 text-text-800">
-          Most facilities run two systems: the software the office uses for tenants and billing, and
+          You are looking for two names: the software the office uses for tenants and billing, and
           the access control that runs the gate and keypads. Each has a name you can find in a
           minute.
         </p>
@@ -113,7 +113,7 @@ export default function SupportPage() {
             href="/solutions/access-control-hosting#end-of-life"
             className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
           >
-            moving off end-of-life gate hardware
+            moving off end-of-life gate systems
           </Link>
           .
         </p>
@@ -145,8 +145,8 @@ export default function SupportPage() {
           </div>
         ))}
         <p className="mt-10 text-text-800">
-          If the sync computer keeps turning out to be the problem, it can be taken out of the chain
-          altogether.{" "}
+          If the sync computer keeps turning out to be the problem, it can be taken out of the
+          chain.{" "}
           <Link
             href="/solutions/access-control-hosting"
             className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
@@ -160,10 +160,7 @@ export default function SupportPage() {
       {/* 3. Vendor directory: Appendix A.2 links only, no phone numbers. */}
       <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
         <h2 className="text-2xl font-semibold sm:text-3xl">Vendor support directory</h2>
-        <p className="mt-4 text-text-800">
-          Each vendor runs its own support desk. Their sites carry their current phone numbers and
-          hours.
-        </p>
+        <p className="mt-4 text-text-800">The links below go to each vendor&apos;s own support pages.</p>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <caption className="sr-only">Support desks for self-storage software and gate systems</caption>
