@@ -1,5 +1,19 @@
 import { describe, it, expect, vi } from "vitest";
-import { ROUTES, NAV, FOOTER, indexableRoutes, SITE, NON_ROUTE_PATHS } from "@/lib/site";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import {
+  ROUTES,
+  NAV,
+  FOOTER,
+  indexableRoutes,
+  SITE,
+  NON_ROUTE_PATHS,
+  isLive,
+  assertLive,
+  liveNav,
+  liveFooter,
+} from "@/lib/site";
+import { PKG_ROOT, walkFrom } from "./helpers/walk";
 
 function internalHrefs(): string[] {
   const out: string[] = [];
@@ -72,5 +86,102 @@ describe("link integrity", () => {
       else process.env.NEXT_PUBLIC_SITE_URL = prev;
       vi.resetModules();
     }
+  });
+});
+
+// ROUTES is a mutable Record. These cases flip `built` on a few entries so
+// liveNav/liveFooter are tested in every state the site passes through while
+// Plan 2 lands. The originals are restored even when an assertion throws.
+function withBuilt(overrides: Record<string, boolean>, run: () => void) {
+  const prev = Object.fromEntries(Object.keys(overrides).map((k) => [k, ROUTES[k].built]));
+  try {
+    for (const [k, v] of Object.entries(overrides)) ROUTES[k].built = v;
+    run();
+  } finally {
+    for (const [k, v] of Object.entries(prev)) ROUTES[k].built = v;
+  }
+}
+
+describe("live links", () => {
+  it("isLive ignores the fragment and accepts non-route files", () => {
+    expect(isLive("/about-us#story")).toBe(true);
+    expect(isLive("/sitemap.xml")).toBe(true);
+    expect(isLive("/no-such-page")).toBe(false);
+  });
+
+  it("assertLive names the context and the dead href", () => {
+    expect(() => assertLive("/no-such-page", "Test link")).toThrow(
+      "Test link links to /no-such-page, which is not a built route"
+    );
+    expect(() => assertLive("/contact", "Test link")).not.toThrow();
+  });
+
+  it("drops a main item whose own page is not built, even if a child is", () => {
+    withBuilt({ "/solutions": false, "/solutions/web-hosting": true }, () => {
+      expect(liveNav().main.map((i) => i.href)).not.toContain("/solutions");
+    });
+  });
+
+  it("keeps only built children, and drops the children key when none remain", () => {
+    withBuilt(
+      {
+        "/solutions": true,
+        "/solutions/access-control-hosting": true,
+        "/solutions/web-hosting": false,
+      },
+      () => {
+        const item = liveNav().main.find((i) => i.href === "/solutions");
+        expect(item?.children?.map((c) => c.href)).toEqual(["/solutions/access-control-hosting"]);
+      }
+    );
+    withBuilt(
+      {
+        "/solutions": true,
+        "/solutions/access-control-hosting": false,
+        "/solutions/web-hosting": false,
+      },
+      () => {
+        const item = liveNav().main.find((i) => i.href === "/solutions");
+        expect(item).toBeDefined();
+        // No key at all, not an empty array. MainNav renders a dropdown for
+        // any truthy `children`, and an empty dropdown is a dead control.
+        expect(item && "children" in item).toBe(false);
+      }
+    );
+  });
+
+  it("drops a footer column once every link in it is dead", () => {
+    withBuilt(
+      { "/solutions/access-control-hosting": false, "/solutions/web-hosting": false },
+      () => {
+        expect(liveFooter().map((c) => c.heading)).not.toContain("Solutions");
+      }
+    );
+  });
+
+  it("renders nothing that is not live", () => {
+    const { utility, main } = liveNav();
+    const hrefs = [
+      ...utility,
+      ...main,
+      ...main.flatMap((i) => i.children ?? []),
+      ...liveFooter().flatMap((c) => c.links),
+    ].map((l) => l.href);
+    // Non-vacuous: /about-us is built, so the list is never empty.
+    expect(hrefs).toContain("/about-us");
+    expect(hrefs.filter((h) => !isLive(h))).toEqual([]);
+  });
+
+  it("no page or component reads NAV or FOOTER directly", () => {
+    // The chrome must render liveNav()/liveFooter(). Reading the raw tables
+    // is exactly how fourteen dead links reached the live site. The file list
+    // comes from the source tree rather than naming the three chrome files,
+    // so a new component that reaches for NAV is caught too.
+    const files = walkFrom("app", /\.tsx?$/).concat(walkFrom("components", /\.tsx?$/));
+    const rel = (f: string) => path.relative(PKG_ROOT, f).split(path.sep).join("/");
+    const raw = files.filter((f) => /\bNAV\b|\bFOOTER\b/.test(readFileSync(f, "utf8"))).map(rel);
+    expect(raw, `read the raw nav tables instead of liveNav()/liveFooter(): ${raw.join(", ")}`).toEqual([]);
+    const live = files.filter((f) => /\blive(?:Nav|Footer)\(\)/.test(readFileSync(f, "utf8")));
+    expect(live.length, "TopBar, MainNav and Footer should all call a live helper").toBeGreaterThanOrEqual(3);
   });
 });

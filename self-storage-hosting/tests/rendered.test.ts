@@ -1,0 +1,92 @@
+import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { ROUTES } from "@/lib/site";
+import { canonicalFor } from "@/lib/seo";
+import { assertNoForbiddenTypes } from "@/lib/schema";
+import { PKG_ROOT } from "./helpers/walk";
+import { allowedLink } from "./helpers/links";
+
+// Checks the HTML that `next build` wrote, not the source that produced it.
+// It needs a fresh build, so a plain `npm test` skips it. Run it with:
+//   npm run build && RENDERED=1 npx vitest run tests/rendered.test.ts
+const RUN = process.env.RENDERED === "1";
+const OUT = path.join(PKG_ROOT, ".next", "server", "app");
+const built = Object.keys(ROUTES).filter((r) => ROUTES[r].built);
+
+const htmlFile = (route: string) =>
+  path.join(OUT, route === "/" ? "index.html" : `${route.slice(1)}.html`);
+const read = (route: string) => readFileSync(htmlFile(route), "utf8");
+
+// Drop every <script> except JSON-LD. The React Server Components payload
+// repeats each string on the page, so counting without this doubles.
+function visible(html: string): string {
+  return html.replace(/<script\b(?![^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>/g, "");
+}
+
+function jsonLd(html: string): unknown[] {
+  return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(
+    (m) => JSON.parse(m[1]) as unknown
+  );
+}
+
+describe.skipIf(!RUN)("rendered HTML", () => {
+  it("has a prerendered file for every built route", () => {
+    expect(built.length).toBeGreaterThanOrEqual(3);
+    const missing = built.filter((r) => !existsSync(htmlFile(r)));
+    expect(missing, `no prerendered HTML for: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  it.each(built)("%s renders exactly one h1", (r) => {
+    const n = (visible(read(r)).match(/<h1\b/g) ?? []).length;
+    expect(n, `${r} renders ${n} h1 elements`).toBe(1);
+  });
+
+  it("gives every built route its own title and description", () => {
+    const seen = new Map<string, string>();
+    const clashes: string[] = [];
+    for (const r of built) {
+      const html = read(r);
+      const title = html.match(/<title>([^<]*)<\/title>/)?.[1];
+      const desc = html.match(/<meta name="description" content="([^"]*)"/)?.[1];
+      expect(title, `${r} has no <title>`).toBeTruthy();
+      expect(desc, `${r} has no meta description`).toBeTruthy();
+      for (const [kind, value] of [["title", title], ["description", desc]] as const) {
+        const key = `${kind}:${value}`;
+        const other = seen.get(key);
+        if (other) clashes.push(`${r} reuses the ${kind} of ${other}`);
+        else seen.set(key, r);
+      }
+    }
+    expect(clashes).toEqual([]);
+  });
+
+  it.each(built)("%s renders its canonical and the right robots rule", (r) => {
+    const html = read(r);
+    expect(html).toContain(`<link rel="canonical" href="${canonicalFor(r)}"/>`);
+    const robots = html.match(/<meta name="robots" content="([^"]*)"/)?.[1] ?? "";
+    expect(robots.includes("noindex"), `${r} robots is "${robots}"`).toBe(!ROUTES[r].indexable);
+  });
+
+  it("renders only links the link rule allows", () => {
+    let checked = 0;
+    const bad: string[] = [];
+    for (const r of built) {
+      for (const m of visible(read(r)).matchAll(/<a\b[^>]*\shref="(\/[^"?#]*)/g)) {
+        checked++;
+        if (!allowedLink(m[1])) bad.push(`${r} -> ${m[1]}`);
+      }
+    }
+    // Every page carries at least the logo, a nav link and a footer link.
+    expect(checked).toBeGreaterThanOrEqual(built.length * 3);
+    expect(bad, `rendered links that must not exist: ${bad.join(", ")}`).toEqual([]);
+  });
+
+  it.each(built)("%s emits only allowed JSON-LD, with breadcrumbs off the home page", (r) => {
+    const blocks = jsonLd(read(r));
+    expect(blocks.length, `${r} emits no JSON-LD`).toBeGreaterThan(0);
+    for (const b of blocks) assertNoForbiddenTypes(b);
+    const crumbs = blocks.some((b) => JSON.stringify(b).includes('"@type":"BreadcrumbList"'));
+    expect(crumbs, `${r} BreadcrumbList present`).toBe(r !== "/");
+  });
+});

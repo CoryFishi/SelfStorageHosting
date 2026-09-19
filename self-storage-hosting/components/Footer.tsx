@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FOOTER, SITE, NON_ROUTE_PATHS } from "@/lib/site";
+import { liveFooter, SITE, NON_ROUTE_PATHS } from "@/lib/site";
 import { FOCUS_RING } from "@/components/ui/focus";
 
 export default function Footer() {
@@ -8,7 +8,7 @@ export default function Footer() {
     <footer className="mt-16 bg-primary-700 text-text-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <nav aria-label="Footer" className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
-          {FOOTER.map((col) => (
+          {liveFooter().map((col) => (
             <div key={col.heading}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-accent-200">
                 {col.heading}

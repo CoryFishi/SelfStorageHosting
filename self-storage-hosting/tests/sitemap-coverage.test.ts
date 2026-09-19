@@ -3,48 +3,19 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { ROUTES, indexableRoutes } from "@/lib/site";
 import { walkFrom } from "./helpers/walk";
+import { pageFiles, pageMetaArg } from "./helpers/pages";
 
 const APP_DIR = path.resolve(__dirname, "../app");
-
-// Maps each routable URL to the page.tsx that serves it. Step 6c needs the file
-// path and Step 6b needs the URL, so the walk returns both rather than existing
-// twice in two shapes. The file listing itself comes from the shared walker;
-// only the URL-from-path shape is specific to this test.
-function pageFiles(): Map<string, string> {
-  const pages = new Map<string, string>();
-  for (const file of walkFrom("app", /^page\.tsx$/)) {
-    const rel = path.relative(APP_DIR, path.dirname(file));
-    // Route groups like (marketing) do not appear in the URL.
-    const segments = rel === "" ? [] : rel.split(path.sep).filter((s) => !s.startsWith("("));
-    pages.set(segments.length === 0 ? "/" : "/" + segments.join("/"), file);
-  }
-  return pages;
-}
 
 // URLs that exist on disk as a page.tsx but are deliberately not in ROUTES.
 // Empty today -- every page this repo builds is manifest-tracked. A future
 // entry here must carry its own reason; it is never a silent catch-all.
 const UNMANAGED_PAGES: string[] = [];
 
-// The source text of the `pageMeta({ ... })` argument, braces balanced, or null
-// if the file does not call it. Scoping the path assertion to this slice is the
-// whole point: `path:` also appears in every breadcrumb entry, so searching the
-// file as a whole lets a page whose breadcrumb names the right route pass with
-// the WRONG canonical in pageMeta -- which is the one bug the assertion exists
-// to catch. Two of the three pages in this repo carry such a breadcrumb.
-// Brace counting is enough here because pageMeta's arguments are plain strings
-// with no braces in them; a template literal containing "{" would need a parser.
-function pageMetaArg(src: string): string | null {
-  const call = src.search(/pageMeta\s*\(\s*\{/);
-  if (call === -1) return null;
-  const open = src.indexOf("{", call);
-  let depth = 0;
-  for (let i = open; i < src.length; i++) {
-    if (src[i] === "{") depth++;
-    else if (src[i] === "}" && --depth === 0) return src.slice(open, i + 1);
-  }
-  return null;
-}
+const builtRoutes = () =>
+  Object.entries(ROUTES)
+    .filter(([, m]) => m.built)
+    .map(([r]) => r);
 
 describe("sitemap coverage", () => {
   it("every route the sitemap emits has a page on disk", () => {
@@ -95,25 +66,66 @@ describe("canonical declarations", () => {
     ).toEqual([]);
   });
 
-  it("gives every built, indexable route its own canonical via pageMeta", () => {
+  it("gives every built route its own canonical via pageMeta", () => {
     const pages = pageFiles();
-    for (const route of indexableRoutes()) {
+    for (const route of builtRoutes()) {
       const file = pages.get(route);
-      expect(file, `${route} has no page.tsx on disk`).toBeDefined();
+      expect(file, `${route} is flagged built but has no page.tsx on disk`).toBeDefined();
       const arg = pageMetaArg(readFileSync(file!, "utf8"));
       expect(arg, `${route} must call pageMeta with an object literal`).not.toBeNull();
       // Built from a plain string with the backslash doubled, so the regex
-      // engine receives `\s` (whitespace) rather than a literal "s". Inside a
-      // template literal `\s` collapses the same way, and inside a
-      // single-quoted string a *single* backslash also collapses to a bare
-      // "s" (neither form recognises `\s` as a string escape) -- only the
-      // doubled backslash below survives into the RegExp as intended.
-      // Routes contain only "/", letters and hyphens, so none of them carry
-      // a regex metacharacter.
+      // engine receives `\s` (whitespace) rather than a literal "s". A single
+      // backslash, in either a template literal or a quoted string, collapses
+      // to a bare "s". Routes contain only "/", letters and hyphens, so none
+      // of them carry a regex metacharacter.
       expect(
         arg!,
         `${route} must declare its own path inside the pageMeta call, not only in a breadcrumb`
       ).toMatch(new RegExp('path:\\s*["\']' + route + '["\']'));
     }
+  });
+
+  it("never overrides the route manifest's index decision", () => {
+    // pageMeta() already defaults noindex from ROUTES. An explicit override in
+    // the wrong direction is the only way a page can contradict the manifest,
+    // the sitemap and robots.txt all at once.
+    const pages = pageFiles();
+    for (const route of builtRoutes()) {
+      const arg = pageMetaArg(readFileSync(pages.get(route)!, "utf8"))!;
+      const wrong = ROUTES[route].indexable ? /noindex:\s*true/ : /noindex:\s*false/;
+      expect(arg, `${route} overrides ROUTES["${route}"].indexable in its pageMeta call`).not.toMatch(
+        wrong
+      );
+    }
+  });
+
+  it("gives every built page exactly one h1", () => {
+    // Spec 7.6(4). A page's h1 lives in its page.tsx. No shared component in
+    // this repo renders one, so the page file is the whole measurement.
+    const pages = pageFiles();
+    for (const route of builtRoutes()) {
+      const count = (readFileSync(pages.get(route)!, "utf8").match(/<h1\b/g) ?? []).length;
+      expect(count, `${route} has ${count} <h1> elements`).toBe(1);
+    }
+  });
+
+  it("gives every built page a unique title and a unique description of at most 155 characters", () => {
+    const pages = pageFiles();
+    const seen = { title: new Map<string, string>(), description: new Map<string, string>() };
+    for (const route of builtRoutes()) {
+      const arg = pageMetaArg(readFileSync(pages.get(route)!, "utf8"))!;
+      for (const key of ["title", "description"] as const) {
+        const m = arg.match(key === "title" ? /title:\s*"([^"]+)"/ : /description:\s*"([^"]+)"/);
+        expect(m, `${route}: pageMeta ${key} must be a double-quoted string literal`).not.toBeNull();
+        const value = m![1];
+        const clash = seen[key].get(value);
+        expect(clash, `${route} reuses the ${key} of ${clash}: "${value}"`).toBeUndefined();
+        seen[key].set(value, route);
+        if (key === "description") {
+          expect(value.length, `${route} description is ${value.length} characters`).toBeLessThanOrEqual(155);
+        }
+      }
+    }
+    expect(seen.title.size).toBe(builtRoutes().length);
   });
 });

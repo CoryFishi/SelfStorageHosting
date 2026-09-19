@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { HiMenu, HiX } from "react-icons/hi";
-import { NAV } from "@/lib/site";
+import { liveNav } from "@/lib/site";
 import { CHROME, FOCUS_RING } from "./chrome";
 
 // "/solutions" -> "menu-solutions". Concatenating without the extra hyphen
@@ -14,6 +14,7 @@ import { CHROME, FOCUS_RING } from "./chrome";
 const menuId = (href: string) => `menu${href.replace(/\//g, "-")}`;
 
 export default function MainNav() {
+  const { main } = liveNav();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const pathname = usePathname();
@@ -51,7 +52,7 @@ export default function MainNav() {
 
         {/* Desktop */}
         <div className="hidden items-center md:flex">
-          {NAV.main.map((item) =>
+          {main.map((item) =>
             item.children ? (
               <div
                 key={item.href}
@@ -150,7 +151,7 @@ export default function MainNav() {
         className="border-t border-primary-500 md:hidden"
       >
         <ul className="px-4 py-2">
-          {NAV.main.map((item) => (
+          {main.map((item) => (
             <li key={item.href} className="py-1">
               <Link
                 href={item.href}

@@ -23,10 +23,11 @@ export type NavItem = NavLink & { children?: NavLink[] };
 
 // `indexable` is an SEO decision: may this URL be crawled and listed.
 // `built`    is a fact: does a page.tsx for it exist yet.
-// They are independent, and the sitemap needs BOTH. Nav renders from this
-// table in full so the site's shape is visible, but Plan 1 only builds three
-// pages -- advertising the other fourteen in sitemap.xml would hand Google a
-// list of URLs that 404. Plan 2 flips each `built` to true as it lands.
+// They are independent, and the sitemap needs BOTH. Nav and footer render
+// through liveNav()/liveFooter(), which drop anything not yet built, and
+// Plan 1 only builds three pages -- advertising the other fourteen in
+// sitemap.xml would hand Google a list of URLs that 404. Plan 2 flips each
+// `built` to true as it lands.
 export const ROUTES: Record<string, { title: string; indexable: boolean; built: boolean }> = {
   // These three are Plan 1's own pages and are `built: true` ahead of their
   // page.tsx on purpose -- Task 12 creates /, Task 13 /about-us and Task 16
@@ -120,4 +121,51 @@ export function indexableRoutes(): string[] {
   return Object.entries(ROUTES)
     .filter(([, meta]) => meta.indexable && meta.built)
     .map(([path]) => path);
+}
+
+/**
+ * True when `href` leads somewhere real: a built page, or a file such as the
+ * sitemap. A `#fragment` is ignored here. Whether the anchor exists on the
+ * page is checked by tests/source-links.test.ts.
+ */
+export function isLive(href: string): boolean {
+  const path = href.split("#")[0];
+  if (NON_ROUTE_PATHS.includes(path)) return true;
+  return ROUTES[path]?.built === true;
+}
+
+/**
+ * Throws when `href` is not live. Components that take a link as a prop
+ * (Breadcrumbs, CtaBand) call this while rendering. Every marketing page is
+ * prerendered, so a dead link fails `next build` instead of shipping.
+ */
+export function assertLive(href: string, context: string): void {
+  if (!isLive(href)) {
+    throw new Error(`${context} links to ${href}, which is not a built route`);
+  }
+}
+
+/**
+ * NAV with every dead link removed. A main item survives only if its own page
+ * is built. Its children are filtered. When none remain, the `children` key
+ * is dropped entirely, because MainNav renders a dropdown for any `children`
+ * value and an empty dropdown is a dead control.
+ */
+export function liveNav(): { utility: NavLink[]; main: NavItem[] } {
+  return {
+    utility: NAV.utility.filter((l) => isLive(l.href)),
+    main: NAV.main
+      .filter((item) => isLive(item.href))
+      .map(({ children, ...item }) => {
+        const live = (children ?? []).filter((c) => isLive(c.href));
+        return live.length > 0 ? { ...item, children: live } : item;
+      }),
+  };
+}
+
+/** FOOTER with every dead link removed, and any column left empty dropped. */
+export function liveFooter(): { heading: string; links: NavLink[] }[] {
+  return FOOTER.map((col) => ({ ...col, links: col.links.filter((l) => isLive(l.href)) })).filter(
+    (col) => col.links.length > 0
+  );
 }
