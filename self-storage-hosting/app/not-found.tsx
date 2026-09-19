@@ -1,21 +1,10 @@
 import Link from "next/link";
-import TopBar from "@/components/nav/TopBar";
-import MainNav from "@/components/nav/MainNav";
-import Footer from "@/components/Footer";
+import SiteChrome from "@/components/SiteChrome";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent-50 focus:px-4 focus:py-2 focus:text-text-950"
-      >
-        Skip to content
-      </a>
-      <TopBar />
-      <MainNav />
-      <main id="main" className="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-20 text-center">
+    <SiteChrome mainClassName="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-20 text-center">
         <p className="text-7xl font-bold sm:text-9xl" aria-hidden="true">
           Oops!
         </p>
@@ -30,8 +19,6 @@ export default function NotFound() {
         >
           Go to homepage
         </Link>
-      </main>
-      <Footer />
-    </div>
+    </SiteChrome>
   );
 }

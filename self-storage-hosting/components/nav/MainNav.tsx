@@ -22,7 +22,7 @@ export default function MainNav() {
 
   // Escape closes the mobile panel from anywhere on the page, and the listener
   // is on `document` rather than on <header> for a reason found by testing: the
-  // skip link is rendered by the marketing layout OUTSIDE <header>, so a
+  // skip link is rendered by SiteChrome OUTSIDE <header>, so a
   // keyboard user who tabs to it while the panel is open is past the header's
   // subtree and a header-scoped handler never sees the key. A menu you cannot
   // dismiss from wherever focus happens to be is a trap. Focus returns to the

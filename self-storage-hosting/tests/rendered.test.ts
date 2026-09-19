@@ -282,6 +282,19 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     expect(bad, bad.join("; ")).toEqual([]);
   });
 
+  it.each(built)("%s starts with a skip link to its one <main id=\"main\">", (r) => {
+    // /legal/accessibility says the skip link is the first thing a keyboard
+    // reaches. The first link in <body> is the first focusable element here:
+    // nothing before it is a button or a field.
+    const html = visible(read(r));
+    const body = html.slice(html.indexOf("<body"));
+    expect(body.match(/<a\b[^>]*>/)?.[0] ?? "", `${r}: the first link is not the skip link`).toMatch(
+      /\bhref="#main"/
+    );
+    const mains = (body.match(/<main\b[^>]*\bid="main"/g) ?? []).length;
+    expect(mains, `${r} has ${mains} <main id="main"> elements`).toBe(1);
+  });
+
   it("shows the exact outage wording where it is promised (spec 14 D3)", () => {
     for (const r of ["/", "/about-us", "/solutions/access-control-hosting"]) {
       expect(

@@ -52,8 +52,8 @@ export const ROUTES: Record<string, { title: string; indexable: boolean; built: 
   "/legal/trademarks": { title: "Trademarks", indexable: true, built: true },
   "/legal/accessibility": { title: "Accessibility Statement", indexable: true, built: true },
   "/case-studies": { title: "Case Studies", indexable: false, built: true },
-  "/user/login": { title: "Log In", indexable: false, built: false },
-  "/user/register": { title: "Create an Account", indexable: false, built: false },
+  "/user/login": { title: "Log In", indexable: false, built: true },
+  "/user/register": { title: "Create an Account", indexable: false, built: true },
 };
 
 // Paths that appear in FOOTER but are not app pages. Task 9 renders these as
