@@ -282,7 +282,14 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     expect(bad, bad.join("; ")).toEqual([]);
   });
 
-  it.each(built)("%s starts with a skip link to its one <main id=\"main\">", (r) => {
+  // SiteChrome's other consumer: the 404 page (app/not-found.tsx). It has no
+  // ROUTES entry -- it is not a route you can navigate to, Next renders it
+  // for any unmatched path -- so it needs its own place in this list rather
+  // than joining `built`. "/_not-found".slice(1) is "_not-found", which is
+  // exactly the file Next writes, so read()/htmlFile() need no change.
+  const framePages = [...built, "/_not-found"];
+
+  it.each(framePages)("%s starts with a skip link to its one <main id=\"main\">", (r) => {
     // /legal/accessibility says the skip link is the first thing a keyboard
     // reaches. The first link in <body> is the first focusable element here:
     // nothing before it is a button or a field.

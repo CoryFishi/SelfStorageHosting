@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { friendlyAuthError, validateAuthInput, MAX_NAME, MIN_PASSWORD, type AuthMode } from "@/lib/auth-form";
@@ -19,15 +19,55 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Counts failed validation attempts, so the focus effect below can run only
+  // after a real attempt (never on mount) and re-run on a repeat failure even
+  // when the fields at fault are unchanged.
+  const [attempt, setAttempt] = useState(0);
+  // Counts a successful login/register submitted FROM THIS FORM, so the
+  // signed-in focus effect never fires for a visitor who was already signed
+  // in when the page loaded.
+  const [justSignedIn, setJustSignedIn] = useState(0);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const signedInRef = useRef<HTMLParagraphElement>(null);
+
+  // Runs after the render that put this attempt's aria-invalid and
+  // aria-describedby on the fields, so moving focus here makes a screen
+  // reader read the field's label and its linked error message. A second
+  // failed submit with the same message would otherwise leave the DOM (and
+  // so the live region) unchanged, and say nothing.
+  useEffect(() => {
+    if (attempt === 0) return;
+    const target = errors.name
+      ? nameRef.current
+      : errors.email
+        ? emailRef.current
+        : errors.password
+          ? passwordRef.current
+          : null;
+    target?.focus();
+  }, [attempt, errors]);
+
+  // A successful submit unmounts the focused submit button, dropping focus to
+  // <body>. Move it into the signed-in view instead, once, and only for a
+  // sign-in that happened through this form.
+  useEffect(() => {
+    if (justSignedIn === 0) return;
+    signedInRef.current?.focus();
+  }, [justSignedIn]);
 
   // Runs one account request, then says how it went in the live region.
-  async function run(request: () => Promise<void>, done: string) {
+  // `moveFocus` is true only for a login/register submitted from this form,
+  // never for the logout button in the signed-in view.
+  async function run(request: () => Promise<void>, done: string, moveFocus = false) {
     setBusy(true);
     setMessage("");
     try {
       await request();
       setFailed(false);
       setMessage(done);
+      if (moveFocus) setJustSignedIn((n) => n + 1);
     } catch (err) {
       setFailed(true);
       setMessage(friendlyAuthError(err));
@@ -49,6 +89,7 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
     if (Object.keys(found).length > 0) {
       setFailed(true);
       setMessage("Please fix the fields marked above.");
+      setAttempt((n) => n + 1);
       return;
     }
     await run(
@@ -56,7 +97,8 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
         mode === "login"
           ? login(input.email, input.password)
           : register(input.email, input.password, input.name || undefined),
-      mode === "login" ? "You are signed in." : "Your account is ready, and you are signed in."
+      mode === "login" ? "You are signed in." : "Your account is ready, and you are signed in.",
+      true
     );
   }
 
@@ -80,7 +122,11 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
     <div className="mt-6">
       {ready && user ? (
         <div>
-          <p className="text-text-800">
+          {/* tabIndex={-1}: not a stop in tab order, only a target for the
+              focus effect above, so a screen reader announces this text
+              right after a successful submit instead of leaving focus on
+              <body>. */}
+          <p ref={signedInRef} tabIndex={-1} className="text-text-800">
             You are signed in as <strong>{user.email}</strong>.
           </p>
           <button type="button" onClick={() => run(logout, "You are signed out.")} disabled={busy} className={button}>
@@ -90,12 +136,17 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
       ) : (
         <>
           <form onSubmit={onSubmit} noValidate>
+            <p className="mb-5 text-sm text-text-700">
+              Fields marked <span aria-hidden="true">*</span> are required.
+            </p>
+
             {mode === "register" && (
               <div className="mb-5">
                 <label htmlFor="name" className="font-medium">
                   Name <span className="font-normal text-text-700">(optional)</span>
                 </label>
                 <input
+                  ref={nameRef}
                   id="name"
                   name="name"
                   type="text"
@@ -118,6 +169,7 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
                 Email <span aria-hidden="true">*</span>
               </label>
               <input
+                ref={emailRef}
                 id="email"
                 name="email"
                 type="email"
@@ -144,6 +196,7 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
                 </p>
               )}
               <input
+                ref={passwordRef}
                 id="password"
                 name="password"
                 type="password"
