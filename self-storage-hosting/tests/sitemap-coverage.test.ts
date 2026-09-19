@@ -51,6 +51,8 @@ describe("sitemap coverage", () => {
       "/events",
       "/support",
       "/demo",
+      "/legal/privacy",
+      "/legal/terms",
     ]);
   });
 });

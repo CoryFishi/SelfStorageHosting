@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { ROUTES } from "@/lib/site";
+import { ROUTES, SITE } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 import { assertNoForbiddenTypes } from "@/lib/schema";
 import { formatDateRange } from "@/lib/dates";
@@ -173,6 +173,28 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       }
       expect(row, `${e.name}: no visible link to ${e.url}`).toContain(`href="${e.url}"`);
     }
+  });
+
+  it("loads nothing from another origin, as /legal/privacy says", () => {
+    // Tags whose URL the browser fetches while it renders the page. Links a
+    // visitor clicks (<a>) and the canonical and alternate <link>s are not
+    // fetched, so they are not counted. Read the raw HTML: visible() drops
+    // <script src> tags, and those are exactly what this test is for.
+    const fetched = built.flatMap((r) =>
+      [...read(r).matchAll(/<(?:script|img|iframe|link|source|video|audio)\b[^>]*>/g)]
+        .map((m) => m[0])
+        .filter((tag) => !/\brel="(?:canonical|alternate)"/.test(tag))
+        .map((tag) => ({ r, tag }))
+    );
+    // Proves the tag scan matches the markup Next actually writes.
+    expect(fetched.some(({ tag }) => /\bsrc="\/_next\/static\//.test(tag))).toBe(true);
+    const offsite = fetched.flatMap(({ r, tag }) =>
+      [...tag.matchAll(/\b(?:src|href|srcset)="(https?:\/\/[^"\s]+)/g)]
+        .map((u) => u[1])
+        .filter((u) => !u.startsWith(SITE.url))
+        .map((u) => `${r} -> ${u}`)
+    );
+    expect(offsite, `off-site resources: ${offsite.join(", ")}`).toEqual([]);
   });
 
   it("shows the exact outage wording where it is promised (spec 14 D3)", () => {

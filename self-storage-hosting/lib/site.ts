@@ -47,8 +47,8 @@ export const ROUTES: Record<string, { title: string; indexable: boolean; built: 
   "/events": { title: "Industry Events", indexable: true, built: true },
   "/support": { title: "Support & Diagnostics", indexable: true, built: true },
   "/demo": { title: "Request a Demo", indexable: true, built: true },
-  "/legal/privacy": { title: "Privacy Policy", indexable: true, built: false },
-  "/legal/terms": { title: "Terms of Service", indexable: true, built: false },
+  "/legal/privacy": { title: "Privacy Policy", indexable: true, built: true },
+  "/legal/terms": { title: "Terms of Service", indexable: true, built: true },
   "/legal/trademarks": { title: "Trademarks", indexable: true, built: false },
   "/legal/accessibility": { title: "Accessibility Statement", indexable: true, built: false },
   "/case-studies": { title: "Case Studies", indexable: false, built: true },
@@ -109,6 +109,7 @@ export const FOOTER: { heading: string; links: NavLink[] }[] = [
     heading: "Legal",
     links: [
       { href: "/legal/privacy", label: "Privacy Policy" },
+      { href: "/legal/privacy#security", label: "Security" },
       { href: "/legal/terms", label: "Terms" },
       { href: "/legal/trademarks", label: "Trademarks" },
       { href: "/legal/accessibility", label: "Accessibility" },
