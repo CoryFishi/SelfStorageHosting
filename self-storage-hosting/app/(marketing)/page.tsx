@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BiRightArrowAlt } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
+import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import Faq, { type FaqItem } from "@/components/Faq";
 import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
@@ -24,7 +25,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "What happens if the site loses internet?",
-    a: "The on-site controller keeps enforcing the access rules it already has, so tenants can still get in and out while the connection is down.",
+    a: OUTAGE_BEHAVIOR,
   },
   {
     // The original wording named two access-management capabilities that spec

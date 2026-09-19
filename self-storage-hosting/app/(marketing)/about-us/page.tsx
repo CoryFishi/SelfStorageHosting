@@ -11,6 +11,7 @@ import {
   BiRightArrowAlt,
 } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
+import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
 import Faq, { type FaqItem } from "@/components/Faq";
@@ -104,7 +105,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "What if site internet goes down?",
-    a: "Local controllers keep enforcing last-known rules. When the connection returns, changes resync automatically.",
+    a: OUTAGE_BEHAVIOR,
   },
   {
     q: "Do you integrate with my FMS?",

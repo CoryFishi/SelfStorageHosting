@@ -18,6 +18,10 @@ const files = DIRS.flatMap((d) => walkFrom(d)).map((f) => ({
 // inside this exact file, which Plan 3 will feed article/event data through).
 const SCHEMA = path.join("lib", "schema.ts");
 
+// The one file allowed to state outage behaviour in words. Every page renders
+// its OUTAGE_BEHAVIOR constant instead of paraphrasing it.
+const CLAIMS = path.join("lib", "claims.ts");
+
 const FORBIDDEN: [RegExp, string, string?][] = [
   [/\bStorEdge\b/, 'Use "Storable Edge" (renamed 2025-03-06)'],
   [/\bDigi Gate\b/, 'Use "DigiGate" (one word)'],
@@ -35,6 +39,13 @@ const FORBIDDEN: [RegExp, string, string?][] = [
   ],
   [/\bPMS\b/, 'Use "FMS" — the industry term is facility management software'],
   [/\breal[- ]time\b/i, 'Spec 13: remove "real time" or qualify it with a measured figure'],
+  [
+    // Spec 14 D3 is open: say nothing about admin changes made during an
+    // outage. Paraphrases drift towards exactly that ("changes resync").
+    /\bkeeps? enforcing\b|last-known rules|\bresync/i,
+    "Outage wording: render OUTAGE_BEHAVIOR from lib/claims.ts instead of paraphrasing it (spec 14 D3)",
+    CLAIMS,
+  ],
   [/99\.95\s*%/, "Unsubstantiated uptime claim — spec D3"],
   [/100\+\s*(managed\s*)?sites?/i, "Unsubstantiated scale claim — spec D3"],
   [/\d\s*[–-]\s*\d\s*seconds/, "Unsubstantiated latency claim — spec D3"],
@@ -59,5 +70,15 @@ describe("content policy", () => {
   it("actually walked real files", () => {
     expect(files.length).toBeGreaterThan(0);
     expect(files.map((f) => f.file)).toContain(SCHEMA);
+  });
+
+  it("renders the outage wording from lib/claims.ts", () => {
+    // Keeps the row above honest: if no page used the constant, the row
+    // would pass just as well on a site that had dropped the answer entirely.
+    const users = files
+      .filter((f) => f.file !== CLAIMS && /\bOUTAGE_BEHAVIOR\b/.test(f.text))
+      .map((f) => f.file);
+    // The home page, /about-us and /solutions/access-control-hosting.
+    expect(users.length, `OUTAGE_BEHAVIOR is rendered by: ${users.join(", ")}`).toBeGreaterThanOrEqual(3);
   });
 });
