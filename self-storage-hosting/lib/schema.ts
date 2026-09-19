@@ -118,12 +118,21 @@ export function articleSchema(a: {
   };
 }
 
+export type PostalAddressInput = {
+  streetAddress?: string;
+  addressLocality: string;
+  addressRegion: string;
+  postalCode?: string;
+  addressCountry: string;
+};
+
 export function eventSchema(e: {
   name: string;
   startDate: string;
   endDate?: string;
   locationName: string;
-  locationAddress: string;
+  address: PostalAddressInput;
+  organizer: string;
   url: string;
 }) {
   return {
@@ -132,12 +141,15 @@ export function eventSchema(e: {
     name: e.name,
     startDate: e.startDate,
     endDate: e.endDate ?? e.startDate,
+    // Every listed event was confirmed on its organizer's own page.
+    eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
       name: e.locationName,
-      address: e.locationAddress,
+      address: { "@type": "PostalAddress", ...e.address },
     },
+    organizer: { "@type": "Organization", name: e.organizer },
     url: e.url,
   };
 }

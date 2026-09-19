@@ -51,17 +51,21 @@ describe("schema builders", () => {
     expect(s.dateModified).toBe("2026-09-18");
   });
 
-  it("emits Event with a place location", () => {
+  it("emits Event with a postal address, an organizer and a status", () => {
     const s = eventSchema({
-      name: "SSAA Convention",
+      name: "Sample Conference",
       startDate: "2026-11-10",
       endDate: "2026-11-12",
-      locationName: "The Star Grand Gold Coast",
-      locationAddress: "Broadbeach, QLD, Australia",
-      url: "https://www.selfstorage.org.au/",
-    }) as { "@type": string; location: { "@type": string } };
+      locationName: "Sample Convention Center",
+      address: { addressLocality: "Springfield", addressRegion: "IL", addressCountry: "US" },
+      organizer: "Sample Association",
+      url: "https://example.org/conference",
+    });
     expect(s["@type"]).toBe("Event");
+    expect(s.eventStatus).toBe("https://schema.org/EventScheduled");
     expect(s.location["@type"]).toBe("Place");
+    expect(s.location.address).toMatchObject({ "@type": "PostalAddress", addressLocality: "Springfield" });
+    expect(s.organizer).toEqual({ "@type": "Organization", name: "Sample Association" });
   });
 });
 
@@ -109,7 +113,8 @@ describe("forbidden schema guard", () => {
           name: "n",
           startDate: "2026-11-10",
           locationName: "l",
-          locationAddress: "a",
+          address: { addressLocality: "c", addressRegion: "r", addressCountry: "US" },
+          organizer: "o",
           url: "https://example.org/",
         })
       )

@@ -48,6 +48,7 @@ describe("sitemap coverage", () => {
       "/solutions",
       "/solutions/access-control-hosting",
       "/solutions/web-hosting",
+      "/events",
       "/support",
       "/demo",
     ]);

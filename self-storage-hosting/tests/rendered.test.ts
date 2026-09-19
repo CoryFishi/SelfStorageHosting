@@ -4,6 +4,7 @@ import path from "node:path";
 import { ROUTES } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 import { assertNoForbiddenTypes } from "@/lib/schema";
+import { formatDateRange } from "@/lib/dates";
 import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import { PKG_ROOT } from "./helpers/walk";
 import { allowedLink } from "./helpers/links";
@@ -89,6 +90,24 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     for (const b of blocks) assertNoForbiddenTypes(b);
     const crumbs = blocks.some((b) => JSON.stringify(b).includes('"@type":"BreadcrumbList"'));
     expect(crumbs, `${r} BreadcrumbList present`).toBe(r !== "/");
+  });
+
+  it("shows a visible row for every Event it marks up on /events", () => {
+    const html = read("/events");
+    const shown = visible(html);
+    const events = jsonLd(html).filter(
+      (b): b is { name: string; url: string; startDate: string; endDate: string } =>
+        (b as { "@type"?: unknown })["@type"] === "Event"
+    );
+    // When this fails, every listed event has passed. It is not a code bug:
+    // lib/events.ts is due its quarterly review (spec 14 E1).
+    expect(events.length, "/events rendered no upcoming events; review lib/events.ts").toBeGreaterThan(0);
+    for (const e of events) {
+      expect(shown, `${e.name}: no visible link to ${e.url}`).toContain(`href="${e.url}"`);
+      expect(shown, `${e.name}: the visible dates do not match the markup`).toContain(
+        formatDateRange(e.startDate, e.endDate)
+      );
+    }
   });
 
   it("shows the exact outage wording where it is promised (spec 14 D3)", () => {
