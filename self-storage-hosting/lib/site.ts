@@ -40,7 +40,7 @@ export const ROUTES: Record<string, { title: string; indexable: boolean; built: 
 
   // Plan 2 builds everything below. Flip `built` in the same commit that
   // creates the page, never before.
-  "/solutions": { title: "Solutions", indexable: true, built: false },
+  "/solutions": { title: "Solutions", indexable: true, built: true },
   "/solutions/access-control-hosting": { title: "Cloud Self-Storage Access Control", indexable: true, built: false },
   "/solutions/web-hosting": { title: "Self-Storage Facility Websites", indexable: true, built: false },
   "/resources": { title: "Resources", indexable: true, built: false },
