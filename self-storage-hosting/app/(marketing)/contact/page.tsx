@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-import { breadcrumbSchema } from "@/lib/schema";
-import JsonLd from "@/components/JsonLd";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import ContactForm from "@/components/ContactForm";
 
 export const metadata: Metadata = pageMeta({
@@ -14,11 +13,11 @@ export const metadata: Metadata = pageMeta({
 export default function ContactPage() {
   return (
     <>
-      <JsonLd
-        data={breadcrumbSchema([
+      <Breadcrumbs
+        crumbs={[
           { name: "Home", path: "/" },
           { name: "Contact", path: "/contact" },
-        ])}
+        ]}
       />
       <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="text-3xl font-extrabold sm:text-4xl">Contact us</h1>

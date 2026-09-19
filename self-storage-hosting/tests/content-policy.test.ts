@@ -34,6 +34,7 @@ const FORBIDDEN: [RegExp, string, string?][] = [
     "Unsubstantiated security claim (spec 14B) - only TLS is verified",
   ],
   [/\bPMS\b/, 'Use "FMS" — the industry term is facility management software'],
+  [/\breal[- ]time\b/i, 'Spec 13: remove "real time" or qualify it with a measured figure'],
   [/99\.95\s*%/, "Unsubstantiated uptime claim — spec D3"],
   [/100\+\s*(managed\s*)?sites?/i, "Unsubstantiated scale claim — spec D3"],
   [/\d\s*[–-]\s*\d\s*seconds/, "Unsubstantiated latency claim — spec D3"],

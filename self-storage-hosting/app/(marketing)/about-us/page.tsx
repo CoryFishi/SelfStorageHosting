@@ -11,8 +11,7 @@ import {
   BiRightArrowAlt,
 } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
-import { breadcrumbSchema } from "@/lib/schema";
-import JsonLd from "@/components/JsonLd";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Faq, { type FaqItem } from "@/components/Faq";
 import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
@@ -57,8 +56,8 @@ const pillars = [
   },
   {
     icon: BiPulse,
-    title: "Real-Time Telemetry",
-    desc: "Live status for locks, gates, sensors, and battery health—actionable alerts, not noise.",
+    title: "Device Telemetry",
+    desc: "Status for locks, gates, sensors and battery health, with actionable alerts rather than noise.",
   },
   {
     icon: BiSupport,
@@ -121,11 +120,11 @@ const faqs: FaqItem[] = [
 export default function AboutUsPage() {
   return (
     <>
-      <JsonLd
-        data={breadcrumbSchema([
+      <Breadcrumbs
+        crumbs={[
           { name: "Home", path: "/" },
           { name: "About Us", path: "/about-us" },
-        ])}
+        ]}
       />
 
       {/* Hero */}

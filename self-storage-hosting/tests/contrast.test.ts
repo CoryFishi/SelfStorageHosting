@@ -50,6 +50,16 @@ const PAIRS: [string, string, string, number][] = [
   // item 8) were replaced. One row covers both usages: the token is the same,
   // and background-50 is what both are actually drawn on.
   ["about-us body copy and borders", "text-700", "background-50", 4.5],
+  // Text and icons drawn from the brand ramps. These tokens were in use on
+  // about-us, the home page and the contact form with no row measuring them,
+  // because the coverage scan only looked at the text-* ramp.
+  // Icons are non-text (WCAG 1.4.11, 3:1) but are held to the text minimum
+  // here, because the same tokens are used for text on the new pages.
+  ["primary text and links on light", "primary-700", "background-50", 4.5], // 5.79:1
+  ["primary icons on their accent tile", "primary-700", "accent-50", 4.5], // 5.84:1
+  ["accent icons on light", "accent-700", "background-50", 4.5], // 5.25:1
+  ["form success status", "accent-800", "background-50", 4.5], // 9.00:1
+  ["secondary icons on their tint", "secondary-700", "secondary-50", 4.5], // 5.57:1
   // Non-text tier, WCAG 1.4.11 (3.0:1). A focus indicator is the only thing a
   // keyboard user has to tell them where they are, and it is measured against
   // the colours ADJACENT to it -- which is why every ring below is specified
@@ -73,7 +83,17 @@ describe("WCAG AA contrast", () => {
     const used = new Set<string>();
     for (const f of sources) {
       const text = readFileSync(f, "utf8");
-      for (const m of text.matchAll(/\b(?:text|border)-(text-\d{2,3})\b/g)) used.add(m[1]);
+      // Text drawn from the brand ramps is measured too. Borders from those
+      // ramps are deliberately not: border-primary-500 divides the mobile
+      // menu at 2.42:1 on primary-700, a decorative separator with no WCAG
+      // minimum, and hover:border-accent-700 on the home cards is a hover
+      // flourish on a card that already has a visible border. text-red-700
+      // (form errors) is Tailwind's default palette, not a --color-* token in
+      // globals.css, so it cannot be read from here.
+      for (const m of text.matchAll(
+        /\b(?:text|border)-(text-\d{2,3})\b|\btext-((?:primary|secondary|accent)-\d{2,3})\b/g
+      ))
+        used.add(m[1] ?? m[2]);
     }
     const covered = new Set(PAIRS.map(([, fg]) => fg));
     const untested = [...used].filter((t) => !covered.has(t)).sort();
