@@ -29,9 +29,12 @@ describe("legal pages", () => {
     // Spec 14 C: the legal entity is an owner input that does not exist yet,
     // and the law that applies and how disputes are settled are counsel's to
     // write. A draft that states them reads as settled when it is not.
+    // Not "dispute": the terms page's own comment says "how disputes are
+    // settled" on purpose, describing what the owner or counsel must still
+    // decide, and that comment is meant to survive this guard.
     const found =
       source(route).match(
-        /\b(?:LLC|L\.L\.C\.|Inc\.|Incorporated|Ltd\b|Corp\.|Corporation|GmbH)|governing law|governed by|laws of the|jurisdiction|arbitration|class action/gi
+        /\b(?:P?LLC|L\.L\.C\.|LLP|Inc\.|Incorporated|Ltd\b|Corp\.|Corporation|GmbH)|governing law|governed by|laws of the|jurisdiction|arbitration|class action|courts? of/gi
       ) ?? [];
     expect(found, `${route} states: ${found.join(", ")}`).toEqual([]);
   });
@@ -40,7 +43,9 @@ describe("legal pages", () => {
     // How long messages and accounts are kept is the owner's decision. The one
     // duration these pages state is the sign-in cookie's lifetime, which the
     // backend sets in code.
-    const found = source(route).match(/\b(?:retain\w*|retention|kept for|keep \w+ for|delete\w* after)\b/gi) ?? [];
+    const found =
+      source(route).match(/\b(?:retain\w*|retention|kept for|keep \w+ for|delete\w* after|stored for|held for)\b/gi) ??
+      [];
     expect(found, `${route} states a retention period: ${found.join(", ")}`).toEqual([]);
   });
 
@@ -68,6 +73,20 @@ describe("/legal/privacy matches what the site does", () => {
   // Set by the form component to say which form was used. The visitor never types it.
   const SET_BY_THE_FORM = ["subject"];
 
+  // The text of the "When you send us a message" section only, up to (but
+  // not including) the next <h2>. "your name", "email address" and "message"
+  // each also appear elsewhere on the page (the account section repeats the
+  // first two; "messages" in the rate-limit paragraph contains "message" as
+  // a substring), so checking the whole page let a field be deleted from the
+  // form paragraph and still pass because some other section happened to say
+  // the same word for an unrelated reason.
+  function formSection(route: string): string {
+    const html = source(route);
+    const match = /<h2[^>]*>When you send us a message<\/h2>([\s\S]*?)<h2/.exec(html);
+    expect(match, `${route} has no "When you send us a message" section`).not.toBeNull();
+    return match![1];
+  }
+
   it("names every field the forms collect", () => {
     const r = validateContact({ name: "Dana Reyes", email: "dana@example.com", message: "Hello" });
     if (!r.ok) throw new Error("a minimal valid message was rejected");
@@ -76,18 +95,46 @@ describe("/legal/privacy matches what the site does", () => {
     expect(fields.length).toBeGreaterThanOrEqual(9);
     const unlisted = fields.filter((k) => !(k in DISCLOSED));
     expect(unlisted, `form fields the policy does not cover; add them to DISCLOSED and the policy: ${unlisted.join(", ")}`).toEqual([]);
-    const policy = source("/legal/privacy");
+    const section = formSection("/legal/privacy");
     const unsaid = Object.entries(DISCLOSED)
-      .filter(([, words]) => !policy.includes(words))
+      .filter(([, words]) => !section.includes(words))
       .map(([field]) => field);
     expect(unsaid, `the policy does not mention: ${unsaid.join(", ")}`).toEqual([]);
   });
 
-  it("names the email provider the contact route sends through", () => {
+  // The label before the public suffix, e.g. "resend" for "api.resend.com"
+  // and "amazonaws" for "email.us-east-1.amazonaws.com". A real public-suffix
+  // list is overkill for the handful of hosts this one route calls; none of
+  // them use a multi-part suffix like "co.uk".
+  function registrableLabel(host: string): string {
+    const parts = host.split(".");
+    return parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+  }
+
+  it("names every outbound host the contact route sends through", () => {
     const route = readFileSync(path.join(PKG_ROOT, "app", "api", "contact", "route.ts"), "utf8");
-    const provider = /fetch\(\s*"https:\/\/(?:api\.)?([a-z0-9-]+)\./.exec(route)?.[1];
-    expect(provider, "no outbound email call found in app/api/contact/route.ts").toBeDefined();
-    expect(source("/legal/privacy").toLowerCase(), `the policy does not name ${provider}`).toContain(provider!);
+    const hosts = [...route.matchAll(/fetch\(\s*"https:\/\/([a-z0-9.-]+)/gi)].map((m) => m[1]);
+    expect(hosts.length, 'no fetch("https://...") call found in app/api/contact/route.ts').toBeGreaterThan(0);
+    const policy = source("/legal/privacy").toLowerCase();
+    for (const host of hosts) {
+      const label = registrableLabel(host);
+      expect(policy, `the policy does not name ${label}`).toMatch(new RegExp(`\\b${label}\\b`, "i"));
+    }
+  });
+
+  it("backs the rate-limit claims with the contact route's own code", () => {
+    const route = readFileSync(path.join(PKG_ROOT, "app", "api", "contact", "route.ts"), "utf8");
+    // "each minute" (the privacy page) is only true while the window is 60
+    // seconds.
+    expect(route, 'the route\'s rate-limit window is no longer 60 seconds, so "each minute" is no longer true').toMatch(
+      /WINDOW_MS\s*=\s*60_000/
+    );
+    // "not written to a database or a log" (the privacy page) fails the day
+    // any console. line names the variable it is meant never to log.
+    const loggedIp = route.split("\n").some((line) => line.includes("console.") && /\bip\b/.test(line));
+    expect(loggedIp, "a console. line in the route names ip; the policy says the IP address is never logged").toBe(
+      false
+    );
   });
 
   it("describes the account data and the cookie the backend actually uses", () => {

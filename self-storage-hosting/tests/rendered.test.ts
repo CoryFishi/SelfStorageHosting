@@ -6,7 +6,7 @@ import { canonicalFor } from "@/lib/seo";
 import { assertNoForbiddenTypes } from "@/lib/schema";
 import { formatDateRange } from "@/lib/dates";
 import { OUTAGE_BEHAVIOR } from "@/lib/claims";
-import { PKG_ROOT } from "./helpers/walk";
+import { PKG_ROOT, walk } from "./helpers/walk";
 import { allowedLink } from "./helpers/links";
 
 // Checks the HTML that `next build` wrote, not the source that produced it.
@@ -176,24 +176,79 @@ describe.skipIf(!RUN)("rendered HTML", () => {
   });
 
   it("loads nothing from another origin, as /legal/privacy says", () => {
-    // Tags whose URL the browser fetches while it renders the page. Links a
-    // visitor clicks (<a>) and the canonical and alternate <link>s are not
-    // fetched, so they are not counted. Read the raw HTML: visible() drops
-    // <script src> tags, and those are exactly what this test is for.
-    const fetched = built.flatMap((r) =>
-      [...read(r).matchAll(/<(?:script|img|iframe|link|source|video|audio)\b[^>]*>/g)]
+    const siteOrigin = new URL(SITE.url).origin;
+
+    // Every URL a tag's src/href points to, plus every URL named in a
+    // srcset (comma-separated "url descriptor" entries -- only the URL part
+    // of each entry matters here).
+    function tagUrls(tag: string): string[] {
+      const urls = [...tag.matchAll(/\b(?:src|href)="([^"]*)"/g)].map((m) => m[1]);
+      for (const m of tag.matchAll(/\bsrcset="([^"]*)"/g)) {
+        for (const entry of m[1].split(",")) {
+          const url = entry.trim().split(/\s+/)[0];
+          if (url) urls.push(url);
+        }
+      }
+      return urls;
+    }
+
+    // Resolves against SITE.url so a bare "//host/path" (protocol-relative)
+    // and a relative "/path" both resolve the way a browser would, then
+    // compares origins rather than prefixes: a prefix check (u.startsWith)
+    // would wrongly clear "https://selfstoragehosting.com.evil.example/x".
+    // data:/mailto:/tel: URLs are inline or non-fetching, not off-site.
+    function isOffSite(url: string): boolean {
+      if (/^(?:data|mailto|tel|javascript):/i.test(url)) return false;
+      try {
+        return new URL(url, SITE.url).origin !== siteOrigin;
+      } catch {
+        return false;
+      }
+    }
+
+    const offsite: string[] = [];
+
+    for (const r of built) {
+      const html = read(r);
+      // Tags whose URL the browser fetches while it renders the page. Links a
+      // visitor clicks (<a>) and the canonical and alternate <link>s are not
+      // fetched, so they are not counted. Read the raw HTML: visible() drops
+      // <script src> tags, and those are exactly what this test is for.
+      const tags = [...html.matchAll(/<(?:script|img|iframe|link|source|video|audio)\b[^>]*>/g)]
         .map((m) => m[0])
-        .filter((tag) => !/\brel="(?:canonical|alternate)"/.test(tag))
-        .map((tag) => ({ r, tag }))
-    );
-    // Proves the tag scan matches the markup Next actually writes.
-    expect(fetched.some(({ tag }) => /\bsrc="\/_next\/static\//.test(tag))).toBe(true);
-    const offsite = fetched.flatMap(({ r, tag }) =>
-      [...tag.matchAll(/\b(?:src|href|srcset)="(https?:\/\/[^"\s]+)/g)]
-        .map((u) => u[1])
-        .filter((u) => !u.startsWith(SITE.url))
-        .map((u) => `${r} -> ${u}`)
-    );
+        .filter((tag) => !/\brel="(?:canonical|alternate)"/.test(tag));
+
+      // Proves the tag scan matches the markup Next actually writes, for
+      // THIS route -- checking it once for the whole site would still pass
+      // if only one of seventeen routes carried the proof tag.
+      expect(
+        tags.some((tag) => /\bsrc="\/_next\/static\//.test(tag)),
+        `${r} has no <script src="/_next/static/…"> tag; the tag scan may not be matching real markup`
+      ).toBe(true);
+
+      for (const tag of tags) {
+        for (const url of tagUrls(tag)) {
+          if (isOffSite(url)) offsite.push(`${r} -> ${url}`);
+        }
+      }
+    }
+
+    // The policy also promises the site's fonts and images come from this
+    // site -- which its built CSS could break on its own (a @font-face src
+    // or a background-image url()) even when every HTML tag above is clean.
+    const cssFiles = walk(path.join(PKG_ROOT, ".next", "static"), /\.css$/);
+    expect(cssFiles.length, "no built CSS files found under .next/static").toBeGreaterThan(0);
+    for (const file of cssFiles) {
+      const css = readFileSync(file, "utf8");
+      const rel = path.relative(PKG_ROOT, file);
+      for (const m of css.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)) {
+        if (isOffSite(m[2])) offsite.push(`${rel} -> ${m[2]}`);
+      }
+      for (const m of css.matchAll(/@import\s+(?:url\(\s*)?(['"])([^'")]+)\1/g)) {
+        if (isOffSite(m[2])) offsite.push(`${rel} -> ${m[2]}`);
+      }
+    }
+
     expect(offsite, `off-site resources: ${offsite.join(", ")}`).toEqual([]);
   });
 

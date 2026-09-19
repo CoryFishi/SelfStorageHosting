@@ -59,8 +59,8 @@ export default function PrivacyPage() {
         <p className="mt-4 text-text-800">
           We use what you send to reply to you and to prepare for the conversation you asked for.
           Our server checks the form, then sends it as an email through Resend, an email delivery
-          service, to our business inbox. Your email address is set as the reply-to address, so our
-          answer comes straight back to you. The website itself keeps no copy.
+          service, to our business inbox. The reply-to address on that email is the one you gave
+          us, so our answer comes straight back to you. The website itself keeps no copy.
         </p>
         <p className="mt-4 text-text-800">
           To stop the forms being flooded, our server also reads your IP address and counts the

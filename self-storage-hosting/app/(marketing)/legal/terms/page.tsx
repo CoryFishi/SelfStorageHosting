@@ -56,7 +56,7 @@ export default function TermsPage() {
         <p className="mt-4 text-text-800">
           We name other companies&apos; products to describe what our services work with, and we link
           to those companies&apos; own pages for support and events. We check those facts against the
-          companies&apos; own pages on the dates shown, but they can change. We do not control those
+          companies&apos; own pages, but they can change. We do not control those
           websites.
         </p>
 
