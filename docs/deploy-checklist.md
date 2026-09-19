@@ -16,15 +16,16 @@ Run after the first production deploy. Each needs owner access.
       crawl budget and splits signals.
       Where to flip it: production is served by **Netlify behind
       Cloudflare** today (responses carry `x-nf-request-id` and
-      `Server: cloudflare`), not Vercel as spec D1 plans. Make the apex the
-      primary domain in Netlify's domain management, and check Cloudflare
-      for a redirect rule doing the same thing — either one can produce this
-      301. If hosting moves to Vercel per D1, it is the Vercel project's
-      domain settings instead. Dashboard change, owner access, not code.
-- [ ] Hosting: confirm the host's build settings suit Next.js before the
-      first production deploy from this branch. The site was a Vite SPA, so
-      existing settings may publish `dist`, which `next build` does not
-      produce. The branch also deletes `public/_redirects` (its
+      `Server: cloudflare`), not Vercel as spec D1 plans, and Netlify's
+      public site record lists `www.selfstoragehosting.com` as the primary
+      custom domain — which is what produces this 301. Make the apex the
+      primary domain in Netlify's domain management. If hosting moves to
+      Vercel per D1, it is the Vercel project's domain settings instead.
+      Dashboard change, owner access, not code.
+- [ ] Hosting (optional tidy-up): the Netlify dashboard still lists the
+      Vite-era publish directory `dist`. It no longer matters —
+      `self-storage-hosting/netlify.toml` sets `publish = ".next"` and
+      file-based settings override the dashboard — but clearing it avoids
+      confusion. The branch also deletes `public/_redirects`, whose
       `/* /index.html 200` SPA fallback would have routed every URL to a
-      file Next.js never emits). A deploy preview that serves `/about-us`
-      and `/sitemap.xml` correctly is the check.
+      file Next.js never emits.

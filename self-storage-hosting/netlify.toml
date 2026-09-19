@@ -1,0 +1,13 @@
+# Netlify build settings, checked in so the repository decides how the site
+# builds rather than the dashboard. File-based settings override the UI, which
+# still carries the Vite-era publish directory `dist` -- a directory
+# `next build` never produces, so every deploy failed after a clean build.
+#
+# Paths are relative to this file's directory, which the dashboard sets as the
+# base directory. The Next.js adapter (@netlify/plugin-nextjs) is applied
+# automatically; it is deliberately not declared as a plugin here, because
+# declaring it means installing and pinning it, which opts out of Netlify's
+# automatic adapter updates.
+[build]
+  command = "npm run build"
+  publish = ".next"
