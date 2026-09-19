@@ -47,6 +47,7 @@ describe("sitemap coverage", () => {
       "/contact",
       "/solutions",
       "/solutions/access-control-hosting",
+      "/solutions/web-hosting",
       "/demo",
     ]);
   });

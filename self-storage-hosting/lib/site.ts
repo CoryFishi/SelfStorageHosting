@@ -42,7 +42,7 @@ export const ROUTES: Record<string, { title: string; indexable: boolean; built: 
   // creates the page, never before.
   "/solutions": { title: "Solutions", indexable: true, built: true },
   "/solutions/access-control-hosting": { title: "Cloud Self-Storage Access Control", indexable: true, built: true },
-  "/solutions/web-hosting": { title: "Self-Storage Facility Websites", indexable: true, built: false },
+  "/solutions/web-hosting": { title: "Self-Storage Facility Websites", indexable: true, built: true },
   "/resources": { title: "Resources", indexable: true, built: false },
   "/events": { title: "Industry Events", indexable: true, built: false },
   "/support": { title: "Support & Diagnostics", indexable: true, built: false },
