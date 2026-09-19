@@ -159,6 +159,9 @@ describe("auth input", () => {
     ["an operator object as the password", { email: "dana@example.com", password: { $ne: null } }],
     ["a missing password", { email: "dana@example.com" }],
     ["a blank email", { email: "   ", password: "whatever-123" }],
+    // Mongoose silently turns an array into $in, which is why this row matters.
+    ["an array as the email", { email: ["a@example.com", "b@example.com"], password: "whatever-123" }],
+    ["a number as the email", { email: 42, password: "whatever-123" }],
   ])("login refuses %s before querying", async (_label, body) => {
     const { findOne } = stubUsers();
     const res = await request(app).post("/api/users/login").send(body);
@@ -193,6 +196,19 @@ describe("auth input", () => {
     expect(res.status).toBe(401);
     expect(res.body.code).toBe("INVALID_LOGIN");
     expect(findOne).toHaveBeenCalledWith({ email: "dana@example.com" });
+  });
+
+  it("lets a legacy shape-only login through to the lookup", async () => {
+    // Register would refuse this password (too short), but login checks only
+    // the shape, so an account made before these rules existed can still
+    // reach the lookup and get a normal invalid-credentials answer.
+    const { findOne } = stubUsers();
+    const res = await request(app)
+      .post("/api/users/login")
+      .send({ email: "legacy@localhost", password: "x" });
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe("INVALID_LOGIN");
+    expect(findOne).toHaveBeenCalledWith({ email: "legacy@localhost" });
   });
 
   it("registers a valid account with a hashed password and sets the sign-in cookie", async () => {
