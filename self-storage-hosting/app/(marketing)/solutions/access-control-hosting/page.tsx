@@ -20,12 +20,12 @@ export const metadata: Metadata = pageMeta({
 // specific vendor's product, which is why none carries a citation.
 const pcRisks = [
   "The PC or its disk fails, and the gate stops receiving changes until the machine is replaced and set up again.",
-  "A Windows update restarts it overnight, and the sync program may not come back on its own.",
+  "A Windows update restarts it overnight, at a time nobody chose.",
   "Someone switches it off, or closes the program, at the end of the day.",
   "Reaching it from home means a VPN or port forwarding, on an internet connection whose IP address can change.",
   "Fixing it means a trip to the site, often after hours.",
   "Backups and restores are nobody's job until the day they are needed.",
-  "Its operating system reaches the end of its support life, and the gate software has to move with it.",
+  "Its operating system reaches the end of its support life, and whatever runs on it has to be moved or upgraded.",
 ];
 
 const flow = [
@@ -228,8 +228,9 @@ export default function AccessControlHostingPage() {
           From your facility management software to the gate
         </h2>
         <p className="mt-4 text-text-800">
-          Our bridges carry tenants, units, access levels and lockouts from your FMS to your access
-          control, including OpenTech Alliance&apos;s INSOMNIAC® CIA and DigiGate.{" "}
+          A bridge carries tenants, units, access levels and lockouts from your FMS to your access
+          control. We can bridge Storable Edge and Storable Easy to OpenTech Alliance&apos;s
+          INSOMNIAC® CIA and to DigiGate. Tell us your setup.{" "}
           <Link href="/about-us" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
             More about our FMS bridges
           </Link>

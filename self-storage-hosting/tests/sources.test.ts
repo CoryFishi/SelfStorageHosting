@@ -20,10 +20,14 @@ describe("cited sources", () => {
   });
 
   it("every source is cited by at least one page", () => {
-    // A source nobody cites is a URL nobody re-checks. Keys are matched as
-    // `SOURCES.<key>` in page source, which is the only way a page reaches them.
+    // A source nobody cites is a URL nobody re-checks. Keys are matched as a
+    // whole word after `SOURCES.` in page source, which is the only way a
+    // page reaches them. A plain substring match would also count a key as
+    // cited when it is only a prefix of another key's citation.
     const pages = walkFrom("app", /^page\.tsx$/).map((f) => readFileSync(f, "utf8")).join("\n");
-    const uncited = entries.map(([k]) => k).filter((k) => !pages.includes(`SOURCES.${k}`));
+    const uncited = entries
+      .map(([k]) => k)
+      .filter((k) => !new RegExp(`\\bSOURCES\\.${k}\\b`).test(pages));
     expect(uncited, `sources no page cites: ${uncited.join(", ")}`).toEqual([]);
   });
 });

@@ -75,8 +75,10 @@ describe("content policy", () => {
   it("renders the outage wording from lib/claims.ts", () => {
     // Keeps the row above honest: if no page used the constant, the row
     // would pass just as well on a site that had dropped the answer entirely.
+    // A render site, not a mention: imports and comments name the constant too.
+    const RENDERS_OUTAGE = /\{OUTAGE_BEHAVIOR\}|\ba:\s*OUTAGE_BEHAVIOR\b/;
     const users = files
-      .filter((f) => f.file !== CLAIMS && /\bOUTAGE_BEHAVIOR\b/.test(f.text))
+      .filter((f) => f.file !== CLAIMS && RENDERS_OUTAGE.test(f.text))
       .map((f) => f.file);
     // The home page, /about-us and /solutions/access-control-hosting.
     expect(users.length, `OUTAGE_BEHAVIOR is rendered by: ${users.join(", ")}`).toBeGreaterThanOrEqual(3);

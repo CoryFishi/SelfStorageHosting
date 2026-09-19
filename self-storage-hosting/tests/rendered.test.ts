@@ -4,6 +4,7 @@ import path from "node:path";
 import { ROUTES } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 import { assertNoForbiddenTypes } from "@/lib/schema";
+import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import { PKG_ROOT } from "./helpers/walk";
 import { allowedLink } from "./helpers/links";
 
@@ -88,5 +89,14 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     for (const b of blocks) assertNoForbiddenTypes(b);
     const crumbs = blocks.some((b) => JSON.stringify(b).includes('"@type":"BreadcrumbList"'));
     expect(crumbs, `${r} BreadcrumbList present`).toBe(r !== "/");
+  });
+
+  it("shows the exact outage wording where it is promised (spec 14 D3)", () => {
+    for (const r of ["/", "/about-us", "/solutions/access-control-hosting"]) {
+      expect(
+        visible(read(r)),
+        `${r} does not render the exact OUTAGE_BEHAVIOR text`
+      ).toContain(OUTAGE_BEHAVIOR);
+    }
   });
 });

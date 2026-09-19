@@ -251,11 +251,12 @@ export default function AboutUsPage() {
               </div>
               {/* Spec §14 D3 leaves a related outage-time behavior as an open
                   owner question, so this list sticks to ordinary operational
-                  practice rather than answering it. Continuity while offline
-                  is already covered by the home page's FAQ. */}
+                  practice rather than answering it. What happens during an
+                  outage is stated once, from OUTAGE_BEHAVIOR, in this page's
+                  FAQ. */}
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-700">
                 <li>Rolling updates</li>
-                <li>Health checks and graceful fallbacks on site outages</li>
+                <li>Health checks</li>
                 <li>Proactive monitoring and alerts</li>
               </ul>
             </div>
@@ -292,9 +293,10 @@ export default function AboutUsPage() {
             We bridge facility management software to your access control
           </h2>
           <p className="mt-3 text-text-700">
-            Including OpenTech Alliance’s INSOMNIAC® CIA and DigiGate. Our FMS
-            connectors keep tenants, units, access levels and lockouts in sync
-            with your access control.
+            We can bridge Storable Edge and Storable Easy to OpenTech
+            Alliance’s INSOMNIAC® CIA and to DigiGate. Tell us your setup. A
+            bridge carries tenants, units, access levels and lockouts from
+            your FMS to your access control.
           </p>
         </div>
 
