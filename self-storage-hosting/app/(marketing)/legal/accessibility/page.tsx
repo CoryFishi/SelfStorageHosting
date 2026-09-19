@@ -59,7 +59,7 @@ export default function AccessibilityPage() {
           AA. This statement is based on our own checks, not an outside audit.
         </p>
 
-        <h2 className="mt-10 text-2xl font-semibold">What we check</h2>
+        <h2 className="mt-10 text-2xl font-semibold">What we do</h2>
         <ul className="mt-4 list-disc space-y-2 pl-6 text-text-800">
           {checks.map((c) => (
             <li key={c}>{c}</li>

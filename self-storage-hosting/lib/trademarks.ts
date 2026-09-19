@@ -4,7 +4,8 @@
 //
 // Owners are plain company names, never with a legal suffix: their legal
 // entities were not verified. No registration status is claimed for any
-// mark. INSOMNIAC® keeps the ® its owner uses.
+// mark beyond the ® its owner prints on INSOMNIAC. INSOMNIAC® keeps the ®
+// its owner uses.
 export type ThirdPartyMark = { owner: string; marks: string[] };
 
 export const THIRD_PARTY_MARKS: ThirdPartyMark[] = [
@@ -13,7 +14,7 @@ export const THIRD_PARTY_MARKS: ThirdPartyMark[] = [
     marks: ["PTI", "StorLogix", "StorLogix Cloud", "FalconXT", "CloudController", "DigiGate"],
   },
   { owner: "OpenTech Alliance", marks: ["OpenTech Alliance", "INSOMNIAC® CIA"] },
-  { owner: "Storable", marks: ["Storable", "Sitelink", "Storable Edge", "Storable Easy"] },
+  { owner: "Storable", marks: ["Storable", "Sitelink by Storable", "Storable Edge", "Storable Easy"] },
   { owner: "Janus International", marks: ["Janus", "Nokē", "Nokē Smart Entry"] },
   { owner: "DoorKing", marks: ["DoorKing", "DKS"] },
   { owner: "Netlify", marks: ["Netlify"] },

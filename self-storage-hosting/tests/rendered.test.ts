@@ -267,8 +267,18 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       if (!uses[0]) bad.push(`${r}: the first INSOMNIAC has no ®`);
       if (uses.slice(1).some(Boolean)) bad.push(`${r}: ® repeated after the first use`);
     }
-    // /about-us, /contact, /demo, access control hosting, /support, /legal/trademarks.
-    expect(checked.length).toBeGreaterThanOrEqual(5);
+    const expectedRoutes = [
+      "/about-us",
+      "/contact",
+      "/demo",
+      "/solutions/access-control-hosting",
+      "/support",
+      "/legal/trademarks",
+    ];
+    expect(
+      checked,
+      `INSOMNIAC should appear on every one of ${expectedRoutes.join(", ")}; it was found on ${checked.join(", ")}`
+    ).toEqual(expect.arrayContaining(expectedRoutes));
     expect(bad, bad.join("; ")).toEqual([]);
   });
 

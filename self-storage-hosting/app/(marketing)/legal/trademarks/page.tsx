@@ -36,8 +36,9 @@ export default function TrademarksPage() {
         <p className="mt-2 text-sm text-text-700">Last updated {formatDate(LEGAL_UPDATED.trademarks)}</p>
         <p className="mt-6 text-text-800">
           This site names other companies and their products so we can say plainly which systems
-          our services work with, and where to find each vendor&apos;s own support. Those names
-          belong to their owners. We use them only to identify those companies and their products.
+          our services work with, where to find each vendor&apos;s own support, and which service
+          providers handle what you send us. Those names belong to their owners. We use them only
+          to identify those companies and their products.
         </p>
         <p className="mt-4 text-text-800">
           Naming a company here does not mean it sponsors or endorses us. We are not affiliated with
