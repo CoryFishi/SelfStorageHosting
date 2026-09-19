@@ -47,4 +47,20 @@ describe("auth client configuration", () => {
     const inline = src.match(/process\.env\.NEXT_PUBLIC_API_BASE/g) ?? [];
     expect(inline.length).toBe(1);
   });
+
+  it("says when accounts are unavailable instead of calling an undefined address", () => {
+    // Without an API base, `${API}/api/users/login` is "undefined/api/users/login",
+    // which the browser resolves against this site.
+    expect(src).toMatch(/available:\s*boolean/);
+    expect(src).toMatch(/if \(!API\) throw new AuthError\("UNAVAILABLE"/);
+  });
+
+  it("checks the user the server sends instead of casting it", () => {
+    expect(src, "a response is cast to User").not.toMatch(/\bas User\b/);
+    expect((src.match(/\btoUser\(/g) ?? []).length, "login, register and the profile check should each call toUser").toBe(3);
+  });
+
+  it("logs a failed profile check instead of swallowing it", () => {
+    expect(src).toMatch(/refreshProfile\(\)\.catch\(\(err\) => console\.error\(/);
+  });
 });

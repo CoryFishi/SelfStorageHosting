@@ -1,15 +1,17 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-
-export type User = { id: string; email: string; name?: string; createdAt?: string };
+import { AuthError, toUser, type User } from "@/lib/auth-form";
 
 const API = process.env.NEXT_PUBLIC_API_BASE;
+const AVAILABLE = Boolean(API);
 
 type AuthCtx = {
   user: User | null;
   ready: boolean;
-  error: string | null;
+  // False when the site was built without an account server address. The
+  // forms say so, instead of sending requests that cannot work.
+  available: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -18,15 +20,32 @@ type AuthCtx = {
 
 const Ctx = createContext<AuthCtx | undefined>(undefined);
 
-async function post(path: string, body: unknown) {
-  const res = await fetch(`${API}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    credentials: "include",
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
+// The server answers every failure with { code, message }. The code is kept
+// so the form can explain it with friendlyAuthError(). The message is for
+// the console, not for visitors.
+function errorFrom(data: unknown, status: number): AuthError {
+  const { code, message } = (data ?? {}) as { code?: unknown; message?: unknown };
+  return new AuthError(
+    typeof code === "string" ? code : "HTTP_ERROR",
+    typeof message === "string" ? message : `Request failed (${status})`
+  );
+}
+
+async function post(path: string, body: unknown): Promise<unknown> {
+  if (!API) throw new AuthError("UNAVAILABLE", "NEXT_PUBLIC_API_BASE is not set");
+  let res: Response;
+  try {
+    res = await fetch(`${API}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+  } catch (e) {
+    throw new AuthError("NETWORK", e instanceof Error ? e.message : String(e));
+  }
+  const data: unknown = await res.json().catch(() => ({}));
+  if (!res.ok) throw errorFrom(data, res.status);
   return data;
 }
 
@@ -34,18 +53,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   // When there is no API base there is nothing to await, so ready starts true.
   const [ready, setReady] = useState(!API);
-  const [error, setError] = useState<string | null>(null);
 
   const refreshProfile = useCallback(async () => {
+    if (!API) return;
     try {
       const res = await fetch(`${API}/api/users/profile`, { credentials: "include" });
       if (res.status === 401) {
         setUser(null);
         return;
       }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || `Profile failed (${res.status})`);
-      setUser(data.user as User);
+      const data: unknown = await res.json().catch(() => ({}));
+      if (!res.ok) throw errorFrom(data, res.status);
+      setUser(toUser(data));
     } finally {
       setReady(true);
     }
@@ -54,48 +73,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Runs only after mount, so nothing here affects prerendered HTML.
   useEffect(() => {
     if (!API) {
-      console.error("NEXT_PUBLIC_API_BASE is not set; auth requests will fail.");
+      console.error("NEXT_PUBLIC_API_BASE is not set; signing in is unavailable.");
       return;
     }
-    refreshProfile().catch(() => setReady(true));
+    // A failed check leaves the visitor signed out, which is safe. The reason
+    // still has to reach the console instead of disappearing.
+    refreshProfile().catch((err) => console.error("Could not check the signed-in account:", err));
   }, [refreshProfile]);
 
   const login = useCallback(async (email: string, password: string) => {
-    setError(null);
-    try {
-      const data = await post("/api/users/login", { email, password });
-      setUser(data.user as User);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Login failed");
-      throw e;
-    }
+    setUser(toUser(await post("/api/users/login", { email, password })));
   }, []);
 
   const register = useCallback(async (email: string, password: string, name?: string) => {
-    setError(null);
-    try {
-      const data = await post("/api/users/register", { email, password, name });
-      setUser(data.user as User);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Registration failed");
-      throw e;
-    }
+    setUser(toUser(await post("/api/users/register", { email, password, name })));
   }, []);
 
   const logout = useCallback(async () => {
-    setError(null);
-    try {
-      await post("/api/users/logout", {});
-      setUser(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Logout failed");
-      throw e;
-    }
+    await post("/api/users/logout", {});
+    setUser(null);
   }, []);
 
   const value = useMemo<AuthCtx>(
-    () => ({ user, ready, error, login, register, logout, refreshProfile }),
-    [user, ready, error, login, register, logout, refreshProfile]
+    () => ({ user, ready, available: AVAILABLE, login, register, logout, refreshProfile }),
+    [user, ready, login, register, logout, refreshProfile]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
