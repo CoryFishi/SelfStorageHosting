@@ -46,7 +46,7 @@ export const ROUTES: Record<string, { title: string; indexable: boolean; built: 
   "/resources": { title: "Resources", indexable: true, built: false },
   "/events": { title: "Industry Events", indexable: true, built: false },
   "/support": { title: "Support & Diagnostics", indexable: true, built: false },
-  "/demo": { title: "Request a Demo", indexable: true, built: false },
+  "/demo": { title: "Request a Demo", indexable: true, built: true },
   "/legal/privacy": { title: "Privacy Policy", indexable: true, built: false },
   "/legal/terms": { title: "Terms of Service", indexable: true, built: false },
   "/legal/trademarks": { title: "Trademarks", indexable: true, built: false },

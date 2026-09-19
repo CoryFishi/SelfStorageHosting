@@ -10,7 +10,24 @@ export type ContactPayload = {
   // Which form this came from, so /contact and Plan 2's /demo are
   // distinguishable in the inbox. Not user input - the component sets it.
   subject?: string;
+  timeline?: string;
 };
+
+// The /demo form's timeline select. A value that is not on this list is
+// dropped, not rejected. The select cannot produce one, so it came from a
+// script, and turning away a genuine lead over a field nobody typed would be
+// the wrong trade.
+export const TIMELINE_OPTIONS = [
+  "As soon as possible",
+  "Within 3 months",
+  "In 3–6 months",
+  "Just researching",
+] as const;
+
+function timeline(v: unknown): string | undefined {
+  const s = str(v);
+  return (TIMELINE_OPTIONS as readonly string[]).includes(s) ? s : undefined;
+}
 
 export type ValidationResult =
   | { ok: true; value: ContactPayload }
@@ -46,14 +63,22 @@ export function validateContact(input: unknown): ValidationResult {
   const email = str(raw.email);
   const message = str(raw.message);
 
+  // A demo request's qualification fields (facility count, FMS, gate system,
+  // timeline) already say what the visitor wants, so the free-text box is
+  // optional there. The general form has nothing else to go on.
+  const isDemo = str(raw.subject) === "demo";
+
   if (!name) errors.name = "Please enter your name.";
   else if (name.length > 200) errors.name = "That name is too long.";
 
   if (!email) errors.email = "Please enter your email address.";
   else if (!EMAIL.test(email)) errors.email = "Please enter a valid email address.";
 
-  if (!message) errors.message = "Please tell us what you need.";
-  else if (message.length > 5000) errors.message = "Please keep your message under 5000 characters.";
+  if (!message) {
+    if (!isDemo) errors.message = "Please tell us what you need.";
+  } else if (message.length > 5000) {
+    errors.message = "Please keep your message under 5000 characters.";
+  }
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
@@ -69,6 +94,7 @@ export function validateContact(input: unknown): ValidationResult {
       fms: opt(raw.fms),
       gateSystem: opt(raw.gateSystem),
       subject: opt(raw.subject),
+      timeline: timeline(raw.timeline),
     },
   };
 }

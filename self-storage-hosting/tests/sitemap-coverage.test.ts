@@ -41,7 +41,7 @@ describe("sitemap coverage", () => {
   });
 
   it("is actually checking something", () => {
-    expect(indexableRoutes()).toEqual(["/", "/about-us", "/contact"]);
+    expect(indexableRoutes()).toEqual(["/", "/about-us", "/contact", "/demo"]);
   });
 });
 

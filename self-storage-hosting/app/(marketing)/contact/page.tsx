@@ -26,7 +26,7 @@ export default function ContactPage() {
           gate hardware is on site. We will tell you plainly whether we can bridge it.
         </p>
         <div className="mt-10">
-          <ContactForm subject="general" />
+          <ContactForm />
         </div>
       </section>
     </>

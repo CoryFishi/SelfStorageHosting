@@ -12,8 +12,9 @@ import {
 } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import CtaBand from "@/components/CtaBand";
 import Faq, { type FaqItem } from "@/components/Faq";
-import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
+import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export const metadata: Metadata = pageMeta({
   title: "About Us",
@@ -346,33 +347,12 @@ export default function AboutUsPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-6 pb-24">
-        <div className="flex flex-col items-center justify-between gap-6 rounded-3xl bg-primary-700 p-8 text-text-50 md:flex-row">
-          <div>
-            <h2 className="text-2xl font-semibold">
-              Ready to modernize your sites?
-            </h2>
-            <p className="mt-1 text-accent-200">
-              Get a tailored plan for your facilities and integrations.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link
-              href="/contact"
-              className={`rounded-full bg-background-50 px-6 py-3 text-primary-700 shadow transition hover:scale-[1.02] hover:bg-background-100 ${FOCUS_RING}`}
-            >
-              Book a demo
-            </Link>
-            <Link
-              href="/"
-              className={`rounded-full border border-text-50 px-6 py-3 text-text-50 transition hover:bg-text-50/10 ${FOCUS_RING}`}
-            >
-              Go to homepage
-            </Link>
-          </div>
-        </div>
-      </section>
+      <CtaBand
+        heading="Ready to modernize your sites?"
+        text="Get a tailored plan for your facilities and integrations."
+        primary={{ href: "/demo", label: "Book a demo" }}
+        secondary={{ href: "/contact", label: "Talk to us" }}
+      />
     </>
   );
 }

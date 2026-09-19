@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
-import { interpretResponse } from "@/lib/contact";
+import { interpretResponse, TIMELINE_OPTIONS } from "@/lib/contact";
 
 type Errors = Record<string, string>;
 type Status = "idle" | "sending" | "sent" | "error";
 
-export default function ContactForm({ subject = "general" }: { subject?: string }) {
+// "demo" adds the timeline question, makes the message optional and changes
+// the button label. The subject tells the two apart in the inbox. It is
+// derived here, not passed in, so a page cannot send a subject the validator
+// does not know.
+export default function ContactForm({ variant = "contact" }: { variant?: "contact" | "demo" }) {
+  const isDemo = variant === "demo";
+  const subject = isDemo ? "demo" : "general";
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Errors>({});
   const [message, setMessage] = useState("");
@@ -156,15 +162,41 @@ export default function ContactForm({ subject = "general" }: { subject?: string 
           />
         </div>
 
+        {isDemo && (
+          <div className="sm:col-span-2">
+            <label htmlFor="timeline" className="font-medium">
+              When are you looking to switch?{" "}
+              <span className="font-normal text-text-700">(optional)</span>
+            </label>
+            <select id="timeline" name="timeline" defaultValue="" className={field}>
+              <option value="">Choose one</option>
+              {TIMELINE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="sm:col-span-2">
           <label htmlFor="message" className="font-medium">
-            What do you need? <span aria-hidden="true">*</span>
+            {isDemo ? (
+              <>
+                Anything we should know?{" "}
+                <span className="font-normal text-text-700">(optional)</span>
+              </>
+            ) : (
+              <>
+                What do you need? <span aria-hidden="true">*</span>
+              </>
+            )}
           </label>
           <textarea
             id="message"
             name="message"
             rows={5}
-            required
+            required={!isDemo}
             maxLength={5000}
             aria-invalid={!!errors.message}
             aria-describedby={errors.message ? "message-error" : undefined}
@@ -181,9 +213,9 @@ export default function ContactForm({ subject = "general" }: { subject?: string 
       <button
         type="submit"
         disabled={status === "sending"}
-        className={`mt-6 rounded-full bg-accent-500 px-6 py-3 font-semibold text-text-950 transition hover:bg-accent-400 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING_LIGHT}`}
+        className={`mt-6 rounded-full bg-accent-500 px-6 py-3 font-semibold text-text-950 transition hover:bg-accent-400 disabled:cursor-not-allowed disabled:bg-background-200 ${FOCUS_RING_LIGHT}`}
       >
-        {status === "sending" ? "Sending…" : "Send message"}
+        {status === "sending" ? "Sending…" : isDemo ? "Request a demo" : "Send message"}
       </button>
 
       {/* Announced to screen readers without stealing focus. */}

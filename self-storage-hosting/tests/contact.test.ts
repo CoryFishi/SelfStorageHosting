@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { validateContact, interpretResponse } from "@/lib/contact";
+import { validateContact, interpretResponse, TIMELINE_OPTIONS } from "@/lib/contact";
 import { POST } from "@/app/api/contact/route";
 
 const valid = {
@@ -67,6 +67,38 @@ describe("validateContact", () => {
       ok: true,
       value: { name: "Dana Reyes" },
     });
+  });
+});
+
+describe("demo requests", () => {
+  const demo = { name: "Dana Reyes", email: "dana@example.com", subject: "demo" };
+
+  // Every case below asserts unconditionally, in the style of the "trims
+  // whitespace" case above. A branch that only asserts when r.ok is true
+  // passes vacuously when the validator wrongly rejects.
+  it("may omit the message, because the qualification fields say what they want", () => {
+    expect(validateContact(demo)).toMatchObject({ ok: true, value: { subject: "demo" } });
+  });
+
+  it("still requires a message on the general form", () => {
+    const r = validateContact({ ...demo, subject: "general" });
+    expect(r.ok ? [] : Object.keys(r.errors)).toEqual(["message"]);
+  });
+
+  it("still caps a demo message at 5000 characters", () => {
+    expect(validateContact({ ...demo, message: "x".repeat(5001) }).ok).toBe(false);
+  });
+
+  it("keeps a timeline that is one of the listed options", () => {
+    expect(validateContact({ ...demo, timeline: TIMELINE_OPTIONS[1] })).toMatchObject({
+      ok: true,
+      value: { timeline: "Within 3 months" },
+    });
+  });
+
+  it("drops a timeline that is not one of the listed options", () => {
+    const r = validateContact({ ...demo, timeline: "Tomorrow, or else" });
+    expect(r.ok ? r.value.timeline : "rejected instead of dropped").toBeUndefined();
   });
 });
 
