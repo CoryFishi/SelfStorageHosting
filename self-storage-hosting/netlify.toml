@@ -1,0 +1,21 @@
+# Netlify build settings, checked in so the repository decides how the site
+# builds rather than the dashboard. File-based settings override the UI, which
+# still carries the Vite-era publish directory `dist` -- a directory
+# `next build` never produces, so every deploy failed after a clean build.
+#
+# Paths are relative to this file's directory, which the dashboard sets as the
+# base directory.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# The Next.js adapter must be declared here. Netlify provisions it automatically
+# only when it detects Next.js at the moment a repository is linked, and this
+# site was linked while it was a Vite app -- so without this entry the build
+# succeeds, the raw .next directory is published as static files, and every
+# URL, the API route included, answers 404 while the deploy reports "ready".
+# Declared here but NOT added to package.json on purpose: Netlify installs the
+# latest adapter at build time, which is what it recommends. Adding it to
+# package.json would pin it and opt out of automatic adapter updates.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

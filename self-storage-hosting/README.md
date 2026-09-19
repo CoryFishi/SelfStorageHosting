@@ -1,69 +1,47 @@
-# React + TypeScript + Vite
+# Self Storage Hosting — Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Next.js 16 App Router marketing site for selfstoragehosting.com.
 
-Currently, two official plugins are available:
+## Develop
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+    npm install
+    cp .env.example .env.local   # then fill in the values
+    npm run dev
 
-## Expanding the ESLint configuration
+The API lives in `../backend` and must be running for the auth pages:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+    cd ../backend
+    cp .env.example .env         # then fill in the values
+    npm install
+    npm run dev
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+The API needs a reachable MongoDB (a local `mongod` or an Atlas URI in
+`MONGODB_URI`); it exits with `Failed to start API` if it cannot connect.
+`JWT_SECRET` is optional in development and **required in production** —
+the process refuses to start without it.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## Scripts
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `npm run dev` — dev server
+- `npm run build` — production build
+- `npm test` — Vitest (SEO, routing, link integrity, content policy)
+- `npm run lint` — ESLint
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Conventions
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Routes, navigation and footer data live in `lib/site.ts`. Adding a page
+  means adding it there; the sitemap and the link-integrity test read from it.
+- Page metadata goes through `pageMeta()` in `lib/seo.ts`. Never put the brand
+  name in a page title — the root layout template appends it.
+- JSON-LD goes through `lib/schema.ts`. `FAQPage`, `SoftwareApplication`,
+  `Product`, `aggregateRating`, `review`, `SearchAction` and `LocalBusiness`
+  are blocked and will fail the build.
+- No unverified metrics in copy: no uptime percentage, latency figure or site
+  count, and no security claim beyond TLS until the owner substantiates it.
+  `tests/content-policy.test.ts` catches the specific phrasings it knows
+  about — it is a backstop, not a substitute for reading new copy before it
+  ships.
+- No `opacity-*` utility on text sitting on the dark chrome —
+  `tests/contrast.test.ts` reads raw tokens and cannot see a composited colour.
+- See `docs/superpowers/specs/2026-09-18-website-completion-seo-design.md`
+  for the full content and copy rules.

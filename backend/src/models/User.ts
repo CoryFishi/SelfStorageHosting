@@ -11,7 +11,7 @@ const UserSchema = new mongoose.Schema(
       trim: true,
     },
     passwordHash: { type: String, required: true },
-    role: { type: String, required: true },
+    role: { type: String, required: true, default: "user" },
     name: { type: String },
   },
   { timestamps: true }
