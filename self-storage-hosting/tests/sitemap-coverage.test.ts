@@ -50,6 +50,7 @@ describe("sitemap coverage", () => {
       "/solutions/web-hosting",
       "/resources",
       "/resources/falconxt-end-of-life",
+      "/resources/gate-not-syncing",
       "/events",
       "/support",
       "/demo",

@@ -32,6 +32,14 @@ export const ARTICLES: readonly Article[] = [
       "PTI lists FalconXT and the StorLogix Cloud Adaptor as legacy products it no longer sells or supports. Every path forward, each one cited to its vendor.",
     datePublished: "2026-09-19",
   },
+  {
+    slug: "gate-not-syncing",
+    headline: "Why Your Gate Isn't Syncing With Your Storage Software: A Diagnostic Guide",
+    title: "Gate Not Syncing With Storage Software",
+    description:
+      "Find out why gate codes stop matching your storage software, step by step, using the vendors' own troubleshooting documents.",
+    datePublished: "2026-09-19",
+  },
 ];
 
 export const articlePath = (slug: string): string => `/resources/${slug}`;
