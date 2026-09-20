@@ -23,7 +23,16 @@ export type Article = {
   dateModified?: string;
 };
 
-export const ARTICLES: readonly Article[] = [];
+export const ARTICLES: readonly Article[] = [
+  {
+    slug: "falconxt-end-of-life",
+    headline: "PTI FalconXT and StorLogix Cloud Adaptor End of Life: Every Option You Actually Have",
+    title: "FalconXT End of Life: Your Options",
+    description:
+      "PTI lists FalconXT and the StorLogix Cloud Adaptor as legacy products it no longer sells or supports. Every path forward, each one cited to its vendor.",
+    datePublished: "2026-09-19",
+  },
+];
 
 export const articlePath = (slug: string): string => `/resources/${slug}`;
 

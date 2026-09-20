@@ -49,6 +49,7 @@ describe("sitemap coverage", () => {
       "/solutions/access-control-hosting",
       "/solutions/web-hosting",
       "/resources",
+      "/resources/falconxt-end-of-life",
       "/events",
       "/support",
       "/demo",

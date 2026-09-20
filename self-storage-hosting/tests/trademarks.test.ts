@@ -12,10 +12,15 @@ import { WATCHLIST, words } from "./helpers/brands";
 const DIRS = ["app", "components", "lib"];
 const TRADEMARKS_FILE = path.join(PKG_ROOT, "lib", "trademarks.ts");
 
+// URLs are link targets, never printed text, so they are removed before the
+// words are counted. Otherwise a vendor's URL slug (".../noke-smart-entry...")
+// would count as the site printing a spelling it never shows a reader.
+const URL_PATTERN = /https?:\/\/[^\s"'`)]+/g;
+
 function wordsUnder(dir: string): Set<string> {
   const text = walkFrom(dir, /\.tsx?$/)
     .filter((f) => f !== TRADEMARKS_FILE)
-    .map((f) => readFileSync(f, "utf8"))
+    .map((f) => readFileSync(f, "utf8").replace(URL_PATTERN, " "))
     .join("\n");
   return words(text);
 }
