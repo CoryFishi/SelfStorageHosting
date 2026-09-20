@@ -102,7 +102,7 @@ const COMPUTER_ROWS: readonly ComputerRow[] = [
   {
     key: "doorking-wam",
     system: "DoorKing Windows Account Manager",
-    says: "Designed to be installed on one PC.",
+    says: "The software was designed to reside on one PC.",
     sources: [SOURCES.doorkingWindowsAccountManager],
   },
   {
@@ -120,7 +120,7 @@ const COMPUTER_ROWS: readonly ComputerRow[] = [
   {
     key: "sitelink-hardware",
     system: "Sitelink Web Edition",
-    says: "A computer is required to use Sitelink Web Edition: Windows 11 or newer, with Windows 7, 8, 8.1 and 10 no longer supported. This is the computer you run Sitelink on, not a gate computer.",
+    says: "A computer is required to use Sitelink Web Edition: Windows 11 or newer, with Windows 7, 8, 8.1 and 10 no longer supported.",
     sources: [SOURCES.sitelinkRecommendedHardware],
   },
 ];
@@ -250,13 +250,18 @@ export default function ArticlePage() {
             </tbody>
           </table>
         </div>
+        <p className="mt-4 text-text-800">
+          One note on that last row: the Sitelink Web Edition requirement above is for the computer
+          you run Sitelink on, not a gate computer.
+        </p>
 
         <h3 className="mt-8 text-xl font-semibold">Storable Easy and Storable Edge</h3>
         <p className="mt-4 text-text-800">
           Storable&apos;s help pages refer to your computer without saying where it has to be.
-          Storable Edge&apos;s gate integration page lists INSOMNIAC CIA and Storable Access Control
-          among its integrations, but its same-computer sentence does not name those two, and the page
-          does not say whether they need the gate program. <SourceLink source={SOURCES.storableEdgeGateIntegration} /> Our{" "}
+          Storable Edge&apos;s gate integration page lists Storable Access Control among its
+          integrations, and lists INSOMNIAC CIA too, though the page&apos;s own list names it
+          OpenTech CIA. Its same-computer sentence does not name either one, and the page does not
+          say whether they need the gate program. <SourceLink source={SOURCES.storableEdgeGateIntegration} /> Our{" "}
           <Link href="/resources/self-storage-gate-compatibility" className={link}>
             self-storage gate compatibility matrix
           </Link>{" "}
