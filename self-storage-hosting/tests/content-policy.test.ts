@@ -15,7 +15,7 @@ const files = DIRS.flatMap((d) => walkFrom(d)).map((f) => ({
 // exempted from those two patterns only -- not from any of the others, which
 // it must obey like every other file (spec-driven correction: a blanket
 // exemption would also hide a brand-name or unsubstantiated-claim violation
-// inside this exact file, which Plan 3 will feed article/event data through).
+// inside this exact file, which article and event data pass through).
 const SCHEMA = path.join("lib", "schema.ts");
 
 // The one file allowed to state outage behaviour in words. Every page renders
@@ -91,6 +91,44 @@ describe("content policy", () => {
   it("actually walked real files", () => {
     expect(files.length).toBeGreaterThan(0);
     expect(files.map((f) => f.file)).toContain(SCHEMA);
+  });
+
+  // Microsoft runs two Extended Security Updates programmes for Windows 10 on
+  // different terms, and October 12, 2027 is the consumer one's end date. No
+  // row above can catch this: the date is not forbidden, only detaching it
+  // from the consumer programme is. Move it onto the commercial programme and
+  // every gate stays green while the site states a third party's support
+  // terms wrongly -- the most expensive kind of error this site can make.
+  //
+  // The window is the 240 characters of whitespace-collapsed source that end
+  // at the date. The scoping clause sits 134 characters before it today, so
+  // the sentence has room to be reworded; a "consumer" further back than that
+  // belongs to an earlier sentence and must not be allowed to vouch for this
+  // claim. "commercial" inside the window means the date has drifted onto the
+  // other programme. Whitespace is collapsed first because JSX wraps the
+  // sentence across four lines.
+  it("keeps October 12, 2027 scoped to Microsoft's consumer ESU programme", () => {
+    const DATE = "October 12, 2027";
+    const CONSUMER = /\bconsumer\b[^.]{0,60}?(?:\bExtended Security Updates\b|\bESU\b)/i;
+    const WINDOW = 240;
+    const bad: string[] = [];
+    let checked = 0;
+    for (const f of files) {
+      const text = f.text.replace(/\s+/g, " ");
+      for (let i = text.indexOf(DATE); i !== -1; i = text.indexOf(DATE, i + 1)) {
+        checked++;
+        const before = text.slice(Math.max(0, i - WINDOW), i);
+        if (!CONSUMER.test(before)) {
+          bad.push(`${f.file}: "${DATE}" is not scoped to Microsoft's consumer ESU programme`);
+        } else if (/\bcommercial\b/i.test(before)) {
+          bad.push(`${f.file}: "${DATE}" reads as the commercial programme's date`);
+        }
+      }
+    }
+    // Without this the rule passes on a site that never states the date at
+    // all, which is exactly how a guard ships green while asserting nothing.
+    expect(checked, `no file states "${DATE}"; delete this guard or fix the scan`).toBeGreaterThan(0);
+    expect(bad, bad.join("; ")).toEqual([]);
   });
 
   it("renders the outage wording from lib/claims.ts", () => {

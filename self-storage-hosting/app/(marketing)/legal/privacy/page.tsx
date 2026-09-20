@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/dates";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
-// DRAFT FOR OWNER OR COUNSEL REVIEW BEFORE PR #1 MERGES. Not legal advice.
+// DRAFT FOR OWNER OR COUNSEL REVIEW. Not legal advice.
 //
 // This page describes what the website's code does with personal
 // information, checked against the code on the date in lib/legal.ts. The

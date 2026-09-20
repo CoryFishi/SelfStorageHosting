@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { NAMES_WITHOUT_CONFIRMED_OWNER, THIRD_PARTY_MARKS } from "@/lib/trademarks";
 import { PKG_ROOT, walkFrom } from "./helpers/walk";
-import { WATCHLIST, words } from "./helpers/brands";
+import { VERBATIM_NAMES, WATCHLIST, words } from "./helpers/brands";
 
 // Everything the site renders comes from these three directories. lib/trademarks.ts
 // is excluded from every directory's word set below: it is the list this page
@@ -30,6 +30,25 @@ function wordsUnder(dir: string): Set<string> {
 // three (which would still look non-empty if one directory silently dropped
 // out of the scan).
 const perDir = new Map(DIRS.map((d) => [d, wordsUnder(d)] as const));
+
+// The same source text the word sets are built from, kept as prose instead of
+// split into words, so a multi-word name can be matched whole. Whitespace is
+// collapsed first: JSX wraps a long name across two lines, and "Storable
+// Access\n          Control" is still the site printing "Storable Access
+// Control". Lower-cased, because the site's own casing is checked elsewhere
+// (lib/trademarks.ts documents the Winsen/WinSen split) and this guard is
+// about whether a name is listed at all.
+const siteProse = DIRS.map((d) =>
+  walkFrom(d, /\.tsx?$/)
+    .filter((f) => f !== TRADEMARKS_FILE)
+    .map((f) => readFileSync(f, "utf8").replace(URL_PATTERN, " "))
+    .join("\n")
+)
+  .join("\n")
+  .replace(/\s+/g, " ")
+  .toLowerCase();
+
+const printsInFull = (name: string) => siteProse.includes(name.replace(/\s+/g, " ").toLowerCase());
 
 describe("/legal/trademarks", () => {
   const used = new Set<string>();
@@ -59,6 +78,52 @@ describe("/legal/trademarks", () => {
   it("lists every third-party name the site uses", () => {
     const missing = WATCHLIST.filter((w) => used.has(w.toLowerCase()) && !listed.has(w.toLowerCase()));
     expect(missing, `named on the site but not on /legal/trademarks: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  // Every owner, mark and unconfirmed name exactly as lib/trademarks.ts
+  // spells it, for the two checks below. Whole strings, not words: that is
+  // the whole point of them.
+  const listedVerbatim = new Set(
+    [...THIRD_PARTY_MARKS.flatMap((m) => [m.owner, ...m.marks]), ...NAMES_WITHOUT_CONFIRMED_OWNER].map((n) =>
+      n.replace(/\s+/g, " ").toLowerCase()
+    )
+  );
+
+  it("finds the full-length names it is meant to check", () => {
+    // Keeps the next case honest. It only asks about names the site prints,
+    // so an entry the site stopped printing would sit there passing on
+    // nothing. When this fails, either a page dropped the name -- delete the
+    // VERBATIM_NAMES entry -- or the scan above is broken.
+    const unused = VERBATIM_NAMES.filter((n) => !printsInFull(n));
+    expect(
+      unused,
+      `VERBATIM_NAMES entries no page prints any more; remove them or fix the scan: ${unused.join(", ")}`
+    ).toEqual([]);
+  });
+
+  it("lists every full-length name the site prints, spelled out in full", () => {
+    // The word-set case above cannot see these: see VERBATIM_NAMES in
+    // tests/helpers/brands.ts for why, and why they cannot live on WATCHLIST.
+    const missing = VERBATIM_NAMES.filter(
+      (n) => printsInFull(n) && !listedVerbatim.has(n.replace(/\s+/g, " ").toLowerCase())
+    );
+    expect(
+      missing,
+      `printed in full on the site but not listed in full on /legal/trademarks: ${missing.join(", ")}`
+    ).toEqual([]);
+  });
+
+  it("gives every owner at least one mark of its own", () => {
+    // "lists every third-party name the site uses" pools every owner and
+    // every mark into one bag of words, so an owner keeps its own name in
+    // that bag after its marks are emptied. Emptying Microsoft's marks drops
+    // the site's attribution of Windows and leaves every other case here
+    // green, because DoorKing's "Windows Account Manager" still contributes
+    // the word "windows".
+    const bad = THIRD_PARTY_MARKS.filter(
+      (m) => m.marks.length === 0 || m.marks.some((k) => k.trim() === "") || m.owner.trim() === ""
+    ).map((m) => m.owner || "(unnamed owner)");
+    expect(bad, `owners listed with no mark, or with a blank name: ${bad.join(", ")}`).toEqual([]);
   });
 
   it("names each owner without a legal suffix it has not verified", () => {

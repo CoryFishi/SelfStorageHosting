@@ -7,7 +7,7 @@ import { NAMES_WITHOUT_CONFIRMED_OWNER, THIRD_PARTY_MARKS } from "@/lib/trademar
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
-// DRAFT FOR OWNER OR COUNSEL REVIEW BEFORE PR #1 MERGES. Not legal advice.
+// DRAFT FOR OWNER OR COUNSEL REVIEW. Not legal advice.
 //
 // Lists the third-party names the site uses (lib/trademarks.ts) and says why
 // we use them. It claims no registration status for any mark, and it names

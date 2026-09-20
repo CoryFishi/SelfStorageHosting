@@ -29,9 +29,10 @@ export function assertNoForbiddenTypes(node: unknown): void {
       if (key === "@type") {
         const types = Array.isArray(value) ? value : [value];
         for (const t of types) {
-          // Case-insensitive on purpose. Every @type this file emits today is
-          // a hardcoded literal, but Plan 3 folds article and event data in
-          // from outside, and "faqpage" must not slip past the one guard.
+          // Case-insensitive on purpose. Every @type this file emits is a
+          // hardcoded literal, but articleSchema and eventSchema pass data from
+          // lib/articles.ts and lib/events.ts through here, and "faqpage" must
+          // not slip past the one guard.
           if (FORBIDDEN_LOWER.has(String(t).toLowerCase())) {
             throw new Error(
               `Forbidden JSON-LD type "${t}" at ${path}. See spec section 7.2 — this type no longer earns a rich result, or requires data we do not have.`
