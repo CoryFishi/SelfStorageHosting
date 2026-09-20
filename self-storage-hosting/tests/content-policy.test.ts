@@ -75,6 +75,42 @@ const FORBIDDEN: [RegExp, string, string?][] = [
   [/aggregateRating/, "Requires review data we do not have — spec 7.2", SCHEMA],
 ];
 
+// A .tsx page reduced to the prose a reader sees, so a rule can reason about
+// sentences instead of about source. Comments go first; then JSX tags, which
+// carry every `<SourceLink source={SOURCES.x} />` away with them, so a
+// `SOURCES.x` reference can neither break a sentence in two nor push the rest
+// of one out of reach; then the JSX expression containers left over, such as
+// {" "} and {link}; then HTML entities; then whitespace. Two brace passes
+// handle one level of nesting, which is all these pages use in running text.
+export function prose(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/^[ \t]*\/\/.*$/gm, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\{[^{}]*\}/g, " ")
+    .replace(/\{[^{}]*\}/g, " ")
+    .replace(/&apos;|&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ");
+}
+
+// The sentence of `text` containing the character at `at`, and the part of it
+// that comes before that character. A sentence ends at . ! or ? followed by
+// whitespace and a capital, so neither "Oct. 12" nor a decimal nor an
+// abbreviation mid-sentence splits one.
+export function sentenceAt(text: string, at: number): { sentence: string; before: string } {
+  const boundaries = [...text.slice(0, at).matchAll(/[.!?]\s+(?=[A-Z])/g)];
+  const lastEnd = boundaries.at(-1);
+  const start = lastEnd === undefined ? 0 : lastEnd.index + lastEnd[0].length;
+  const after = text.slice(at);
+  const endMatch = /[.!?](?:\s+(?=[A-Z])|\s*$)/.exec(after);
+  const end = at + (endMatch === null ? after.length : endMatch.index + 1);
+  return { sentence: text.slice(start, end), before: text.slice(start, at) };
+}
+
 describe("content policy", () => {
   it.each(FORBIDDEN)("never contains %s", (pattern, why, exempt) => {
     const offenders = files
@@ -100,34 +136,49 @@ describe("content policy", () => {
   // every gate stays green while the site states a third party's support
   // terms wrongly -- the most expensive kind of error this site can make.
   //
-  // The window is the 240 characters of whitespace-collapsed source that end
-  // at the date. The scoping clause sits 134 characters before it today, so
-  // the sentence has room to be reworded; a "consumer" further back than that
-  // belongs to an earlier sentence and must not be allowed to vouch for this
-  // claim. "commercial" inside the window means the date has drifted onto the
-  // other programme. Whitespace is collapsed first because JSX wraps the
-  // sentence across four lines.
-  it("keeps October 12, 2027 scoped to Microsoft's consumer ESU programme", () => {
-    const DATE = "October 12, 2027";
-    const CONSUMER = /\bconsumer\b[^.]{0,60}?(?:\bExtended Security Updates\b|\bESU\b)/i;
-    const WINDOW = 240;
+  // What is checked is a property of the sentence, not a character distance:
+  // in the sentence that states the date, the last programme named before the
+  // date must be the consumer one. An earlier version measured a 240-character
+  // window ending at the date and forbade "commercial" anywhere inside it.
+  // That passed only because the page happens to put the commercial clause
+  // AFTER the date; reordering the two clauses into a factually identical
+  // sentence failed it, one more <SourceLink/> inside the sentence would have
+  // pushed the scoping clause out of the window, and reformatting the date
+  // would have slipped past it entirely. A guard that fires on a correct edit
+  // teaches people to delete guards.
+  it("keeps the Windows 10 ESU date scoped to Microsoft's consumer programme", () => {
+    // The date in the forms a writer might reasonably reach for, so
+    // reformatting it cannot make the rule quietly stop applying.
+    const ESU_DATE = /\b(?:Oct(?:ober)?\.? 12,? 2027|12 Oct(?:ober)?\.?,? 2027|2027-10-12|10\/12\/2027)\b/gi;
+    const ESU_PROGRAMME = /Extended Security Updates|\bESU\b/i;
+    const PROGRAMME = /\b(consumer|commercial)\b/gi;
+
     const bad: string[] = [];
     let checked = 0;
     for (const f of files) {
-      const text = f.text.replace(/\s+/g, " ");
-      for (let i = text.indexOf(DATE); i !== -1; i = text.indexOf(DATE, i + 1)) {
+      const text = prose(f.text);
+      for (const m of text.matchAll(ESU_DATE)) {
         checked++;
-        const before = text.slice(Math.max(0, i - WINDOW), i);
-        if (!CONSUMER.test(before)) {
-          bad.push(`${f.file}: "${DATE}" is not scoped to Microsoft's consumer ESU programme`);
-        } else if (/\bcommercial\b/i.test(before)) {
-          bad.push(`${f.file}: "${DATE}" reads as the commercial programme's date`);
+        const { sentence, before } = sentenceAt(text, m.index);
+        const named = [...before.matchAll(PROGRAMME)].map((p) => p[1].toLowerCase());
+        const last = named[named.length - 1];
+        if (!ESU_PROGRAMME.test(sentence)) {
+          bad.push(`${f.file}: "${m[0]}" is not in a sentence that names the Extended Security Updates programme`);
+        } else if (last === undefined) {
+          bad.push(`${f.file}: "${m[0]}" names no programme -- say whose ESU programme runs to that date`);
+        } else if (last !== "consumer") {
+          bad.push(
+            `${f.file}: "${m[0]}" reads as the ${last} programme's date; the last programme named before it must be the consumer one`
+          );
         }
       }
     }
     // Without this the rule passes on a site that never states the date at
     // all, which is exactly how a guard ships green while asserting nothing.
-    expect(checked, `no file states "${DATE}"; delete this guard or fix the scan`).toBeGreaterThan(0);
+    expect(
+      checked,
+      "no file states the Windows 10 consumer ESU end date; delete this guard or fix the scan"
+    ).toBeGreaterThan(0);
     expect(bad, bad.join("; ")).toEqual([]);
   });
 

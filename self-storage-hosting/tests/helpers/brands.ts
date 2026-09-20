@@ -28,7 +28,6 @@ export const WATCHLIST = [
   "StorGuard",
   "Sentinel",
   "WinSen",
-  "VP",
   "SpiderDoor",
   "QuikStor",
   "Revenue",
@@ -64,6 +63,10 @@ export const words = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9ē]+/
 // NAMES_WITHOUT_CONFIRMED_OWNER in lib/trademarks.ts -- and must actually be
 // printed somewhere on the site, so the list cannot go stale and start
 // passing vacuously. Add a name the first time a page prints it in full.
+//
+// "VP Standard Series" lives here rather than on WATCHLIST for a second
+// reason: "VP" also means Vice President, and a WATCHLIST token is both
+// forced onto /legal/trademarks and banned from the /support title.
 export const VERBATIM_NAMES = [
   "PTI Security Systems",
   "StorLogix Cloud",
@@ -86,4 +89,51 @@ export const VERBATIM_NAMES = [
   "Windows",
   "Revenue Control Systems",
   "Eight IO",
+];
+
+// Who owns which mark, written out here independently of lib/trademarks.ts.
+//
+// Listing a name is not the same as attributing it correctly, and nothing was
+// checking the attribution: moving "Storable Access Control" from Storable to
+// DoorKing left all twenty-four trademark and legal cases green while
+// /legal/trademarks published a false ownership claim. A register derived from
+// lib/trademarks.ts could not catch that -- it would move with the mark. This
+// one is written from the vendors' own pages, the same sources lib/sources.ts
+// cites, so the two have to agree.
+//
+// What is pinned: every mark that is not its owner's own name, spelled
+// identically. What is not: a mark that IS its owner's name, such as
+// StorGuard's "StorGuard" or Netlify's "Netlify" -- there is nothing to get
+// wrong while the two strings match, and the moment such a mark is moved under
+// a different owner the pair stops matching and has to be pinned like any
+// other. tests/trademarks.test.ts enforces that coverage rule, so this list
+// cannot fall behind lib/trademarks.ts without a test saying so.
+export const MARK_OWNERS: [mark: string, owner: string][] = [
+  ["PTI", "PTI Security Systems"],
+  ["StorLogix", "PTI Security Systems"],
+  ["StorLogix Cloud", "PTI Security Systems"],
+  ["StorLogix Desktop", "PTI Security Systems"],
+  ["StorLogix Cloud Adaptor", "PTI Security Systems"],
+  ["BridgeApp", "PTI Security Systems"],
+  ["FalconXT", "PTI Security Systems"],
+  ["Falcon 2000", "PTI Security Systems"],
+  ["CloudController", "PTI Security Systems"],
+  ["DigiGate", "PTI Security Systems"],
+  ["DigiTech", "PTI Security Systems"],
+  ["Apex", "PTI Security Systems"],
+  ["VP Standard Series", "PTI Security Systems"],
+  ["INSOMNIAC® CIA", "OpenTech Alliance"],
+  ["Sitelink by Storable", "Storable"],
+  ["Storable Edge", "Storable"],
+  ["Storable Easy", "Storable"],
+  ["Storable Access Control", "Storable"],
+  ["Janus", "Janus International"],
+  ["Nokē", "Janus International"],
+  ["Nokē Smart Entry", "Janus International"],
+  ["DKS", "DoorKing"],
+  ["Remote Account Manager", "DoorKing"],
+  ["Windows Account Manager", "DoorKing"],
+  ["Cloud Account Manager", "DoorKing"],
+  ["Winsen", "Sentinel Systems"],
+  ["Windows", "Microsoft"],
 ];
