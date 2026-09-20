@@ -32,9 +32,9 @@ function sourceListArg(src: string): string | null {
 const keysIn = (s: string) => new Set([...s.matchAll(/\bSOURCES\.(\w+)\b/g)].map((m) => m[1]));
 
 describe("article registry", () => {
-  it("has the articles built so far, with unique kebab-case slugs", () => {
+  it("has five articles with unique kebab-case slugs", () => {
     const slugs = ARTICLES.map((a) => a.slug);
-    expect(slugs.length).toBe(4);
+    expect(slugs.length).toBe(5);
     expect(new Set(slugs).size).toBe(slugs.length);
     for (const s of slugs) expect(s).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
   });

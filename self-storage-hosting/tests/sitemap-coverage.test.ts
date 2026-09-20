@@ -53,6 +53,7 @@ describe("sitemap coverage", () => {
       "/resources/gate-not-syncing",
       "/resources/digigate-replacement",
       "/resources/self-storage-gate-compatibility",
+      "/resources/self-storage-gate-server",
       "/events",
       "/support",
       "/demo",

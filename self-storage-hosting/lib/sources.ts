@@ -86,6 +86,12 @@ export const SOURCES = {
     publisher: "PTI Security Systems",
     verifiedOn: "2026-09-19",
   },
+  ptiDesktopInstallGuide: {
+    url: "https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-archive/StorLogix_Desktop_Installation_Guide.pdf",
+    title: "StorLogix Desktop installation guide, archived (PDF)",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
   ptiDesktopToCloudBlog: {
     url: "https://www.ptisecurity.com/us/en/about-us/articles-and-news/blogs/moving-from-desktop-to-cloud",
     title: "Moving from desktop to cloud",
@@ -261,6 +267,18 @@ export const SOURCES = {
     publisher: "Storable",
     verifiedOn: "2026-09-19",
   },
+  sitelinkCiaNews: {
+    url: "https://www.sitelink.com/about/news/sitelink-integrates-with-opentechs-insomniac-cia-cloud-access-control",
+    title: "Sitelink integrates with OpenTech's cloud access control (2018 news)",
+    publisher: "Storable",
+    verifiedOn: "2026-09-19",
+  },
+  sitelinkRecommendedHardware: {
+    url: "https://support.sitelink.com/sitelink/getting-started/recommended-hardware~7605736252733002576",
+    title: "Recommended hardware (Sitelink help)",
+    publisher: "Storable",
+    verifiedOn: "2026-09-19",
+  },
   storableSpiderDoor: {
     url: "https://www.storable.com/resources/integration/spiderdoor/",
     title: "SpiderDoor integration",
@@ -271,6 +289,12 @@ export const SOURCES = {
   opentechCia: {
     url: "https://opentechalliance.com/solutions/insomniac-cia-access-control/",
     title: "CIA access control",
+    publisher: "OpenTech Alliance",
+    verifiedOn: "2026-09-19",
+  },
+  opentechK500Manual: {
+    url: "https://opentechalliance.com/wp-content/uploads/2016/10/INSOMNIAC-CIA-K-500-Keypad-Intallation-Manual.pdf",
+    title: "CIA K-500 keypad installation manual (PDF)",
     publisher: "OpenTech Alliance",
     verifiedOn: "2026-09-19",
   },
@@ -305,10 +329,29 @@ export const SOURCES = {
     publisher: "DoorKing",
     verifiedOn: "2026-09-19",
   },
+  doorkingCloudAccountManager: {
+    url: "https://www.doorking.com/easyconnect/programming-options/cloud-account-manager-1830-series/",
+    title: "Cloud Account Manager, 1830 series",
+    publisher: "DoorKing",
+    verifiedOn: "2026-09-19",
+  },
+  doorkingWindowsAccountManager: {
+    url: "https://www.doorking.com/easyconnect/programming-options/1830-series-windows-account-manager/",
+    title: "Windows Account Manager, 1830 series",
+    publisher: "DoorKing",
+    verifiedOn: "2026-09-19",
+  },
   doorkingRamManual: {
     url: "https://www.doorking.com/wp-content/uploads/2013/09/1835-066-K-4-10_V6-2c.pdf",
     title: "Remote Account Manager for Windows user's manual (PDF)",
     publisher: "DoorKing",
+    verifiedOn: "2026-09-19",
+  },
+
+  janusNoke1: {
+    url: "https://www.janusintl.com/noke1",
+    title: "Nokē Smart Entry System",
+    publisher: "Janus International",
     verifiedOn: "2026-09-19",
   },
   janusNoke: {
@@ -339,6 +382,13 @@ export const SOURCES = {
     url: "https://www.janusintl.com/knowledge/nok%C4%93-smart-entry-training-manual",
     title: "Nokē Smart Entry training manual",
     publisher: "Janus International",
+    verifiedOn: "2026-09-19",
+  },
+
+  microsoftWindowsEos: {
+    url: "https://www.microsoft.com/en-us/windows/end-of-support",
+    title: "End of support for Windows 10, Windows 8.1 and Windows 7",
+    publisher: "Microsoft",
     verifiedOn: "2026-09-19",
   },
 

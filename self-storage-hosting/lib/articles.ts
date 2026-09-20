@@ -56,6 +56,14 @@ export const ARTICLES: readonly Article[] = [
       "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
     datePublished: "2026-09-19",
   },
+  {
+    slug: "self-storage-gate-server",
+    headline: "Do You Still Need a Windows PC in the Office to Run Your Gate?",
+    title: "Do You Still Need a Gate Server?",
+    description:
+      "Some gate setups still depend on a Windows PC at the facility. Which ones do, which do not, and what Windows 10 end of support means for yours.",
+    datePublished: "2026-09-19",
+  },
 ];
 
 export const articlePath = (slug: string): string => `/resources/${slug}`;

@@ -150,6 +150,15 @@ export default function AccessControlHostingPage() {
             <li key={r}>{r}</li>
           ))}
         </ul>
+        <p className="mt-6 text-text-800">
+          Which gate setups still depend on a Windows PC, vendor by vendor:{" "}
+          <Link
+            href="/resources/self-storage-gate-server"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            do you still need a gate server?
+          </Link>
+        </p>
       </section>
 
       {/* 3. How it works, ending with outage behaviour. It is a subsection so
