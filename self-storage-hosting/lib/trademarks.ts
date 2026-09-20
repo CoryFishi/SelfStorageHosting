@@ -38,12 +38,24 @@ export const THIRD_PARTY_MARKS: ThirdPartyMark[] = [
     marks: ["DoorKing", "DKS", "Remote Account Manager", "Windows Account Manager", "Cloud Account Manager"],
   },
   // Each of these four publishes its own site under this name, the name
-  // lib/sources.ts gives as the publisher. Sentinel Systems' own page offers
-  // WinSen license keys and downloads to "existing Winsen customer[s]".
+  // lib/sources.ts gives as the publisher.
   { owner: "StorGuard", marks: ["StorGuard"] },
-  { owner: "Sentinel Systems", marks: ["Sentinel Systems", "WinSen"] },
+  // Sentinel Systems spells the product "Winsen" on its own site
+  // (lib/sources.ts: sentinelHardware), including: "If you are an existing
+  // Winsen customer please contact your Sentinel sales representative
+  // BEFORE installing a newer version of Winsen than you are currently
+  // running." Storable's own gate integration page instead spells it
+  // "WinSen" (capital S) when it lists the gate software Storable Edge can
+  // run alongside. Each guide keeps whichever spelling its own cited source
+  // uses -- neither spelling is normalized to the other, the same policy
+  // this file already follows for PTI's "StorLogix Cloud Adaptor" (whose own
+  // archived PDF instead titles it "Adapter"). This row credits Sentinel
+  // Systems as the owner, so its mark uses Sentinel's own spelling.
+  { owner: "Sentinel Systems", marks: ["Sentinel Systems", "Winsen"] },
   { owner: "SpiderDoor", marks: ["SpiderDoor"] },
   { owner: "QuikStor", marks: ["QuikStor"] },
+  // Basis: Microsoft's own page on end of support for Windows versions
+  // (lib/sources.ts: microsoftWindowsEos), not a page titled "Windows".
   { owner: "Microsoft", marks: ["Windows"] },
   { owner: "Netlify", marks: ["Netlify"] },
   { owner: "Cloudflare", marks: ["Cloudflare"] },
@@ -58,5 +70,5 @@ export const NAMES_WITHOUT_CONFIRMED_OWNER: string[] = [
   "Revenue Control Systems",
   "Eight IO",
   "BearBox",
-  "Cubby",
+  "Cubby Storage",
 ];
