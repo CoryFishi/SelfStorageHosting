@@ -12,11 +12,41 @@ describe("robots", () => {
     expect(r.sitemap).toBe(`${SITE.url}/sitemap.xml`);
   });
 
-  it("disallows private and noindex areas", () => {
-    const rule = Array.isArray(r.rules) ? r.rules[0] : r.rules;
-    const disallow = (rule.disallow ?? []) as string[];
-    for (const p of ["/user/", "/api/", "/case-studies"]) {
-      expect(disallow).toContain(p);
+  const rule = Array.isArray(r.rules) ? r.rules[0] : r.rules;
+  const disallow = (rule.disallow ?? []) as string[];
+
+  // Application surface, blocked from crawling on purpose: not marketing
+  // pages, nothing links to them, and keeping crawlers out costs no indexing
+  // we want. Everything else stays crawlable.
+  const CRAWL_BLOCKED = ["/user/", "/api/"];
+
+  it("disallows private application areas", () => {
+    for (const p of CRAWL_BLOCKED) expect(disallow).toContain(p);
+  });
+
+  // The rule this file previously had backwards: it required /case-studies to
+  // be disallowed while the page also carries noindex. Those are alternatives,
+  // not layers. A Disallow stops the fetch, so the crawler never reads the
+  // noindex, and the URL can still be indexed from an external link with
+  // nothing to tell it the page was meant to be excluded. To keep a page out
+  // of the index you have to let it be fetched.
+  it("never disallows a noindex page, so its noindex can actually be read", () => {
+    const noindex = Object.entries(ROUTES)
+      .filter(([, v]) => !v.indexable && v.built)
+      .map(([path]) => path)
+      .filter((path) => !CRAWL_BLOCKED.some((b) => path.startsWith(b)));
+
+    // Anti-vacuity: if ROUTES ever stops carrying such a page this test would
+    // pass while checking nothing, and the regression could return unnoticed.
+    expect(noindex.length, "no crawlable noindex route left to check").toBeGreaterThan(0);
+
+    for (const path of noindex) {
+      const blocking = disallow.filter((d) => path === d || path.startsWith(d));
+      expect(
+        blocking,
+        `${path} is noindex, but robots.txt blocks it via ${blocking.join(", ")} — ` +
+          `the crawler cannot fetch the page, so it never sees the noindex`
+      ).toEqual([]);
     }
   });
 });
