@@ -288,8 +288,9 @@ export default function ArticlePage() {
 
         <h3 className="mt-8 text-xl font-semibold">PTI&apos;s go-forward controller: CloudController</h3>
         <p className="mt-4 text-text-800">
-          PTI&apos;s training page calls the CloudController its go-forward controller.{" "}
-          <SourceLink source={SOURCES.ptiContinuousLearning} /> Its facts page lists CloudController
+          PTI&apos;s StorLogix Cloud user&apos;s manual calls the CloudController its go-forward
+          system controller.{" "}
+          <SourceLink source={SOURCES.ptiCloudManual} /> Its facts page lists CloudController
           as current hardware that connects a facility&apos;s on-site access control hardware to
           PTI&apos;s StorLogix Cloud software without a separate adaptor.{" "}
           <SourceLink source={SOURCES.ptiFacts} /> The CloudController page describes a
@@ -450,7 +451,7 @@ export default function ArticlePage() {
             SOURCES.storableEasyDigiGate,
             SOURCES.storableEasyGateSync,
             SOURCES.storableEdgeGateIntegration,
-            SOURCES.ptiContinuousLearning,
+            SOURCES.ptiCloudManual,
             SOURCES.ptiCloudControllerPage,
             SOURCES.ptiReplaceSyscon,
             SOURCES.opentechPtiKeypads,

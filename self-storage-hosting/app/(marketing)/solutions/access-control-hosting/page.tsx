@@ -247,7 +247,8 @@ export default function AccessControlHostingPage() {
           <SourceLink source={SOURCES.ptiFacts} />
         </p>
         <p className="mt-4 text-text-800">
-          CloudController is PTI&apos;s go-forward controller. PTI provides training and a migration
+          CloudController is PTI&apos;s go-forward controller.{" "}
+          <SourceLink source={SOURCES.ptiCloudManual} /> PTI provides training and a migration
           manual for moving FalconXT sites to it. <SourceLink source={SOURCES.ptiContinuousLearning} />{" "}
           <SourceLink source={SOURCES.ptiMigrationManual} />
         </p>

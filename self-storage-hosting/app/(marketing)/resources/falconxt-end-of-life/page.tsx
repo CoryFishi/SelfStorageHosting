@@ -209,18 +209,13 @@ export default function ArticlePage() {
 
         <h3 className="mt-8 text-xl font-semibold">PTI&apos;s own path: the CloudController</h3>
         <p className="mt-4 text-text-800">
-          PTI calls the CloudController its controller going forward.{" "}
-          <SourceLink source={SOURCES.ptiContinuousLearning} /> PTI describes it as cloud-native
+          PTI&apos;s StorLogix Cloud user&apos;s manual calls the CloudController its go-forward
+          system controller.{" "}
+          <SourceLink source={SOURCES.ptiCloudManual} /> PTI describes it as cloud-native
           hardware that links a facility&apos;s on-site access control hardware to StorLogix Cloud
           without a separate adaptor. <SourceLink source={SOURCES.ptiLlmsTxt} /> PTI&apos;s
           2023 blog makes the same point: the CloudController does not need a cloud adaptor, where
           the FalconXT does. <SourceLink source={SOURCES.ptiNextGenBlog} />
-        </p>
-        <p className="mt-4 text-text-800">
-          PTI&apos;s Continuous Learning page lists a CloudController installation course, HW-032,
-          on replacing hardware and switching a site from a FalconXT to a CloudController. The page
-          does not say whether the course is meant for owners or for installers.{" "}
-          <SourceLink source={SOURCES.ptiContinuousLearning} />
         </p>
         <p className="mt-4 text-text-800">
           PTI also publishes a FalconXT to CloudController migration manual. Here is what it says
@@ -513,7 +508,7 @@ export default function ArticlePage() {
             SOURCES.ptiCloudFalconGuide,
             SOURCES.ptiDesktopRequirements,
             SOURCES.ptiDesktopToCloudBlog,
-            SOURCES.ptiContinuousLearning,
+            SOURCES.ptiCloudManual,
             SOURCES.opentechPtiKeypads,
             SOURCES.storableAccessControl,
             SOURCES.opentechCia,
