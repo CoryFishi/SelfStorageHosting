@@ -1418,7 +1418,7 @@ This first article also brings in what every article page uses:
 - `SourceList`, the dated Sources section at the foot of the article;
 - two guard changes:
   - **`tests/trademarks.test.ts` stops counting URLs as printed words.** A vendor's URL is a link target, not text a reader sees. Without this, `https://www.janusintl.com/products/noke` counts as the site printing "Noke", a spelling it never shows. The failing run in Step 6 proves it.
-  - **The interim link rule.** The articles link one another, and each lands in its own task, so an article may link one that a later task builds. From this task until Task 9, `allowedLink` also accepts the five planned article paths, and only those. Task 8 removes them. Linking a route before it exists is exactly what Plan 2's link rule forbids, so the exception is named and time-boxed in the one file both link guards share.
+  - **The interim link rule.** The articles link one another, and each lands in its own task, so an article may link one that a later task builds. From this task until Task 9, `allowedLink` also accepts the five planned article paths, and only those. Task 9 removes them. Linking a route before it exists is exactly what Plan 2's link rule forbids, so the exception is named and time-boxed in the one file both link guards share.
 
 **Files:**
 - Modify: `self-storage-hosting/tests/articles.test.ts`
