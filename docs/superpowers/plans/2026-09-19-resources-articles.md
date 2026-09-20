@@ -100,6 +100,43 @@ Decisions this plan makes where the spec is silent or its wording failed verific
 
 ---
 
+## Correction: the PTI/Storable release date
+
+Found by the Task 6 review on 2026-09-19, after Task 6 had been committed. Fixed
+on the branch in commit `49b097d`. Unlike the go-forward correction above, Task
+6's code block IS corrected in place, because `ptiStorableRelease` is created
+inside Task 6 itself, so the corrected text replays cleanly.
+
+**The defect.** The page said PTI announced the Storable Edge integration "in a
+release datelined March 16, 2026", and attributed two further details to that
+release. PTI's own release page carries `"datePublished":"2026-03-13T04:00Z"` in
+its raw HTML JSON-LD, and PTI's news index lists the same article as 2026-03-13.
+March 16, 2026 is the date of *Inside Self Storage*'s write-up of the same
+announcement, so the page printed a trade-press date as a vendor fact. The
+release also carries no dateline, so "datelined" asserted something that does
+not exist.
+
+**Why two more details went with it.** PTI's own lede, preserved in the page's
+meta description, reads "a new real-time integration between PTI's StorLogix
+Cloud and Storable Edge" — not "webhook-based". The strings "webhook" and
+"syncing" appear nowhere in the release's raw HTML, and "eliminates the need for
+onsite syncing tools" is Inside Self Storage's phrasing. That release's body is
+client-rendered and unreadable to every tool available here, including WebFetch,
+which does render PTI's facts page and news index. Inside Self Storage's date
+plus Inside Self Storage's wording is convergent evidence that the clause was
+written from the trade press while cited to PTI, so the sentence now carries
+only the partnership and the integration, dated as PTI dates it. Nothing is
+lost: the webhook fact is separately and correctly sourced in the next sentence,
+which cites PTI's integrations table. PTI's own wording could not have been
+quoted in any case, because "real-time" and "PMS" are both banned terms.
+
+**Also in `49b097d`.** The article description said a bare "Sitelink"; the brand
+rule wants "Sitelink by Storable" at first mention, and a meta description is
+often where a reader meets the name first. It is now 149 characters against the
+155-character guard. The description is written in two places — the registry
+entry and the page's own `pageMeta` call — and `tests/articles.test.ts` requires
+them to match, so both were changed.
+
 ## Correction: the CloudController "go-forward" citation
 
 Found by the Task 5 review on 2026-09-19, after Tasks 3 and 5 had been committed.
@@ -4077,7 +4114,7 @@ In `self-storage-hosting/lib/articles.ts`, add this entry at the end of `ARTICLE
     headline: "Self-Storage Software and Gate Access Control: An Independent Compatibility Matrix",
     title: "Self-Storage Gate Compatibility Matrix",
     description:
-      "Which gate systems Storable Edge, Storable Easy and Sitelink list as integrations, compared with the gate makers' own lists. Dated and sourced.",
+      "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
     datePublished: "2026-09-19",
   },
 ```
@@ -4207,7 +4244,7 @@ const A = article("self-storage-gate-compatibility");
 export const metadata: Metadata = pageMeta({
   title: "Self-Storage Gate Compatibility Matrix",
   description:
-    "Which gate systems Storable Edge, Storable Easy and Sitelink list as integrations, compared with the gate makers' own lists. Dated and sourced.",
+    "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
   path: "/resources/self-storage-gate-compatibility",
   ogType: "article",
   publishedTime: A.datePublished,
@@ -4582,9 +4619,9 @@ export default function ArticlePage() {
           covers what to weigh.
         </p>
         <p className="mt-4 text-text-800">
-          PTI describes a second route for Storable Edge. In a release datelined March 16, 2026, PTI says it and
-          Storable announced a webhook-based integration between StorLogix Cloud and Storable Edge, and that the
-          integration eliminates the need for on-site syncing tools. <SourceLink source={SOURCES.ptiStorableRelease} />{" "}
+          PTI describes a second route for Storable Edge. In a release PTI dates March 13, 2026, PTI says it and
+          Storable announced a partnership to deliver a new integration between PTI&apos;s StorLogix Cloud and
+          Storable Edge. <SourceLink source={SOURCES.ptiStorableRelease} />{" "}
           PTI&apos;s integrations table has two rows for Storable Edge: one marked BridgeApp, and a webhooks row
           marked API. <SourceLink source={SOURCES.ptiIntegrationsTable} /> Storable Edge&apos;s undated help article
           does not mention the webhook route. If you run PTI with Storable Edge, ask both vendors which route your
