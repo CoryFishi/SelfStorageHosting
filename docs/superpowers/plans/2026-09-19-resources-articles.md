@@ -100,6 +100,57 @@ Decisions this plan makes where the spec is silent or its wording failed verific
 
 ---
 
+## Correction: the CloudController "go-forward" citation
+
+Found by the Task 5 review on 2026-09-19, after Tasks 3 and 5 had been committed.
+Fixed on the branch in commit `d42d91c`. **Read this before reusing any page copy
+below that mentions the CloudController.**
+
+**The defect.** Three pages claimed that PTI calls the CloudController its
+go-forward controller and cited `SOURCES.ptiContinuousLearning`
+(<https://www.ptisecurity.com/us/en/get_support/continuous-learning>). That page
+does not carry the claim. A fourth sentence said the same page lists a
+CloudController installation course, `HW-032`; it lists no course codes at all.
+
+**The evidence.** `pdftotext` on PTI's StorLogix Cloud user's manual
+(`SOURCES.ptiCloudManual`) returns, verbatim: "The CloudController unlocks
+several new features and is the go-forward system controller for PTI."
+`pdftotext` on `SOURCES.ptiMigrationManual` returns no occurrence of the string
+"forward". Two independent renders of the Continuous Learning page show no
+go-forward wording, no CloudController outside the navigation, and no course
+codes. The claim is true and PTI-published — it simply lives in a different
+document. Note that ptisecurity.com serves only its `<h1>` to browsers and to
+plain fetches, so its pages must be checked with a renderer, never with curl.
+
+**What changed in the code.** Four edits, all in `d42d91c`:
+
+1. `resources/digigate-replacement/page.tsx` — "PTI's training page calls the
+   CloudController its go-forward controller." became "PTI's StorLogix Cloud
+   user's manual calls the CloudController its go-forward system controller.",
+   citing `ptiCloudManual`; its `<SourceList>` swapped the same key.
+2. `resources/falconxt-end-of-life/page.tsx` — "PTI calls the CloudController
+   its controller going forward." took the same replacement and the same key
+   swap in its `<SourceList>`.
+3. `resources/falconxt-end-of-life/page.tsx` — the `HW-032` paragraph was
+   deleted outright. Softening an unverified claim still publishes it, and the
+   paragraph carried nothing else.
+4. `solutions/access-control-hosting/page.tsx` (Plan 2 code, pre-existing) —
+   the go-forward sentence now cites `ptiCloudManual`; `ptiContinuousLearning`
+   stays on the following sentence, which it does support, alongside
+   `ptiMigrationManual`.
+
+**What a replay must do differently.** The task code blocks below are left as
+written, because Tasks 3 and 5 are executed and rewriting them would hide what
+actually shipped. A replay must apply the four edits above, and must also move
+the creation of the `ptiCloudManual` source entry out of Task 4's sources step
+and into Task 3's — Task 3 is the first task that needs to cite it, and the key
+does not otherwise exist until Task 4.
+
+**What no guard catches.** No test in this repo compares a claim against the
+document cited beside it. All four gates were green, and the page was
+byte-identical to its brief, with this defect present. Citation-to-claim truth
+is checked by a reviewer reading the sources, and by nothing else.
+
 ## File Structure
 
 | File | Status | Responsibility | Task |
@@ -6118,7 +6169,7 @@ Every entry was checked against its live page on 2026-09-19. "Added in" is the t
 | `storableEasyGateSync` | Storable | [What to do if the gate sync is not working](https://support.storageunitsoftware.com/storable-easy/easy-product-guides/access-control-and-gate-integrations/gate-troubleshooting/what-should-i-do-if-the-gate-sync-is-not-working~7609015167005715714) | Plan 2 | Task 4, Task 5, Task 7 |
 | `digiGateManual` | PTI Security Systems | [DigiGate installation manual, archived (PDF)](https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/DigiGate_Install_Manual_1100_044___Ver2.5__.pdf) | Plan 2 | Task 5, Task 7 |
 | `ptiFacts` | PTI Security Systems | [Facts, including legacy products](https://www.ptisecurity.com/us/en/facts) | Plan 2 | Task 3, Task 4, Task 5, Task 6, Task 7 |
-| `ptiContinuousLearning` | PTI Security Systems | [Continuous learning](https://www.ptisecurity.com/us/en/get_support/continuous-learning) | Plan 2 | Task 3, Task 5 |
+| `ptiContinuousLearning` | PTI Security Systems | [Continuous learning](https://www.ptisecurity.com/us/en/get_support/continuous-learning) | Plan 2 | none after the go-forward correction; supports only "PTI provides training" on the access control page |
 | `ptiMigrationManual` | PTI Security Systems | [FalconXT to CloudController migration manual (PDF)](https://www.ptisecurity.com/documents/access-control/controllers/controllers-current/FalconXT%20to%20CloudController%20Migration.pdf) | Plan 2 | Task 3 |
 | `ptiLlmsTxt` | PTI Security Systems | [Canonical facts for AI systems (plain text)](https://www.ptisecurity.com/LLMs.txt) | Task 3 | Task 3 |
 | `ptiCloudControllerPage` | PTI Security Systems | [CloudController](https://www.ptisecurity.com/us/en/products/access-control/cloud-controller) | Task 5 | Task 5 |
@@ -6129,7 +6180,7 @@ Every entry was checked against its live page on 2026-09-19. "Added in" is the t
 | `ptiDesktopRequirements` | PTI Security Systems | [Computer requirements for StorLogix Desktop, archived (PDF)](https://www.ptisecurity.com/documents/misc/misc-archive/Computer_System_Requirements___StorLogix_Desktop.pdf) | Task 3 | Task 3, Task 7 |
 | `ptiDesktopInstallGuide` | PTI Security Systems | [StorLogix Desktop installation guide, archived (PDF)](https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-archive/StorLogix_Desktop_Installation_Guide.pdf) | Task 7 | Task 7 |
 | `ptiDesktopToCloudBlog` | PTI Security Systems | [Moving from desktop to cloud](https://www.ptisecurity.com/us/en/about-us/articles-and-news/blogs/moving-from-desktop-to-cloud) | Task 3 | Task 3 |
-| `ptiCloudManual` | PTI Security Systems | [StorLogix Cloud user's manual (PDF)](https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-current/storlogix-user-manual_071423-1.pdf) | Task 4 | Task 4, Task 6, Task 7 |
+| `ptiCloudManual` | PTI Security Systems | [StorLogix Cloud user's manual (PDF)](https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-current/storlogix-user-manual_071423-1.pdf) | Task 4, moved to Task 3 on a replay (see the Correction section) | Task 3, Task 4, Task 5, Task 6, Task 7 |
 | `ptiIntegrationsTable` | PTI Security Systems | [Facility software integrations table](https://www.ptisecurity.com/us/en/pti-partners/pms-integrations) | Task 6 | Task 6 |
 | `ptiStorableRelease` | PTI Security Systems | [PTI Security Systems and Storable partner integration](https://www.ptisecurity.com/us/en/about-us/articles-and-news/news/pti-security-systems-and-storable-partner-integration) | Task 6 | Task 6 |
 | `ptiKeypadMessages` | PTI Security Systems | [Troubleshooting keypad messages (PDF)](https://www.ptisecurity.com/documents/keypads/keypads-general/troubleshooting_keypad_messages.pdf) | Task 4 | Task 4 |
