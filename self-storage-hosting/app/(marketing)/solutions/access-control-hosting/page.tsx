@@ -113,8 +113,8 @@ export default function AccessControlHostingPage() {
       </section>
 
       {/* 2. The problem: Appendix A.4 only, paraphrased and cited. The spec
-          3.2(2) wording about a 24/7 polling PC and a "System Controller PC"
-          failed verification and must not be used. */}
+          3.2(2) wording about the office PC failed verification and must not
+          be used; tests/content-policy.test.ts lists the banned phrases. */}
       <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
         <h2 className="text-2xl font-semibold sm:text-3xl">The problem: gate software on an office PC</h2>
         <p className="mt-4 text-text-800">
@@ -150,6 +150,15 @@ export default function AccessControlHostingPage() {
             <li key={r}>{r}</li>
           ))}
         </ul>
+        <p className="mt-6 text-text-800">
+          Which gate setups still depend on a Windows PC, vendor by vendor:{" "}
+          <Link
+            href="/resources/self-storage-gate-server"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            do you still need a gate server?
+          </Link>
+        </p>
       </section>
 
       {/* 3. How it works, ending with outage behaviour. It is a subsection so
@@ -223,6 +232,17 @@ export default function AccessControlHostingPage() {
           </Link>
           .
         </p>
+        <p className="mt-4 text-text-800">
+          Which gate systems each Storable product lists as an integration, compared with the gate
+          makers&apos; own lists:{" "}
+          <Link
+            href="/resources/self-storage-gate-compatibility"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            our gate compatibility matrix
+          </Link>
+          .
+        </p>
       </section>
 
       {/* 6. Security: TLS only until spec 14 B is answered. */}
@@ -247,9 +267,31 @@ export default function AccessControlHostingPage() {
           <SourceLink source={SOURCES.ptiFacts} />
         </p>
         <p className="mt-4 text-text-800">
-          CloudController is PTI&apos;s go-forward controller. PTI provides training and a migration
+          CloudController is PTI&apos;s go-forward controller.{" "}
+          <SourceLink source={SOURCES.ptiCloudManual} /> PTI provides training and a migration
           manual for moving FalconXT sites to it. <SourceLink source={SOURCES.ptiContinuousLearning} />{" "}
           <SourceLink source={SOURCES.ptiMigrationManual} />
+        </p>
+        <p className="mt-4 text-text-800">
+          For FalconXT and DigiGate we have written up the options, each cited to its vendor:{" "}
+          <Link
+            href="/resources/falconxt-end-of-life"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            FalconXT end of life: your options
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/resources/digigate-replacement"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            DigiGate replacement options
+          </Link>
+          . More guides are in{" "}
+          <Link href="/resources" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            Resources
+          </Link>
+          .
         </p>
         <p className="mt-4 text-text-800">
           If you are weighing that move, tell us what is on site. We will say plainly what we can

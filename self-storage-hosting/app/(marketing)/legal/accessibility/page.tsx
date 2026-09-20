@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/dates";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
-// DRAFT FOR OWNER REVIEW BEFORE PR #1 MERGES.
+// DRAFT FOR OWNER REVIEW.
 //
 // Every claim in "What we check" is backed by code or a test in this
 // repository (see the table in the plan's Task 11). It claims no conformance

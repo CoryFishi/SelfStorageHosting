@@ -34,7 +34,8 @@ Run after the first production deploy. Each needs owner access.
 
 Each needs owner access.
 
-- [ ] **Legal review, before PR #1 merges.** `git grep -n "DRAFT FOR OWNER" -- self-storage-hosting/app`
+- [ ] **Legal review, now overdue.** PR #1 merged with the legal pages still
+      marked as drafts. `git grep -n "DRAFT FOR OWNER" -- self-storage-hosting/app`
       lists every legal page still waiting. The comment at the top of each
       page lists what the owner or counsel has to decide, such as the legal
       entity that runs the site and how long data is kept.
@@ -63,8 +64,7 @@ Each needs owner access.
       The site's own code sets no cookie on its pages. The sign-in cookie
       comes only from the backend. If this prints a cookie, find out who
       sets it. Cloudflare's bot protection, for one, can add `__cf_bm`.
-      Then disclose it in the privacy policy's "Cookies" section before
-      PR #1 merges.
+      Then disclose it in the privacy policy's "Cookies" section.
 - [ ] **/events refreshes itself.** The page is regenerated at most once a
       day (`revalidate = 86400`), so a finished event drops off without a
       deploy. On the day after the first listed event ends, load `/events`
@@ -85,3 +85,85 @@ Each needs owner access.
       `netlify.toml` runs only `npm run build`. Run `npm test` in
       `self-storage-hosting/` and in `backend/` before each deploy,
       or add both to a CI job.
+
+## Plan 3: after the resources pages deploy
+
+Each needs the owner's access or decision.
+
+- [ ] **Extend #7 and #10 again.** Run the Rich Results Test on `/resources`
+      (BreadcrumbList only: the hub carries no Article) and on each of the
+      five guides under it (Article and BreadcrumbList). In Search Console,
+      request indexing for `/resources` and the five guides. `/sitemap.xml`
+      already lists them.
+- [ ] **Who keeps the compatibility matrix current (spec §14 E2).** Still
+      open: name someone. Until then, re-check it with the quarterly events
+      review above. Open every link in the page's Sources list and correct
+      any table row whose vendor page changed. Then set these to the day you
+      checked:
+      - both tables' "as checked on" date;
+      - each source's `verifiedOn` in `self-storage-hosting/lib/sources.ts`;
+      - the article's `dateModified` in `self-storage-hosting/lib/articles.ts`.
+      The "as checked on" date is a fact the page states, so changing it is
+      a real modification. The sitemap's `lastModified` follows
+      `dateModified`.
+- [ ] **The other four guides.** Each Sources list prints the date every
+      source was last checked. Re-check them at the same time and update
+      `verifiedOn`. Change a guide's `dateModified` only when the facts on
+      it change, as `lib/articles.ts` says.
+- [ ] **Trademark owners we could not confirm.** `/legal/trademarks` names
+      Revenue Control Systems, Eight IO, BearBox and Cubby Storage without an
+      owner, because no first-party page for any of them was found. If counsel
+      wants owners named, confirm each from the company's own site. Then move
+      the name from `NAMES_WITHOUT_CONFIRMED_OWNER` into `THIRD_PARTY_MARKS` in
+      `self-storage-hosting/lib/trademarks.ts`, and update
+      `LEGAL_UPDATED.trademarks` in `self-storage-hosting/lib/legal.ts`.
+
+### Two things no test can catch — read them before editing any page
+
+Both were considered for a guard and deliberately left to a human. The first
+is open-ended paraphrase detection, which fires on innocent wording; the
+second is a judgement about prose.
+
+- [ ] **Outage wording.** Anything a page says about what happens during an
+      internet outage must either render the `OUTAGE_BEHAVIOR` constant from
+      `self-storage-hosting/lib/claims.ts` verbatim, or be attributed to a
+      named vendor's cited document. Say nothing about admin changes made
+      during an outage (spec §14 D3 is still open), and never let a page or a
+      section lead with offline operation.
+      `tests/content-policy.test.ts` catches only the three phrasings it
+      already knows; a fresh paraphrase walks straight past it.
+- [ ] **Prose that restates `HARDWARE_INTEGRATIONS` or `FMS_BRIDGES`.**
+      These paragraphs spell out the two `lib/claims.ts` constants in words
+      instead of rendering them. Change either constant and every line below
+      has to be hand-edited to match. No test compares the prose with the
+      constant, so the drift is silent. Paths are under
+      `self-storage-hosting/`; line numbers are where they were on
+      2026-09-19, so search the wording rather than trusting them.
+      All four `HARDWARE_INTEGRATIONS` categories, in order:
+      - `app/(marketing)/solutions/access-control-hosting/page.tsx:58` (FAQ answer)
+      - `app/(marketing)/resources/falconxt-end-of-life/page.tsx:441`
+
+      A subset of the categories, which still has to stay true to them:
+      - `app/(marketing)/about-us/page.tsx:36` and `:111`
+      - `app/(marketing)/page.tsx:24`
+      - `app/(marketing)/demo/page.tsx:18`
+      - `app/(marketing)/solutions/page.tsx:21`
+      - `app/(marketing)/solutions/access-control-hosting/page.tsx:15` and `:95`
+      - `app/(marketing)/resources/falconxt-end-of-life/page.tsx:62` and `:471`
+
+      `FMS_BRIDGES` written out as a sentence rather than mapped over:
+      - `app/(marketing)/about-us/page.tsx:266`
+      - `app/(marketing)/solutions/access-control-hosting/page.tsx:62` (FAQ answer) and `:214`
+      - `app/(marketing)/resources/digigate-replacement/page.tsx:425-426`
+      - `app/(marketing)/resources/gate-not-syncing/page.tsx:483`
+      - `app/(marketing)/resources/self-storage-gate-compatibility/page.tsx:212`
+      - `app/(marketing)/resources/self-storage-gate-server/page.tsx:435-436`
+
+      Four places already render a constant and need no edit. Both
+      `{HARDWARE_INTEGRATIONS.map(...)}`:
+      - `app/(marketing)/about-us/page.tsx:247`
+      - `app/(marketing)/solutions/access-control-hosting/page.tsx:192`
+
+      Both `{FMS_BRIDGES.map(...)}`:
+      - `app/(marketing)/about-us/page.tsx:274`
+      - `app/(marketing)/solutions/access-control-hosting/page.tsx:222`

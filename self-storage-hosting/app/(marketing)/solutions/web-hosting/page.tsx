@@ -184,6 +184,20 @@ export default function WebHostingPage() {
           </Link>
           .
         </p>
+        <p className="mt-4 text-text-800">
+          Checking which gate systems your software lists as integrations? See{" "}
+          <Link
+            href="/resources/self-storage-gate-compatibility"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            our gate compatibility matrix
+          </Link>
+          , or browse all our{" "}
+          <Link href="/resources" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            guides for operators
+          </Link>
+          .
+        </p>
       </section>
 
       {/* 6. FAQ: accordion semantics only. Never FAQPage JSON-LD (spec 7.2). */}

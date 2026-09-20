@@ -3,11 +3,11 @@ import Link from "next/link";
 import { pageMeta } from "@/lib/seo";
 import { LEGAL_UPDATED } from "@/lib/legal";
 import { formatDate } from "@/lib/dates";
-import { THIRD_PARTY_MARKS } from "@/lib/trademarks";
+import { NAMES_WITHOUT_CONFIRMED_OWNER, THIRD_PARTY_MARKS } from "@/lib/trademarks";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
-// DRAFT FOR OWNER OR COUNSEL REVIEW BEFORE PR #1 MERGES. Not legal advice.
+// DRAFT FOR OWNER OR COUNSEL REVIEW. Not legal advice.
 //
 // Lists the third-party names the site uses (lib/trademarks.ts) and says why
 // we use them. It claims no registration status for any mark, and it names
@@ -56,6 +56,13 @@ export default function TrademarksPage() {
         </dl>
 
         <p className="mt-6 text-text-800">
+          Our guides also name{" "}
+          {new Intl.ListFormat("en", { type: "conjunction" }).format(NAMES_WITHOUT_CONFIRMED_OWNER)},
+          because a vendor&apos;s own list names them. We have not confirmed who owns each of these
+          names. They belong to their owners too.
+        </p>
+
+        <p className="mt-4 text-text-800">
           Event and association names on our events page belong to their organizers.
         </p>
 

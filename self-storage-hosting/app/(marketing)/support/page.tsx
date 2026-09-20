@@ -115,6 +115,14 @@ export default function SupportPage() {
           >
             moving off end-of-life gate systems
           </Link>
+          , or go straight to our guides:{" "}
+          <Link href="/resources/falconxt-end-of-life" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            FalconXT end of life: your options
+          </Link>{" "}
+          and{" "}
+          <Link href="/resources/digigate-replacement" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            DigiGate replacement options
+          </Link>
           .
         </p>
       </section>
@@ -145,6 +153,16 @@ export default function SupportPage() {
           </div>
         ))}
         <p className="mt-10 text-text-800">
+          For step-by-step checks drawn from each vendor&apos;s own troubleshooting documents, read{" "}
+          <Link
+            href="/resources/gate-not-syncing"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            why your gate isn&apos;t syncing with your storage software
+          </Link>
+          .
+        </p>
+        <p className="mt-4 text-text-800">
           If the sync computer keeps turning out to be the problem, it can be taken out of the
           chain.{" "}
           <Link

@@ -1,3 +1,5 @@
+import { ARTICLES, articlePath } from "./articles";
+
 export const SITE = {
   // `??` only catches null/undefined, so a variable that is SET but empty
   // (`NEXT_PUBLIC_SITE_URL=""`) would defeat the fallback and build every
@@ -24,26 +26,22 @@ export type NavItem = NavLink & { children?: NavLink[] };
 // `indexable` is an SEO decision: may this URL be crawled and listed.
 // `built`    is a fact: does a page.tsx for it exist yet.
 // They are independent, and the sitemap needs BOTH. Nav and footer render
-// through liveNav()/liveFooter(), which drop anything not yet built, and
-// Plan 1 only builds three pages -- advertising the other fourteen in
-// sitemap.xml would hand Google a list of URLs that 404. Plan 2 flips each
-// `built` to true as it lands.
+// through liveNav()/liveFooter(), which drop anything not yet built, so a
+// route listed here before its page exists is never advertised or linked.
+// Flip `built` in the same commit that creates the page, never before.
+// Order matters: the sitemap lists routes in this order.
 export const ROUTES: Record<string, { title: string; indexable: boolean; built: boolean }> = {
-  // These three are Plan 1's own pages and are `built: true` ahead of their
-  // page.tsx on purpose -- Task 12 creates /, Task 13 /about-us and Task 16
-  // /contact, and Task 17's sitemap-coverage test asserts exactly this trio.
-  // Do not "correct" them to false to match the rule below: that empties the
-  // sitemap and fails that test. The rule below governs Plan 2's routes.
   "/": { title: "Home", indexable: true, built: true },
   "/about-us": { title: "About Us", indexable: true, built: true },
   "/contact": { title: "Contact", indexable: true, built: true },
-
-  // Plan 2 builds everything below. Flip `built` in the same commit that
-  // creates the page, never before.
   "/solutions": { title: "Solutions", indexable: true, built: true },
   "/solutions/access-control-hosting": { title: "Cloud Self-Storage Access Control", indexable: true, built: true },
   "/solutions/web-hosting": { title: "Self-Storage Facility Websites", indexable: true, built: true },
-  "/resources": { title: "Resources", indexable: true, built: false },
+  "/resources": { title: "Resources", indexable: true, built: true },
+  // One row per article, straight after the hub, from lib/articles.ts.
+  ...Object.fromEntries(
+    ARTICLES.map((a) => [articlePath(a.slug), { title: a.title, indexable: true, built: true }])
+  ),
   "/events": { title: "Industry Events", indexable: true, built: true },
   "/support": { title: "Support & Diagnostics", indexable: true, built: true },
   "/demo": { title: "Request a Demo", indexable: true, built: true },
