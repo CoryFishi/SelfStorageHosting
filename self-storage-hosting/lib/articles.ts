@@ -53,7 +53,7 @@ export const ARTICLES: readonly Article[] = [
     headline: "Self-Storage Software and Gate Access Control: An Independent Compatibility Matrix",
     title: "Self-Storage Gate Compatibility Matrix",
     description:
-      "Which gate systems Storable Edge, Storable Easy and Sitelink list as integrations, compared with the gate makers' own lists. Dated and sourced.",
+      "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
     datePublished: "2026-09-19",
   },
 ];
