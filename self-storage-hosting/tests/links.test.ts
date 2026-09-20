@@ -80,7 +80,7 @@ describe("link integrity", () => {
     try {
       process.env.NEXT_PUBLIC_SITE_URL = "";
       const { SITE: reloaded } = await import("@/lib/site");
-      expect(reloaded.url).toBe("https://selfstoragehosting.com");
+      expect(reloaded.url).toBe("https://www.selfstoragehosting.com");
     } finally {
       if (prev === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
       else process.env.NEXT_PUBLIC_SITE_URL = prev;

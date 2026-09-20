@@ -197,7 +197,7 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     // Resolves against SITE.url so a bare "//host/path" (protocol-relative)
     // and a relative "/path" both resolve the way a browser would, then
     // compares origins rather than prefixes: a prefix check (u.startsWith)
-    // would wrongly clear "https://selfstoragehosting.com.evil.example/x".
+    // would wrongly clear "https://www.selfstoragehosting.com.evil.example/x".
     // data:/mailto:/tel: URLs are inline or non-fetching, not off-site.
     function isOffSite(url: string): boolean {
       if (/^(?:data|mailto|tel|javascript):/i.test(url)) return false;

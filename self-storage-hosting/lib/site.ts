@@ -5,7 +5,14 @@ export const SITE = {
   // (`NEXT_PUBLIC_SITE_URL=""`) would defeat the fallback and build every
   // canonical, the sitemap and metadataBase from "". `||` treats "" the same
   // as absent, which is the property actually wanted here.
-  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://selfstoragehosting.com").replace(/\/$/, ""),
+  //
+  // The host is `www`, not the bare domain: production serves from
+  // www.selfstoragehosting.com and the apex 301s to it. While this read
+  // "https://selfstoragehosting.com" every canonical pointed at a URL that
+  // redirects, so a crawler following the canonical was sent back to the host
+  // it had just come from and had to pick a winner itself. Change this only
+  // together with the redirect direction at the edge -- the two must agree.
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.selfstoragehosting.com").replace(/\/$/, ""),
   name: "Self Storage Hosting",
   description:
     "Cloud-hosted access control and facility websites for independent self-storage operators.",
