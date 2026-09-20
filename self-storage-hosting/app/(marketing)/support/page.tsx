@@ -115,6 +115,14 @@ export default function SupportPage() {
           >
             moving off end-of-life gate systems
           </Link>
+          , or go straight to our guides:{" "}
+          <Link href="/resources/falconxt-end-of-life" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            FalconXT end of life: your options
+          </Link>{" "}
+          and{" "}
+          <Link href="/resources/digigate-replacement" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            DigiGate replacement options
+          </Link>
           .
         </p>
       </section>

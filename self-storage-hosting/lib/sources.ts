@@ -50,6 +50,12 @@ export const SOURCES = {
     publisher: "PTI Security Systems",
     verifiedOn: "2026-09-19",
   },
+  ptiCloudControllerPage: {
+    url: "https://www.ptisecurity.com/us/en/products/access-control/cloud-controller",
+    title: "CloudController",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
   ptiCloudControllerManual: {
     url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-current/cloud-controller-user-manual-91924.pdf",
     title: "CloudController user's manual (PDF)",
@@ -102,6 +108,49 @@ export const SOURCES = {
     url: "https://www.ptisecurity.com/documents/litmos-docs/storlogix-cloud/StorLogix%20Cloud%20Adapter%20Installation%20Guide.pdf",
     title: "Cloud Adapter installation guide (PDF)",
     publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  ptiEolNotice: {
+    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/End-of-Life-Notice_DigiTech-and-Falcon2000-with-Falcon-Base-Unit.pdf",
+    title: "End of life notice: DigiTech and Falcon 2000 with Falcon Base Unit (PDF)",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  ptiKnowledgeBase: {
+    url: "https://www.ptisecurity.com/us/en/get_support/knowledgebase",
+    title: "Knowledge base",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  ptiKbArchive: {
+    url: "https://www.ptisecurity.com/us/en/get_support/archived_knowledgebase",
+    title: "Knowledge base archives",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  ptiReplaceSyscon: {
+    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/falconxt-archive/Replacing_a_Digitech_System_Controller_with_a_Falcon_XT.pdf",
+    title: "Replacing a Digitech system controller with a Falcon XT, archived (PDF)",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  ptiSendDigiGateFiles: {
+    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/Sending_Your_DigiGate_File_to_PTI_Security_Systems___Updated___V1.pdf",
+    title: "Sending your DigiGate files to PTI Security Systems, archived (PDF)",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  digiGateUsersGuide: {
+    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/DigiGate_for_Windows_Users_Guide___Ver_3.6____1_.pdf",
+    title: "DigiGate for Windows user's guide, archived (PDF)",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+
+  storableEasyThirdPartyGates: {
+    url: "https://support.storageunitsoftware.com/storable-easy/easy-product-guides/access-control-and-gate-integrations/gate-integrations/third-party-gate-integrations~7608999610974774984",
+    title: "Third-party gate integrations (Storable Easy help)",
+    publisher: "Storable",
     verifiedOn: "2026-09-19",
   },
   storableEasyCommonProblems: {

@@ -51,6 +51,7 @@ describe("sitemap coverage", () => {
       "/resources",
       "/resources/falconxt-end-of-life",
       "/resources/gate-not-syncing",
+      "/resources/digigate-replacement",
       "/events",
       "/support",
       "/demo",

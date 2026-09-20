@@ -40,6 +40,14 @@ export const ARTICLES: readonly Article[] = [
       "Find out why gate codes stop matching your storage software, step by step, using the vendors' own troubleshooting documents.",
     datePublished: "2026-09-19",
   },
+  {
+    slug: "digigate-replacement",
+    headline: "Still Running DigiGate? What to Do Now That Support Has Ended",
+    title: "DigiGate Replacement Options",
+    description:
+      "PTI no longer sells or supports DigiGate. What its end-of-life notice says, what keeps running without the PC, and the realistic ways to replace it.",
+    datePublished: "2026-09-19",
+  },
 ];
 
 export const articlePath = (slug: string): string => `/resources/${slug}`;

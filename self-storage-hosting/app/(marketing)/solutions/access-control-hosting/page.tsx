@@ -252,6 +252,27 @@ export default function AccessControlHostingPage() {
           <SourceLink source={SOURCES.ptiMigrationManual} />
         </p>
         <p className="mt-4 text-text-800">
+          For FalconXT and DigiGate we have written up the options, each cited to its vendor:{" "}
+          <Link
+            href="/resources/falconxt-end-of-life"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            FalconXT end of life: your options
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/resources/digigate-replacement"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            DigiGate replacement options
+          </Link>
+          . More guides are in{" "}
+          <Link href="/resources" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+            Resources
+          </Link>
+          .
+        </p>
+        <p className="mt-4 text-text-800">
           If you are weighing that move, tell us what is on site. We will say plainly what we can
           bridge, what we cannot, and what each path would involve for your facilities.
         </p>
