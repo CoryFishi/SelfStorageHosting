@@ -392,9 +392,10 @@ export default function ArticlePage() {
           covers what to weigh.
         </p>
         <p className="mt-4 text-text-800">
-          PTI describes a second route for Storable Edge. In a release PTI dates March 13, 2026, PTI says it and
-          Storable announced a partnership to deliver a new integration between PTI&apos;s StorLogix Cloud and
-          Storable Edge. <SourceLink source={SOURCES.ptiStorableRelease} />{" "}
+          PTI describes a second route for Storable Edge. In a release datelined March 16, 2026, on a page PTI
+          dates March 13, 2026, PTI says it and Storable announced a partnership to deliver a new integration
+          between PTI&apos;s StorLogix Cloud and Storable Edge, and calls the connection webhook-based.{" "}
+          <SourceLink source={SOURCES.ptiStorableRelease} />{" "}
           PTI&apos;s integrations table has two rows for Storable Edge: one marked BridgeApp, and a webhooks row
           marked API. <SourceLink source={SOURCES.ptiIntegrationsTable} /> Storable Edge&apos;s undated help article
           does not mention the webhook route. If you run PTI with Storable Edge, ask both vendors which route your

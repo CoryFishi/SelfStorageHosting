@@ -17,7 +17,7 @@ const A = article("self-storage-gate-server");
 export const metadata: Metadata = pageMeta({
   title: "Do You Still Need a Gate Server?",
   description:
-    "Some gate setups still depend on a Windows PC at the facility. Which ones do, which do not, and what Windows 10 end of support means for yours.",
+    "Some gate setups still depend on a Windows PC that stays on. Which ones do, which do not, and what Windows 10 end of support means for yours.",
   path: "/resources/self-storage-gate-server",
   ogType: "article",
   publishedTime: A.datePublished,
@@ -285,7 +285,8 @@ export default function ArticlePage() {
           install it on the PC or server that also holds your FMS client, which does not have to be at
           the site, though it usually is. <SourceLink source={SOURCES.ptiCloudManual} /> PTI&apos;s
           facts page marks Sitelink, Storable Edge and Storable Easy as connecting through the BridgeApp
-          rather than the API, with a separate Storable Edge webhooks row marked for the API.{" "}
+          rather than the API, and gives Storable Edge a second, webhooks row marked for the API. Its
+          table prints none of the three under the names Storable uses now.{" "}
           <SourceLink source={SOURCES.ptiFacts} /> Our guides to{" "}
           <Link href="/resources/falconxt-end-of-life" className={link}>
             FalconXT end of life
@@ -310,7 +311,8 @@ export default function ArticlePage() {
           Windows Account Manager can transfer the user database to the Cloud Account Manager.{" "}
           <SourceLink source={SOURCES.doorkingWindowsAccountManager} /> Check your FMS first:
           DoorKing&apos;s self-storage page lists Sitelink, Storable Edge and Storable Easy for its
-          Remote Account Manager, but only Cubby for its cloud software.{" "}
+          Remote Account Manager, two of the three under other names, and says its cloud software is
+          compatible with one self-storage application only, Cubby.{" "}
           <SourceLink source={SOURCES.doorkingSelfStorage} />
         </p>
         <p className="mt-4 text-text-800">

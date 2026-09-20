@@ -17,7 +17,7 @@ const A = article("digigate-replacement");
 export const metadata: Metadata = pageMeta({
   title: "DigiGate Replacement Options",
   description:
-    "PTI no longer sells or supports DigiGate. What its end-of-life notice says, what keeps running without the PC, and the realistic ways to replace it.",
+    "PTI no longer sells or supports DigiGate. Which products PTI's end-of-life notice names, what keeps running without the PC, and the ways to replace it.",
   path: "/resources/digigate-replacement",
   ogType: "article",
   publishedTime: A.datePublished,
@@ -26,10 +26,19 @@ export const metadata: Metadata = pageMeta({
 
 const link = `font-semibold underline ${FOCUS_RING_LIGHT}`;
 
-// The DigiTech lines of the timeline in PTI's end-of-life notice, exactly as
-// PTI printed them (SOURCES.ptiEolNotice). These are the only third-party
+// Every line of the timeline in PTI's end-of-life notice, exactly as PTI
+// printed them (SOURCES.ptiEolNotice). These are the only third-party
 // end-of-support dates this page may print. The notice itself has no printed
 // issue date, and PTI gives none for DigiGate's legacy status.
+//
+// All four rows are here, not just the DigiTech-scoped ones. Two of the
+// "Products named" cells print Falcon 2000 & Base Unit alongside DigiTech, so
+// dropping the Falcon-only row left the table showing Falcon 2000 in the two
+// May 28, 2021 rows and then, one row later, an End of Partner Support date
+// of December 3, 2021 that is DigiTech's alone. Falcon 2000's End of Partner
+// Support was May 28, 2021. Printing a third party's support date later than
+// the one it published is the worst error this page could make, so the table
+// carries the notice's timeline whole rather than a scoped slice of it.
 type Milestone = { key: string; date: string; milestone: string; products: string };
 
 const EOL_TIMELINE: Milestone[] = [
@@ -46,7 +55,13 @@ const EOL_TIMELINE: Milestone[] = [
     products: "DigiTech, and Falcon 2000 & Base Unit",
   },
   {
-    key: "end-of-partner-support",
+    key: "end-of-partner-support-falcon",
+    date: "May 28, 2021",
+    milestone: "End of Partner Support",
+    products: "Falcon 2000 & Base Unit only",
+  },
+  {
+    key: "end-of-partner-support-digitech",
     date: "December 3, 2021",
     milestone: "End of Partner Support",
     products: "DigiTech",
@@ -71,9 +86,11 @@ export default function ArticlePage() {
         <p className="mt-6 text-lg text-text-800">
           PTI Security Systems lists DigiGate among its legacy products, which it says it no longer
           sells or supports. Its facts page gives no date for that. <SourceLink source={SOURCES.ptiFacts} />{" "}
-          Separately, an archived PTI end-of-life notice for its DigiTech products, which PTI keeps in
-          its DigiGate archive, prints dates for DigiTech: May 28, 2021 for the Last Time Buy Date and
-          the End of Direct Support, and December 3, 2021 for the End of Partner Support.{" "}
+          Separately, an archived PTI end-of-life notice for its DigiTech and Falcon 2000 products,
+          which PTI keeps in its DigiGate archive, prints dates for DigiTech: May 28, 2021 for the Last
+          Time Buy Date and the End of Direct Support, and December 3, 2021 for the End of Partner
+          Support. Falcon 2000 &amp; Base Unit shares the first two dates, and its End of Partner
+          Support is the earlier May 28, 2021.{" "}
           <SourceLink source={SOURCES.ptiEolNotice} />
         </p>
         <p className="mt-4 text-text-800">
@@ -129,13 +146,14 @@ export default function ArticlePage() {
         </p>
         <p className="mt-4 text-text-800">
           It says PTI is discontinuing two solutions and all associated products: Falcon 2000 with
-          Falcon Base Unit, software and hardware, and DigiTech, software and hardware. Its timeline
-          gives these dates for DigiTech. <SourceLink source={SOURCES.ptiEolNotice} />
+          Falcon Base Unit, software and hardware, and DigiTech, software and hardware. Its timeline,
+          in full, gives these dates, and the products column says which of the two each line covers.{" "}
+          <SourceLink source={SOURCES.ptiEolNotice} />
         </p>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <caption className="mb-2 text-left text-sm text-text-700">
-              The DigiTech dates in PTI&apos;s end-of-life notice, as PTI printed them
+              The whole timeline in PTI&apos;s end-of-life notice, as PTI printed it
             </caption>
             <thead>
               <tr className="border-b border-background-300">
@@ -174,10 +192,11 @@ export default function ArticlePage() {
         </p>
         <p className="mt-4 text-text-800">
           It says customers will be encouraged to contact their local PTI Partners for help
-          maintaining or replacing Digitech systems, and that trained partners may have inventory of
-          discontinued products while supplies last. It noted that stock and replacement units were
-          limited. It strongly encourages migration to the new solution and products as soon as
-          possible, without naming them. <SourceLink source={SOURCES.ptiEolNotice} />
+          maintaining or replacing Digitech and Falcon 2000 &amp; Base Unit systems, and that trained
+          partners may have inventory of discontinued products while supplies last. It noted that
+          stock and replacement units were limited. It strongly encourages migration to the new
+          solution and products as soon as possible, without naming them.{" "}
+          <SourceLink source={SOURCES.ptiEolNotice} />
         </p>
 
         <h2 className="mt-10 text-2xl font-semibold">What keeps working, and what depends on the PC</h2>

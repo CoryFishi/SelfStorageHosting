@@ -45,7 +45,7 @@ export const ARTICLES: readonly Article[] = [
     headline: "Still Running DigiGate? What to Do Now That Support Has Ended",
     title: "DigiGate Replacement Options",
     description:
-      "PTI no longer sells or supports DigiGate. What its end-of-life notice says, what keeps running without the PC, and the realistic ways to replace it.",
+      "PTI no longer sells or supports DigiGate. Which products PTI's end-of-life notice names, what keeps running without the PC, and the ways to replace it.",
     datePublished: "2026-09-19",
   },
   {
@@ -61,7 +61,7 @@ export const ARTICLES: readonly Article[] = [
     headline: "Do You Still Need a Windows PC in the Office to Run Your Gate?",
     title: "Do You Still Need a Gate Server?",
     description:
-      "Some gate setups still depend on a Windows PC at the facility. Which ones do, which do not, and what Windows 10 end of support means for yours.",
+      "Some gate setups still depend on a Windows PC that stays on. Which ones do, which do not, and what Windows 10 end of support means for yours.",
     datePublished: "2026-09-19",
   },
 ];
