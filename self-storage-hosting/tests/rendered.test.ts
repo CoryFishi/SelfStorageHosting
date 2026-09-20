@@ -7,6 +7,7 @@ import { assertNoForbiddenTypes } from "@/lib/schema";
 import { formatDateRange } from "@/lib/dates";
 import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import { ARTICLES, articlePath } from "@/lib/articles";
+import { NAMES_WITHOUT_CONFIRMED_OWNER, THIRD_PARTY_MARKS } from "@/lib/trademarks";
 import { PKG_ROOT, walk } from "./helpers/walk";
 import { allowedLink } from "./helpers/links";
 
@@ -281,6 +282,18 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       `INSOMNIAC should appear on every one of ${expectedRoutes.join(", ")}; it was found on ${checked.join(", ")}`
     ).toEqual(expect.arrayContaining(expectedRoutes));
     expect(bad, bad.join("; ")).toEqual([]);
+  });
+
+  it("shows every name lib/trademarks.ts lists on /legal/trademarks", () => {
+    // tests/trademarks.test.ts proves the list is complete; this proves the
+    // page prints it, including the names whose owners we have not confirmed.
+    const text = rowText(visible(read("/legal/trademarks")));
+    const names = [
+      ...THIRD_PARTY_MARKS.flatMap((m) => [m.owner, ...m.marks]),
+      ...NAMES_WITHOUT_CONFIRMED_OWNER,
+    ];
+    const missing = names.filter((n) => !text.includes(n));
+    expect(missing, `listed but not shown on /legal/trademarks: ${missing.join(", ")}`).toEqual([]);
   });
 
   // SiteChrome's other consumer: the 404 page (app/not-found.tsx). It has no

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { THIRD_PARTY_MARKS } from "@/lib/trademarks";
+import { NAMES_WITHOUT_CONFIRMED_OWNER, THIRD_PARTY_MARKS } from "@/lib/trademarks";
 import { PKG_ROOT, walkFrom } from "./helpers/walk";
 import { WATCHLIST, words } from "./helpers/brands";
 
@@ -34,7 +34,11 @@ const perDir = new Map(DIRS.map((d) => [d, wordsUnder(d)] as const));
 describe("/legal/trademarks", () => {
   const used = new Set<string>();
   for (const set of perDir.values()) for (const w of set) used.add(w);
-  const listed = words(THIRD_PARTY_MARKS.flatMap((m) => [m.owner, ...m.marks]).join(" "));
+  // A name counts as listed whether the page gives its owner or lists it
+  // among the names whose owners we have not confirmed.
+  const listed = words(
+    [...THIRD_PARTY_MARKS.flatMap((m) => [m.owner, ...m.marks]), ...NAMES_WITHOUT_CONFIRMED_OWNER].join(" ")
+  );
 
   it("finds the names it is meant to check", () => {
     // Each directory this guard scans must contribute at least one real,
