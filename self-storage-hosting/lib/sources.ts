@@ -98,6 +98,18 @@ export const SOURCES = {
     publisher: "PTI Security Systems",
     verifiedOn: "2026-09-19",
   },
+  ptiIntegrationsTable: {
+    url: "https://www.ptisecurity.com/us/en/pti-partners/pms-integrations",
+    title: "Facility software integrations table",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
+  ptiStorableRelease: {
+    url: "https://www.ptisecurity.com/us/en/about-us/articles-and-news/news/pti-security-systems-and-storable-partner-integration",
+    title: "PTI Security Systems and Storable partner integration",
+    publisher: "PTI Security Systems",
+    verifiedOn: "2026-09-19",
+  },
   ptiKeypadMessages: {
     url: "https://www.ptisecurity.com/documents/keypads/keypads-general/troubleshooting_keypad_messages.pdf",
     title: "Troubleshooting keypad messages (PDF)",
@@ -177,6 +189,12 @@ export const SOURCES = {
     publisher: "Storable",
     verifiedOn: "2026-09-19",
   },
+  storableEasyKiosks: {
+    url: "https://support.storageunitsoftware.com/storable-easy/easy-product-guides/access-control-and-gate-integrations/gate-integrations/insomniac-kiosks-and-storable-easy~7609004321378949717",
+    title: "Kiosk integration with Storable Easy (Storable Easy help)",
+    publisher: "Storable",
+    verifiedOn: "2026-09-19",
+  },
   storableEasyCloudNode: {
     url: "https://support.storageunitsoftware.com/storable-easy/easy-product-guides/access-control-and-gate-integrations/gate-troubleshooting/what-should-i-do-if-i-get-an-error-that-there-was-a-problem-communicating-with-the-cloud-node~7609015147653595240",
     title: "Error communicating with the cloud node (Storable Easy help)",
@@ -237,6 +255,18 @@ export const SOURCES = {
     publisher: "Storable",
     verifiedOn: "2026-09-19",
   },
+  sitelinkGatesMarketplace: {
+    url: "https://www.sitelink.com/marketplace/gate-access",
+    title: "Gates and access partners (Sitelink marketplace)",
+    publisher: "Storable",
+    verifiedOn: "2026-09-19",
+  },
+  storableSpiderDoor: {
+    url: "https://www.storable.com/resources/integration/spiderdoor/",
+    title: "SpiderDoor integration",
+    publisher: "Storable",
+    verifiedOn: "2026-09-19",
+  },
 
   opentechCia: {
     url: "https://opentechalliance.com/solutions/insomniac-cia-access-control/",
@@ -253,6 +283,18 @@ export const SOURCES = {
   opentechPtiKeypads: {
     url: "https://opentechalliance.com/blog/opentech-releases-pti-keypad-integration/",
     title: "OpenTech releases PTI keypad integration (2020)",
+    publisher: "OpenTech Alliance",
+    verifiedOn: "2026-09-19",
+  },
+  opentechSitelink2018: {
+    url: "https://opentechalliance.com/blog/sitelink-first-to-integrate-with-insomniac-cias-api/",
+    title: "Sitelink first to integrate with the CIA API (2018)",
+    publisher: "OpenTech Alliance",
+    verifiedOn: "2026-09-19",
+  },
+  opentechPartners: {
+    url: "https://opentechalliance.com/integration-partners/",
+    title: "Alliance partners",
     publisher: "OpenTech Alliance",
     verifiedOn: "2026-09-19",
   },
@@ -281,6 +323,12 @@ export const SOURCES = {
     publisher: "Janus International",
     verifiedOn: "2026-09-19",
   },
+  janusNokePartners: {
+    url: "https://www.janusintl.com/noke-smart-entry-integration-partners",
+    title: "Nokē Smart Entry software integration partners",
+    publisher: "Janus International",
+    verifiedOn: "2026-09-19",
+  },
   janusAppTroubleshooting: {
     url: "https://www.janusintl.com/knowledge/basic-app-device-troubleshooting",
     title: "Troubleshooting tips for the mobile app",
@@ -300,6 +348,12 @@ export const SOURCES = {
     publisher: "StorGuard",
     verifiedOn: "2026-09-19",
   },
+  storguardPartners: {
+    url: "https://stor-guard.com/partners/",
+    title: "Partners",
+    publisher: "StorGuard",
+    verifiedOn: "2026-09-19",
+  },
   sentinelHardware: {
     url: "https://www.sentinelsystems.com/hardware",
     title: "Access control hardware",
@@ -315,6 +369,12 @@ export const SOURCES = {
   spiderdoorSwitch: {
     url: "https://www.spiderdoor.com/switch-self-storage-access-control-system/",
     title: "Switching access control systems without downtime",
+    publisher: "SpiderDoor",
+    verifiedOn: "2026-09-19",
+  },
+  spiderdoorAccessControl: {
+    url: "https://www.spiderdoor.com/self-storage-access-control-systems/",
+    title: "Self-storage access control systems",
     publisher: "SpiderDoor",
     verifiedOn: "2026-09-19",
   },

@@ -48,6 +48,14 @@ export const ARTICLES: readonly Article[] = [
       "PTI no longer sells or supports DigiGate. What its end-of-life notice says, what keeps running without the PC, and the realistic ways to replace it.",
     datePublished: "2026-09-19",
   },
+  {
+    slug: "self-storage-gate-compatibility",
+    headline: "Self-Storage Software and Gate Access Control: An Independent Compatibility Matrix",
+    title: "Self-Storage Gate Compatibility Matrix",
+    description:
+      "Which gate systems Storable Edge, Storable Easy and Sitelink list as integrations, compared with the gate makers' own lists. Dated and sourced.",
+    datePublished: "2026-09-19",
+  },
 ];
 
 export const articlePath = (slug: string): string => `/resources/${slug}`;

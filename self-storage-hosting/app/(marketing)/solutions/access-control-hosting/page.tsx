@@ -223,6 +223,17 @@ export default function AccessControlHostingPage() {
           </Link>
           .
         </p>
+        <p className="mt-4 text-text-800">
+          Which gate systems each Storable product lists as an integration, compared with the gate
+          makers&apos; own lists:{" "}
+          <Link
+            href="/resources/self-storage-gate-compatibility"
+            className={`font-semibold underline ${FOCUS_RING_LIGHT}`}
+          >
+            our gate compatibility matrix
+          </Link>
+          .
+        </p>
       </section>
 
       {/* 6. Security: TLS only until spec 14 B is answered. */}
