@@ -286,7 +286,8 @@ export default function ArticlePage() {
           the site, though it usually is. <SourceLink source={SOURCES.ptiCloudManual} /> PTI&apos;s
           facts page marks Sitelink, Storable Edge and Storable Easy as connecting through the BridgeApp
           rather than the API, and gives Storable Edge a second, webhooks row marked for the API. Its
-          table prints none of the three under the names Storable uses now.{" "}
+          table prints Storable Edge and Storable Easy under earlier names, and Sitelink with a capital
+          L.{" "}
           <SourceLink source={SOURCES.ptiFacts} /> Our guides to{" "}
           <Link href="/resources/falconxt-end-of-life" className={link}>
             FalconXT end of life
