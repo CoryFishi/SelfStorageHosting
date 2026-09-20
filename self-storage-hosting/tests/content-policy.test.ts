@@ -12,7 +12,7 @@ const files = DIRS.flatMap((d) => walkFrom(d)).map((f) => ({
 
 // lib/schema.ts lists "FAQPage" and "aggregateRating" inside its own
 // blocklist. It enforces those two rules rather than breaking them, so it is
-// exempted from those two patterns only -- not from the other eleven, which
+// exempted from those two patterns only -- not from any of the others, which
 // it must obey like every other file (spec-driven correction: a blanket
 // exemption would also hide a brand-name or unsubstantiated-claim violation
 // inside this exact file, which Plan 3 will feed article/event data through).
@@ -43,7 +43,7 @@ const FORBIDDEN: [RegExp, string, string?][] = [
   [
     // Spec 14 D3 is open: say nothing about admin changes made during an
     // outage. Paraphrases drift towards exactly that ("changes resync").
-    /\bkeeps? enforcing\b|last-known rules|\bresync/i,
+    /\bkeeps? enforcing\b|last-known rules|\bre-?sync/i,
     "Outage wording: render OUTAGE_BEHAVIOR from lib/claims.ts instead of paraphrasing it (spec 14 D3)",
     CLAIMS,
   ],
@@ -51,6 +51,26 @@ const FORBIDDEN: [RegExp, string, string?][] = [
   [/100\+\s*(managed\s*)?sites?/i, "Unsubstantiated scale claim — spec D3"],
   [/\d\s*[–-]\s*\d\s*seconds/, "Unsubstantiated latency claim — spec D3"],
   [/<\s*\d+\s*ms/i, "Unsubstantiated latency claim — spec D3"],
+  [
+    // Spec 3.1 took these from trade press, and PTI's own pages publish none
+    // of them (Plan 2 Appendix A.3). Spec 11 forbids a third-party
+    // end-of-support date the vendor has not stated itself. Windows 10's
+    // October 14, 2025 is Microsoft's own date and does not match.
+    /\b(?:Oct(?:ober)?\.?\s+1,?\s+(?:2025|2023)|1\s+Oct(?:ober)?\.?\s+(?:2025|2023)|Dec(?:ember)?\.?\s+1,?\s+2025|1\s+Dec(?:ember)?\.?\s+2025|2025-10-01|2025-12-01|2023-10-01|10\/0?1\/(?:2025|2023)|12\/0?1\/2025)\b/i,
+    "PTI publishes no end-of-support dates for these products — spec 11 guardrail, Plan 2 Appendix A.3",
+  ],
+  [
+    // Spec 3.2(2)'s on-site PC wording failed verification. The two-minute
+    // figure comes only from a third party, never from Storable or PTI.
+    /\bSystem Controller PC\b|\bdesignated PC\b|\bevery (?:2|two) minutes\b/i,
+    "Unverified on-site PC wording from spec 3.2(2) — use Plan 2 Appendix A.4 instead",
+  ],
+  [
+    // PTI's pages list legacy products and name CloudController as the
+    // go-forward controller. They do not say PTI moves anyone onto it.
+    /\btransition(?:s|ed|ing)?\b[^.]{0,60}\bcustomers\b/i,
+    'Do not say PTI "transitions" customers — Plan 2 Appendix A.3',
+  ],
   [/"FAQPage"|'FAQPage'/, "FAQ rich results were retired 2026-05-07 — spec 7.2", SCHEMA],
   [/aggregateRating/, "Requires review data we do not have — spec 7.2", SCHEMA],
 ];
@@ -67,7 +87,7 @@ describe("content policy", () => {
   // when `files` is empty -- e.g. if DIRS pointed at the wrong root, or
   // walkFrom's directory resolution silently broke. Assert the walk actually
   // found something, and something specific, so a broken walk fails loudly
-  // instead of reporting thirteen vacuous passes.
+  // instead of reporting every row above as a vacuous pass.
   it("actually walked real files", () => {
     expect(files.length).toBeGreaterThan(0);
     expect(files.map((f) => f.file)).toContain(SCHEMA);

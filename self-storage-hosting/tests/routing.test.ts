@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { SITE, ROUTES } from "@/lib/site";
+import { canonicalFor } from "@/lib/seo";
+import { ARTICLES, articlePath } from "@/lib/articles";
 
 describe("robots", () => {
   const r = robots();
@@ -44,6 +46,17 @@ describe("sitemap", () => {
       expect(e).not.toHaveProperty("changeFrequency");
       expect(e).not.toHaveProperty("priority");
     }
+  });
+
+  it("dates each article from lib/articles.ts and no other page", () => {
+    const expected = new Map(
+      ARTICLES.map((a) => [canonicalFor(articlePath(a.slug)), a.dateModified ?? a.datePublished])
+    );
+    for (const e of entries) {
+      expect(e.lastModified, e.url).toBe(expected.get(e.url));
+    }
+    // Every article is in the sitemap, so every expected date was checked.
+    for (const u of expected.keys()) expect(urls).toContain(u);
   });
 
   it("covers exactly the indexable routes in the manifest", () => {

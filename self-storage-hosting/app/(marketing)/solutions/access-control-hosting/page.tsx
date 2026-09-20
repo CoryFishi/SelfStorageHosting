@@ -113,8 +113,8 @@ export default function AccessControlHostingPage() {
       </section>
 
       {/* 2. The problem: Appendix A.4 only, paraphrased and cited. The spec
-          3.2(2) wording about a 24/7 polling PC and a "System Controller PC"
-          failed verification and must not be used. */}
+          3.2(2) wording about the office PC failed verification and must not
+          be used; tests/content-policy.test.ts lists the banned phrases. */}
       <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
         <h2 className="text-2xl font-semibold sm:text-3xl">The problem: gate software on an office PC</h2>
         <p className="mt-4 text-text-800">

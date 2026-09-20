@@ -6,6 +6,7 @@ import { canonicalFor } from "@/lib/seo";
 import { assertNoForbiddenTypes } from "@/lib/schema";
 import { formatDateRange } from "@/lib/dates";
 import { OUTAGE_BEHAVIOR } from "@/lib/claims";
+import { ARTICLES, articlePath } from "@/lib/articles";
 import { PKG_ROOT, walk } from "./helpers/walk";
 import { allowedLink } from "./helpers/links";
 
@@ -300,6 +301,84 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     );
     const mains = (body.match(/<main\b[^>]*\bid="main"/g) ?? []).length;
     expect(mains, `${r} has ${mains} <main id="main"> elements`).toBe(1);
+  });
+
+  it.each(ARTICLES.map((a) => [articlePath(a.slug), a] as const))(
+    "%s marks itself up as one Article that matches what it shows",
+    (r, a) => {
+      const html = read(r);
+      const articles = jsonLd(html).filter((b) => (b as { "@type"?: unknown })["@type"] === "Article");
+      expect(articles.length, `${r} emits ${articles.length} Article blocks`).toBe(1);
+      const block = articles[0] as { headline: string; mainEntityOfPage: string; datePublished: string };
+      expect(block.mainEntityOfPage).toBe(canonicalFor(r));
+      expect(block.datePublished).toBe(a.datePublished);
+      const h1 = visible(html).match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? "";
+      expect(block.headline, `${r}: the Article headline is not the visible h1`).toBe(rowText(h1));
+      expect(html).toContain('<meta property="og:type" content="article"/>');
+      expect(html).toContain(`<meta property="article:published_time" content="${a.datePublished}"/>`);
+      expect(html.includes('property="article:modified_time"'), `${r} article:modified_time`).toBe(
+        a.dateModified !== undefined
+      );
+    }
+  );
+
+  it("lists every article on /resources, which is not itself an Article", () => {
+    const html = read("/resources");
+    expect(jsonLd(html).some((b) => (b as { "@type"?: unknown })["@type"] === "Article")).toBe(false);
+    expect(html).toContain('<meta property="og:type" content="website"/>');
+    for (const a of ARTICLES) expect(html, `/resources does not link ${a.slug}`).toContain(`href="${articlePath(a.slug)}"`);
+  });
+
+  it.each(ARTICLES.map((a) => articlePath(a.slug)))(
+    "%s links a solution page in its first third and again in its closing third (spec 4.4)",
+    (r) => {
+      // The article body: the <article> element up to its Sources section,
+      // which is a reference list and not part of the argument.
+      const html = visible(read(r));
+      const start = html.indexOf("<article");
+      const end = html.indexOf('aria-labelledby="sources"', start);
+      expect(start, `${r} has no <article>`).toBeGreaterThan(-1);
+      expect(end, `${r} has no Sources section inside its <article>`).toBeGreaterThan(start);
+      // Offsets in the reader's text, not the markup: a table's tags would
+      // otherwise count as much as the words around it. Each solution link's
+      // opening tag becomes a private-use marker character, which survives
+      // rowText and never occurs in the site's own text.
+      const MARK = "";
+      const text = rowText(
+        html.slice(start, end).replace(/<a\b[^>]*\shref="\/solutions\/[^"]*"[^>]*>/g, ` ${MARK} `)
+      );
+      const at: number[] = [];
+      for (let i = text.indexOf(MARK); i !== -1; i = text.indexOf(MARK, i + 1)) at.push(i / text.length);
+      expect(at.length, `${r} never links a /solutions/ page`).toBeGreaterThan(0);
+      expect(at[0], `${r}: first solution link is not in the first third`).toBeLessThan(1 / 3);
+      expect(at[at.length - 1], `${r}: last solution link is not in the closing third`).toBeGreaterThan(2 / 3);
+    }
+  );
+
+  it("points every fragment link at an id that exists on its target page", () => {
+    const broken: string[] = [];
+    let checked = 0;
+    for (const r of built) {
+      for (const m of visible(read(r)).matchAll(/<a\b[^>]*\shref="(\/[^"#?]*)?#([^"]+)"/g)) {
+        const target = m[1] ?? r;
+        if (!ROUTES[target]?.built) continue; // links.test and the link rule own this case
+        checked++;
+        if (!visible(read(target)).includes(`id="${m[2]}"`)) broken.push(`${r} -> ${target}#${m[2]}`);
+      }
+    }
+    // Every page has at least its skip link to #main.
+    expect(checked).toBeGreaterThanOrEqual(built.length);
+    expect(broken, `fragment links with no matching id: ${broken.join(", ")}`).toEqual([]);
+  });
+
+  it("captions every table", () => {
+    const bad: string[] = [];
+    for (const r of built) {
+      for (const m of visible(read(r)).matchAll(/<table\b[^>]*>([\s\S]*?)<\/table>/g)) {
+        if (!/^\s*<caption\b/.test(m[1])) bad.push(r);
+      }
+    }
+    expect(bad, `tables with no <caption> as their first child: ${bad.join(", ")}`).toEqual([]);
   });
 
   it("shows the exact outage wording where it is promised (spec 14 D3)", () => {
