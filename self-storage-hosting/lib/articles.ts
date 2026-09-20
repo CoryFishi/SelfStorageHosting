@@ -30,7 +30,7 @@ export const ARTICLES: readonly Article[] = [
     title: "FalconXT End of Life: Your Options",
     description:
       "PTI lists FalconXT and the StorLogix Cloud Adaptor as legacy products it no longer sells or supports. Every path forward, each one cited to its vendor.",
-    datePublished: "2026-09-19",
+    datePublished: "2026-09-20",
   },
   {
     slug: "gate-not-syncing",
@@ -38,7 +38,7 @@ export const ARTICLES: readonly Article[] = [
     title: "Gate Not Syncing With Storage Software",
     description:
       "Find out why gate codes stop matching your storage software, step by step, using the vendors' own troubleshooting documents.",
-    datePublished: "2026-09-19",
+    datePublished: "2026-09-20",
   },
   {
     slug: "digigate-replacement",
@@ -46,7 +46,7 @@ export const ARTICLES: readonly Article[] = [
     title: "DigiGate Replacement Options",
     description:
       "PTI no longer sells or supports DigiGate. Which products PTI's end-of-life notice names, what keeps running without the PC, and the ways to replace it.",
-    datePublished: "2026-09-19",
+    datePublished: "2026-09-20",
   },
   {
     slug: "self-storage-gate-compatibility",
@@ -54,7 +54,7 @@ export const ARTICLES: readonly Article[] = [
     title: "Self-Storage Gate Compatibility Matrix",
     description:
       "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
-    datePublished: "2026-09-19",
+    datePublished: "2026-09-20",
   },
   {
     slug: "self-storage-gate-server",
@@ -62,7 +62,7 @@ export const ARTICLES: readonly Article[] = [
     title: "Do You Still Need a Gate Server?",
     description:
       "Some gate setups still depend on a Windows PC that stays on. Which ones do, which do not, and what Windows 10 end of support means for yours.",
-    datePublished: "2026-09-19",
+    datePublished: "2026-09-20",
   },
 ];
 
