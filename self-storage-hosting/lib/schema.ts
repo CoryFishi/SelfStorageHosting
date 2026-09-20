@@ -1,5 +1,5 @@
 import { SITE } from "./site";
-import { canonicalFor } from "./seo";
+import { canonicalFor, assertArticleDates } from "./seo";
 
 export const FORBIDDEN_SCHEMA_TYPES = [
   "FAQPage",
@@ -102,6 +102,13 @@ export function articleSchema(a: {
   datePublished: string;
   dateModified?: string;
 }) {
+  // Only a /resources/<slug> page is an article on this site. A typo'd path
+  // would still build a valid-looking Article pointing at a page that is not
+  // one, so refuse it here.
+  if (!/^\/resources\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a.path)) {
+    throw new Error(`articleSchema: "${a.path}" is not a /resources/<slug> path`);
+  }
+  assertArticleDates(`articleSchema ${a.path}`, a.datePublished, a.dateModified);
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -110,6 +117,9 @@ export function articleSchema(a: {
     mainEntityOfPage: canonicalFor(a.path),
     datePublished: a.datePublished,
     dateModified: a.dateModified ?? a.datePublished,
+    // The articles are written by the company, not a named person, so the
+    // author is the Organization. Inventing a byline would be a fabrication.
+    author: { "@type": "Organization", name: SITE.name, url: SITE.url },
     publisher: {
       "@type": "Organization",
       name: SITE.name,

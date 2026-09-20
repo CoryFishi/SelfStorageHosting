@@ -51,6 +51,39 @@ describe("schema builders", () => {
     expect(s.dateModified).toBe("2026-09-18");
   });
 
+  it("credits an article to the company, not an invented person", () => {
+    const s = articleSchema({
+      headline: "h",
+      description: "d",
+      path: "/resources/x",
+      datePublished: "2026-09-18",
+    }) as { author: unknown };
+    expect(s.author).toEqual({ "@type": "Organization", name: SITE.name, url: SITE.url });
+  });
+
+  it("refuses an article path outside /resources/<slug>", () => {
+    for (const path of ["/resources", "/resources/", "/about-us", "/resources/A_B", "/resources/x/y", "/resources/-x"]) {
+      expect(() => articleSchema({ headline: "h", description: "d", path, datePublished: "2026-09-18" })).toThrow(
+        /is not a \/resources\/<slug> path/
+      );
+    }
+  });
+
+  it("refuses article dates that are not real days or run backwards", () => {
+    expect(() =>
+      articleSchema({ headline: "h", description: "d", path: "/resources/x", datePublished: "2026-02-30" })
+    ).toThrow(/not a YYYY-MM-DD calendar date/);
+    expect(() =>
+      articleSchema({
+        headline: "h",
+        description: "d",
+        path: "/resources/x",
+        datePublished: "2026-09-18",
+        dateModified: "2026-09-17",
+      })
+    ).toThrow(/is before published/);
+  });
+
   it("emits Event with a postal address, an organizer and a status", () => {
     const s = eventSchema({
       name: "Sample Conference",

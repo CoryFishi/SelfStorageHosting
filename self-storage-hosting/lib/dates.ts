@@ -31,6 +31,16 @@ function parts(iso: string): { y: number; m: number; d: number } {
   throw new Error(`Not an ISO calendar date: "${iso}"`);
 }
 
+/** True only for a real calendar day written YYYY-MM-DD. */
+export function isIsoDate(s: string): boolean {
+  try {
+    parts(s);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** "2026-10-07" → "October 7, 2026" */
 export function formatDate(iso: string): string {
   const { y, m, d } = parts(iso);

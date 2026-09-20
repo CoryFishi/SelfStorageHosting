@@ -29,8 +29,73 @@ describe("pageMeta", () => {
       pageMeta({ title: "a", description: "d", path: "/a" }).openGraph
     ).toMatchObject({ type: "website" });
     expect(
-      pageMeta({ title: "a", description: "d", path: "/a", ogType: "article" }).openGraph
+      pageMeta({ title: "a", description: "d", path: "/a", ogType: "article", publishedTime: "2026-09-19" })
+        .openGraph
     ).toMatchObject({ type: "article" });
+  });
+
+  it("gives an article its published and modified times", () => {
+    const og = pageMeta({
+      title: "a",
+      description: "d",
+      path: "/a",
+      ogType: "article",
+      publishedTime: "2026-09-19",
+      modifiedTime: "2026-10-02",
+    }).openGraph;
+    expect(og).toMatchObject({ publishedTime: "2026-09-19", modifiedTime: "2026-10-02" });
+  });
+
+  it("states no modified time for an article that was never updated", () => {
+    const og = pageMeta({ title: "a", description: "d", path: "/a", ogType: "article", publishedTime: "2026-09-19" })
+      .openGraph;
+    expect(og).not.toHaveProperty("modifiedTime");
+  });
+
+  it("refuses an article with no published time", () => {
+    expect(() => pageMeta({ title: "a", description: "d", path: "/a", ogType: "article" })).toThrow(
+      /needs a publishedTime/
+    );
+  });
+
+  it("refuses article times on a page that is not an article", () => {
+    expect(() => pageMeta({ title: "a", description: "d", path: "/a", publishedTime: "2026-09-19" })).toThrow(
+      /sets article times/
+    );
+    expect(() => pageMeta({ title: "a", description: "d", path: "/a", modifiedTime: "2026-09-19" })).toThrow(
+      /sets article times/
+    );
+  });
+
+  it("refuses an article date that is not a real YYYY-MM-DD day", () => {
+    for (const bad of ["2026-02-30", "09/19/2026", "2026-9-19"]) {
+      expect(() =>
+        pageMeta({ title: "a", description: "d", path: "/a", ogType: "article", publishedTime: bad })
+      ).toThrow(/not a YYYY-MM-DD calendar date/);
+    }
+    expect(() =>
+      pageMeta({
+        title: "a",
+        description: "d",
+        path: "/a",
+        ogType: "article",
+        publishedTime: "2026-09-19",
+        modifiedTime: "2026-13-01",
+      })
+    ).toThrow(/not a YYYY-MM-DD calendar date/);
+  });
+
+  it("refuses a modified time before the published time", () => {
+    expect(() =>
+      pageMeta({
+        title: "a",
+        description: "d",
+        path: "/a",
+        ogType: "article",
+        publishedTime: "2026-09-19",
+        modifiedTime: "2026-09-18",
+      })
+    ).toThrow(/is before published/);
   });
 
   it("emits noindex, nofollow when asked", () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { formatDate, formatDateRange } from "@/lib/dates";
+import { formatDate, formatDateRange, isIsoDate } from "@/lib/dates";
 import { EVENTS, upcomingEvents, type IndustryEvent } from "@/lib/events";
 import { PKG_ROOT } from "./helpers/walk";
 import { pageFiles } from "./helpers/pages";
@@ -14,6 +14,19 @@ describe("formatDate", () => {
   it("rejects a malformed or impossible date", () => {
     expect(() => formatDate("2026-10-7")).toThrow('Not an ISO calendar date: "2026-10-7"');
     expect(() => formatDate("2026-02-30")).toThrow('Not an ISO calendar date: "2026-02-30"');
+  });
+});
+
+describe("isIsoDate", () => {
+  it("accepts a real YYYY-MM-DD day", () => {
+    expect(isIsoDate("2026-09-19")).toBe(true);
+    expect(isIsoDate("2028-02-29")).toBe(true);
+  });
+
+  it("rejects anything else without throwing", () => {
+    for (const s of ["2026-02-30", "2026-9-19", "09/19/2026", "2026-09-19T00:00:00Z", ""]) {
+      expect(isIsoDate(s), s).toBe(false);
+    }
   });
 });
 
