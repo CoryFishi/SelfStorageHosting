@@ -9,6 +9,27 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  # Secrets scanning reads everything under the publish directory, and
+  # `publish = ".next"` puts Next's own build cache inside it. Turbopack's
+  # persistent cache (`.next/cache/turbopack/*.sst`) holds compiled module
+  # data, and on 2026-09-21 the scanner matched RESEND_API_KEY's value at two
+  # lines of one `.sst` blob and failed the build.
+  #
+  # `.next/cache` is a build cache. Netlify carries it between builds to make
+  # them fast; the Next.js runtime never publishes it to the CDN, so nothing
+  # in it was ever served to a visitor. Excluding it restores the check to
+  # what it is for -- the artifacts that actually ship -- rather than
+  # weakening it. Netlify documents this exclusion for Next.js sites.
+  #
+  # Scoped to the cache ON PURPOSE. Do NOT reach for SECRETS_SCAN_OMIT_KEYS
+  # with RESEND_API_KEY, and do NOT set SECRETS_SCAN_ENABLED=false: either one
+  # would stop scanning the deployed bundle, which is the place a leaked key
+  # would actually matter. Both paths are listed because the runtime also
+  # stages a copy under `.netlify/.next/`, which is where the build log
+  # reported the match.
+  SECRETS_SCAN_OMIT_PATHS = ".next/cache/**,.netlify/.next/cache/**"
+
 # The Next.js adapter must be declared here. Netlify provisions it automatically
 # only when it detects Next.js at the moment a repository is linked, and this
 # site was linked while it was a Vite app -- so without this entry the build
