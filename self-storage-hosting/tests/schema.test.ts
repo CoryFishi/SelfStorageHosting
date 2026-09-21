@@ -18,12 +18,24 @@ describe("schema builders", () => {
     expect(String(s.logo)).toMatch(/^https:\/\//);
   });
 
-  it("omits sameAs and contactPoint while the owner facts are outstanding", () => {
+  it("omits sameAs while the owner's profile URLs are outstanding", () => {
     const s = organizationSchema() as Record<string, unknown>;
-    // These appear only once SITE.social / SITE.contactEmail are populated.
-    // An empty sameAs array or a contactPoint with no address is invalid.
+    // SITE.social is still empty, and an empty sameAs array is invalid
+    // structured data. This asserts the omission, not the emptiness: supply
+    // real profile URLs and this test is what tells you to update it.
     expect("sameAs" in s).toBe(false);
-    expect("contactPoint" in s).toBe(false);
+  });
+
+  it("emits contactPoint from the address the site actually publishes", () => {
+    // The owner supplied SITE.contactEmail on 2026-09-21. Asserting the value
+    // rather than mere presence is the point: the legal pages print this same
+    // address, so a contactPoint naming a different one would send a reader
+    // somewhere the site never mentions.
+    const s = organizationSchema() as Record<string, unknown>;
+    expect(SITE.contactEmail, "this test is vacuous once the address is empty").toBeTruthy();
+    const cp = s.contactPoint as Record<string, unknown>;
+    expect(cp, "contactPoint is missing although SITE.contactEmail is set").toBeDefined();
+    expect(cp.email).toBe(SITE.contactEmail);
   });
 
   it("emits WebSite with name and url only, never a SearchAction", () => {

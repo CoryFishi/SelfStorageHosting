@@ -4,6 +4,7 @@ import { pageMeta } from "@/lib/seo";
 import { LEGAL_UPDATED } from "@/lib/legal";
 import { formatDate } from "@/lib/dates";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import MailLink from "@/components/MailLink";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 // DRAFT FOR OWNER REVIEW.
@@ -11,9 +12,12 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 // Every claim in "What we check" is backed by code or a test in this
 // repository (see the table in the plan's Task 11). It claims no conformance
 // level, because there has been no outside audit. Keep it that way until
-// there is one. When spec 14 A supplies a business email or phone number, add
-// it under "Tell us about a barrier": a visitor who cannot use the contact
-// form has no other way to reach us today.
+// there is one.
+//
+// "Tell us about a barrier" now offers SITE.contactEmail beside the contact
+// form (added 2026-09-21). That second channel is the load-bearing one here:
+// a barrier in the form itself would otherwise lock out exactly the visitor
+// this page is written for. Do not reduce it back to the form alone.
 
 export const metadata: Metadata = pageMeta({
   title: "Accessibility Statement",
@@ -78,8 +82,8 @@ export default function AccessibilityPage() {
           <Link href="/contact" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
             contact form
           </Link>
-          . Say which page it was, what you were trying to do, and which browser or assistive
-          technology you use.
+          , or email us at <MailLink />. Say which page it was, what you were trying to do, and
+          which browser or assistive technology you use.
         </p>
       </article>
     </>

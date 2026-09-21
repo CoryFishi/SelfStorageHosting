@@ -4,6 +4,7 @@ import { pageMeta } from "@/lib/seo";
 import { LEGAL_UPDATED } from "@/lib/legal";
 import { formatDate } from "@/lib/dates";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import MailLink from "@/components/MailLink";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 // DRAFT FOR OWNER OR COUNSEL REVIEW. Not legal advice.
@@ -119,7 +120,7 @@ export default function PrivacyPage() {
           <Link href="/contact" className={link}>
             contact form
           </Link>
-          .
+          , or email us at <MailLink />.
         </p>
 
         <section id="security" className="scroll-mt-24">
@@ -144,7 +145,7 @@ export default function PrivacyPage() {
           <Link href="/contact" className={link}>
             contact form
           </Link>
-          .
+          , or email us at <MailLink />.
         </p>
       </article>
     </>

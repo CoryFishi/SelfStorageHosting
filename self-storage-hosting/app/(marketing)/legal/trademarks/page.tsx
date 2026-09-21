@@ -5,6 +5,7 @@ import { LEGAL_UPDATED } from "@/lib/legal";
 import { formatDate } from "@/lib/dates";
 import { NAMES_WITHOUT_CONFIRMED_OWNER, THIRD_PARTY_MARKS } from "@/lib/trademarks";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import MailLink from "@/components/MailLink";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 // DRAFT FOR OWNER OR COUNSEL REVIEW. Not legal advice.
@@ -72,7 +73,7 @@ export default function TrademarksPage() {
           <Link href="/contact" className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
             contact form
           </Link>
-          .
+          , or email us at <MailLink />.
         </p>
       </article>
     </>

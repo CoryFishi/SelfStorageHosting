@@ -5,8 +5,8 @@
 // or counsel must still review them (spec 6.11, 14 C). PR #1 merged before
 // that review, so it is overdue: see docs/deploy-checklist.md.
 export const LEGAL_UPDATED = {
-  privacy: "2026-09-19",
-  terms: "2026-09-19",
-  trademarks: "2026-09-19",
-  accessibility: "2026-09-19",
+  privacy: "2026-09-21",
+  terms: "2026-09-21",
+  trademarks: "2026-09-21",
+  accessibility: "2026-09-21",
 } as const;

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { ROUTES } from "@/lib/site";
+import { ROUTES, SITE } from "@/lib/site";
 import { LEGAL_UPDATED } from "@/lib/legal";
 import { formatDate } from "@/lib/dates";
 import { validateContact } from "@/lib/contact";
@@ -47,6 +47,25 @@ describe("legal pages", () => {
       source(route).match(/\b(?:retain\w*|retention|kept for|keep \w+ for|delete\w* after|stored for|held for)\b/gi) ??
       [];
     expect(found, `${route} states a retention period: ${found.join(", ")}`).toEqual([]);
+  });
+
+  it.each(LEGAL_PAGES)("%s offers a way to reach us that is not the contact form", (route) => {
+    // Every legal page invites the reader to act: a privacy request, an
+    // accessibility barrier, a trademark complaint. Until 2026-09-21 each
+    // routed to the contact form and nothing else, so the form's own failure
+    // -- it answered 503 to every visitor until the day before, and a barrier
+    // in the form locks out the very reader the accessibility page addresses
+    // -- left no route at all.
+    //
+    // This asserts the property, not the address: any page that offers only
+    // the form fails, whatever wording it uses. It is deliberately vacuous
+    // when no address is published, so the first line fails loudly rather
+    // than letting the rest pass on an empty string.
+    expect(SITE.contactEmail, "SITE.contactEmail is empty, so this guard tests nothing").toBeTruthy();
+    expect(
+      source(route).includes("<MailLink />"),
+      `${route} routes the reader to the contact form alone`
+    ).toBe(true);
   });
 
   it.each(Object.entries(LEGAL_UPDATED))("the %s page's last-updated date is real and not in the future", (page, iso) => {

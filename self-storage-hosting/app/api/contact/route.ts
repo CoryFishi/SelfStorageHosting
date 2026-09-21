@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateContact } from "@/lib/contact";
+import { SITE } from "@/lib/site";
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 5;
@@ -15,6 +16,17 @@ const MAIL_TIMEOUT_MS = 10_000;
 // sweep alone does not enforce.
 const PRUNE_ABOVE = 1000;
 const hits = new Map<string, { count: number; resetAt: number }>();
+
+// Both failure branches below mean the same thing to the visitor: the form is
+// the one channel this site funnels into, and it just failed them. Naming the
+// address turns a dead end into a way through -- but only once the owner has
+// actually published one. While SITE.contactEmail is empty the sentence would
+// be an instruction nobody can follow, so it is omitted rather than faked,
+// and the message reads exactly as it did before the address existed.
+const FALLBACK = SITE.contactEmail
+  ? ` Please try again shortly, or email us at ${SITE.contactEmail}.`
+  : " Please try again shortly.";
+
 
 function rateLimited(ip: string): boolean {
   const now = Date.now();
@@ -59,10 +71,7 @@ export async function POST(request: Request) {
   if (!to || !key) {
     console.error("Contact form not configured: set CONTACT_TO_EMAIL and RESEND_API_KEY.");
     return NextResponse.json(
-      // Do NOT say "email us directly": SITE.contactEmail is "" until the
-      // owner supplies one (spec §14 A), so the page publishes no address
-      // and that instruction is impossible to follow.
-      { error: "We could not send that right now. Please try again shortly." },
+      { error: `We could not send that right now.${FALLBACK}` },
       { status: 503 }
     );
   }
@@ -93,7 +102,7 @@ export async function POST(request: Request) {
   if (!res || !res.ok) {
     const detail = res ? `${res.status} ${await res.text().catch(() => "")}` : "unreachable";
     console.error("Mail provider failed:", detail);
-    return NextResponse.json({ error: "We couldn't send that. Please try again." }, { status: 502 });
+    return NextResponse.json({ error: `We couldn't send that.${FALLBACK}` }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });

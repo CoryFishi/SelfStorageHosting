@@ -19,12 +19,20 @@ export const SITE = {
   locale: "en_US",
 
   // Spec §14 B and C: real social profile URLs and business contact details
-  // are owner inputs that do not exist yet. Keep these empty until supplied —
-  // organizationSchema() omits sameAs and contactPoint when they are, which is
-  // correct. A placeholder email or an invented profile URL would be worse
-  // than the omission, and inviting Google to crawl a dead profile is worst.
+  // are owner inputs. `social` is still empty and must stay that way until
+  // real profile URLs exist — organizationSchema() omits sameAs when it is,
+  // which is correct, and inviting Google to crawl a dead profile is worse
+  // than the omission.
+  //
+  // `contactEmail` was supplied by the owner on 2026-09-21. Setting it does
+  // two things beyond the legal pages: organizationSchema() starts emitting a
+  // contactPoint, and /api/contact's failure response can finally name a way
+  // to reach us that does not depend on the form that just failed. Both were
+  // written to switch on automatically. Empty it again and both revert
+  // cleanly, so this stays a single source of truth rather than an address
+  // copied into six files.
   social: [] as string[],
-  contactEmail: "",
+  contactEmail: "support@selfstoragehosting.com",
 };
 
 export type NavLink = { href: string; label: string };
