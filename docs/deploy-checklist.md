@@ -9,19 +9,22 @@ Run after the first production deploy. Each needs owner access.
 - [ ] #10 Search Console — verify the property, submit `/sitemap.xml`, and
       confirm it is collecting data. Spec §16 names this as the point of
       the whole first phase.
-- [ ] #5  Re-run the apex/`www` redirect check (Step 6) against production.
-      As of this writing (2026-09-18) the apex still 301s to `www` — the
-      opposite of the direction `SITE.url` assumes. Left as is, every
-      canonical points at a URL that immediately redirects, which wastes
-      crawl budget and splits signals.
-      Where to flip it: production is served by **Netlify behind
-      Cloudflare** today (responses carry `x-nf-request-id` and
-      `Server: cloudflare`), not Vercel as spec D1 plans, and Netlify's
-      public site record lists `www.selfstoragehosting.com` as the primary
-      custom domain — which is what produces this 301. Make the apex the
-      primary domain in Netlify's domain management. If hosting moves to
-      Vercel per D1, it is the Vercel project's domain settings instead.
-      Dashboard change, owner access, not code.
+- [x] #5  Apex/`www` — **settled in code on 2026-09-20 (78f0999), the other
+      way round.** Rather than flip the edge, `SITE.url` moved to
+      `https://www.selfstoragehosting.com`, so canonicals, the sitemap,
+      `metadataBase`, `og:url` and the JSON-LD `@id` now name the host that
+      actually serves. Nothing is left to do in the dashboard.
+      **Do not make the apex the primary domain in Netlify.** Production is
+      Netlify behind Cloudflare (responses carry `x-nf-request-id` and
+      `Server: cloudflare`), Netlify lists `www.selfstoragehosting.com` as
+      the primary custom domain, and that is what produces the apex→`www`
+      301 the canonicals now agree with. Flipping it would point every
+      canonical at a redirecting URL again — the exact defect this fixed.
+      The redirect direction and `SITE.url` must always change together; if
+      hosting ever moves (spec D1 plans Vercel), carry the same pairing over.
+      Verify only: `curl -sI https://selfstoragehosting.com/` should 301 to
+      the `www` host, and `curl -sI https://www.selfstoragehosting.com/`
+      should answer 200.
 - [ ] Hosting (optional tidy-up): the Netlify dashboard still lists the
       Vite-era publish directory `dist`. It no longer matters —
       `self-storage-hosting/netlify.toml` sets `publish = ".next"` and
@@ -29,6 +32,36 @@ Run after the first production deploy. Each needs owner access.
       confusion. The branch also deletes `public/_redirects`, whose
       `/* /index.html 200` SPA fallback would have routed every URL to a
       file Next.js never emits.
+
+## Environment variables
+
+What each name does, where it is set, and what breaks when it is absent.
+`git grep -n "process\.env\." -- self-storage-hosting backend` is the
+authority; this table is the reading of it as of 2026-09-21.
+
+Netlify (site `self-storage-hosting/`):
+
+| Name | Needed? | Read | Absent means |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | optional | build | `lib/site.ts` falls back to `https://www.selfstoragehosting.com`, which is correct today. Set it only to override, and never to the apex — see #5. |
+| `CONTACT_TO_EMAIL` | **yes** | request | `/api/contact` answers **503** to every visitor and logs "Contact form not configured". The form looks live and delivers nothing. |
+| `RESEND_API_KEY` | **yes** | request | same 503 — the route requires both. |
+| `NEXT_PUBLIC_API_BASE` | not yet | **build** | `/user/login` and `/user/register` say "Signing in is not available right now." — deliberate until the backend exists. Inlined at build, so setting it needs a fresh deploy, not just a save. |
+
+Netlify reads its environment at deploy time, so **after changing any of
+these, trigger a new deploy.** Saving the variable alone changes nothing.
+
+Backend (`backend/`, not deployed anywhere yet — see "Turn accounts on"):
+
+| Name | Needed? | Absent means |
+| --- | --- | --- |
+| `MONGODB_URI` | **yes** | falls back to `mongodb://127.0.0.1:27017`, which no host serves. |
+| `MONGODB_DB` | **yes** | falls back to `selfstoragehosting`; fine if that is the real database name. |
+| `JWT_SECRET` | **yes** | 32 characters minimum. `.env.example` leaves it empty on purpose so it can never be copied into production as a publicly known signing key. |
+| `NODE_ENV=production` | **yes** | the sign-in cookie drops `Secure` and `SameSite=None`, so cross-origin sign-in silently fails. |
+| `CORS_ORIGINS` | **yes** | the site's origins, comma-separated. |
+| `PORT` | host-dependent | defaults to 4000; most hosts inject their own. |
+| `JWT_EXPIRES` | optional | leave unset or `7d`, matching the cookie lifetime fixed in code and the seven days the privacy policy states. |
 
 ## Plan 2: after the remaining pages deploy
 
@@ -45,8 +78,11 @@ Each needs owner access.
       "Signing in is not available right now." and send nothing.
       1. Deploy `backend/` over HTTPS with `MONGODB_URI`, `JWT_SECRET`,
          `NODE_ENV=production`, and `CORS_ORIGINS` set to the site's origins,
-         comma-separated: `https://selfstoragehosting.com,https://www.selfstoragehosting.com`
-         while #5 is open. Leave `JWT_EXPIRES` unset, or set it to `7d` — the
+         comma-separated: `https://selfstoragehosting.com,https://www.selfstoragehosting.com`.
+         Both, even though #5 settled on `www`: the apex 301 covers the
+         browser's top-level navigation, but a stray `fetch` issued from an
+         apex document would still carry the apex `Origin`, and listing it
+         costs nothing. Leave `JWT_EXPIRES` unset, or set it to `7d` — the
          privacy policy says sign-in lasts seven days, and the cookie's own
          lifetime is fixed at seven days in code. In production the sign-in
          cookie is sent with `Secure` and `SameSite=None`.
