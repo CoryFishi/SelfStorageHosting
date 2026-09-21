@@ -12,11 +12,21 @@ dist
 dist-ssr
 *.local
 
+# `.env` alone matches only that exact name, so `.env.local` and
+# `.env.production` -- the files Next.js actually loads, and the ones most
+# likely to hold a real RESEND_API_KEY -- were never ignored.
 .env
+.env.*
+!.env.example
 
 # next.js
 /.next/
 /out/
+
+# Netlify. `netlify build` writes the adapter's output here (a ~100MB
+# function bundle) and `netlify link` writes .netlify/state.json, which
+# carries the site ID.
+/.netlify/
 
 # typescript
 *.tsbuildinfo

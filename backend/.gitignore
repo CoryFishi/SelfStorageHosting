@@ -12,7 +12,12 @@ dist
 dist-ssr
 *.local
 
+# `.env` alone matches only that exact name, leaving `.env.local` and
+# `.env.production` -- which would hold a real MONGODB_URI and JWT_SECRET --
+# untracked by the rule and therefore committable.
 .env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
