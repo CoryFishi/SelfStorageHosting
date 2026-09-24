@@ -4,6 +4,7 @@ import { BiRightArrowAlt } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
+import GuideLinks from "@/components/GuideLinks";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export const metadata: Metadata = pageMeta({
@@ -137,6 +138,11 @@ export default function SolutionsPage() {
           and add the other when it suits you.
         </p>
       </section>
+
+      <GuideLinks
+        heading="Guides to read first"
+        intro="If you are weighing either solution because of a gate problem, one of these guides probably covers it."
+      />
 
       <CtaBand
         heading="Not sure which fits?"

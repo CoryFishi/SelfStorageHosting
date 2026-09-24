@@ -5,6 +5,7 @@ import { BiRightArrowAlt } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
 import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import Faq, { type FaqItem } from "@/components/Faq";
+import GuideLinks from "@/components/GuideLinks";
 import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export const metadata: Metadata = pageMeta({
@@ -131,6 +132,11 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      <GuideLinks
+        heading="Guides for self-storage operators"
+        intro="Plain answers to the gate and access control problems operators ask us about most, each one cited to the vendors' own documents."
+      />
 
       <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
         <h2 className="text-center text-2xl font-extrabold sm:text-3xl">FAQs</h2>
