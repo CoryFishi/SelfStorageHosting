@@ -80,6 +80,13 @@ export function webSiteSchema() {
     "@type": "WebSite",
     name: SITE.name,
     url: SITE.url,
+    // The same studio the footer's "Built by" link names. See SITE.builtBy.
+    creator: {
+      "@type": "Organization",
+      "@id": SITE.builtBy.id,
+      name: SITE.builtBy.legalName,
+      url: SITE.builtBy.url,
+    },
   };
 }
 

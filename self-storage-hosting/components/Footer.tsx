@@ -42,6 +42,11 @@ export default function Footer() {
             All third-party product names and marks are the property of their
             owners. No affiliation or endorsement is implied.
           </p>
+          <p className="text-xs text-accent-200">
+            <a href={SITE.builtBy.url} className={`hover:underline ${FOCUS_RING}`}>
+              Built by {SITE.builtBy.label}
+            </a>
+          </p>
         </div>
       </div>
     </footer>
