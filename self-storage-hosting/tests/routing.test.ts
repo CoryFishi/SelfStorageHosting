@@ -13,41 +13,53 @@ describe("robots", () => {
   });
 
   const rule = Array.isArray(r.rules) ? r.rules[0] : r.rules;
-  const disallow = (rule.disallow ?? []) as string[];
+  const disallow = ([] as string[]).concat(rule.disallow ?? []);
+  const allow = ([] as string[]).concat(rule.allow ?? []);
 
-  // Application surface, blocked from crawling on purpose: not marketing
-  // pages, nothing links to them, and keeping crawlers out costs no indexing
-  // we want. Everything else stays crawlable.
-  const CRAWL_BLOCKED = ["/user/", "/api/"];
+  // How Google and Bing resolve robots.txt: the longest matching rule wins,
+  // and Allow wins a tie. A path matches a rule when it starts with it.
+  function crawlable(path: string): boolean {
+    const longest = (rules: string[]) =>
+      Math.max(-1, ...rules.filter((p) => path.startsWith(p)).map((p) => p.length));
+    return longest(allow) >= longest(disallow);
+  }
 
-  it("disallows private application areas", () => {
-    for (const p of CRAWL_BLOCKED) expect(disallow).toContain(p);
+  it("resolves rules the way crawlers do", () => {
+    // Pins crawlable() itself, so a broken matcher cannot wave the next two
+    // tests through.
+    expect(crawlable("/user/dashboard")).toBe(false);
+    expect(crawlable("/api/contact")).toBe(false);
+    expect(crawlable("/")).toBe(true);
+    expect(crawlable("/resources")).toBe(true);
   });
 
-  // The rule this file previously had backwards: it required /case-studies to
-  // be disallowed while the page also carries noindex. Those are alternatives,
-  // not layers. A Disallow stops the fetch, so the crawler never reads the
-  // noindex, and the URL can still be indexed from an external link with
-  // nothing to tell it the page was meant to be excluded. To keep a page out
-  // of the index you have to let it be fetched.
-  it("never disallows a noindex page, so its noindex can actually be read", () => {
+  // Application surface, blocked from crawling on purpose.
+  it("disallows private application areas", () => {
+    for (const p of ["/user/", "/api/"]) expect(disallow).toContain(p);
+  });
+
+  // The rule this file previously had backwards twice. First it required
+  // /case-studies to be disallowed while the page also carried noindex; then
+  // it exempted everything under /user/ on the grounds that nothing links
+  // there, while the top bar links /user/login from every page. Disallow and
+  // noindex are alternatives, not layers: a Disallow stops the fetch, so the
+  // crawler never reads the noindex, and a linked URL can still be indexed
+  // with nothing to tell it the page was meant to be excluded. Every noindex
+  // page, wherever it lives, has to be fetchable.
+  it("never blocks a noindex page, so its noindex can actually be read", () => {
     const noindex = Object.entries(ROUTES)
       .filter(([, v]) => !v.indexable && v.built)
-      .map(([path]) => path)
-      .filter((path) => !CRAWL_BLOCKED.some((b) => path.startsWith(b)));
+      .map(([path]) => path);
 
-    // Anti-vacuity: if ROUTES ever stops carrying such a page this test would
-    // pass while checking nothing, and the regression could return unnoticed.
-    expect(noindex.length, "no crawlable noindex route left to check").toBeGreaterThan(0);
+    // Anti-vacuity, and proof the /user/ pages are in scope.
+    expect(noindex).toContain("/case-studies");
+    expect(noindex).toContain("/user/login");
 
-    for (const path of noindex) {
-      const blocking = disallow.filter((d) => path === d || path.startsWith(d));
-      expect(
-        blocking,
-        `${path} is noindex, but robots.txt blocks it via ${blocking.join(", ")} — ` +
-          `the crawler cannot fetch the page, so it never sees the noindex`
-      ).toEqual([]);
-    }
+    const blocked = noindex.filter((p) => !crawlable(p));
+    expect(
+      blocked,
+      `noindex, but robots.txt blocks the fetch, so the noindex is never seen: ${blocked.join(", ")}`
+    ).toEqual([]);
   });
 });
 
