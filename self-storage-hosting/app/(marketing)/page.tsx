@@ -82,6 +82,12 @@ export default function HomePage() {
         </div>
         <Image
           src="/HeroImage.png"
+          // The LCP element on mobile. public/HeroImage.png is a 16-colour PNG
+          // of about 14 KB at 768px, twice the rendered 384px. The image
+          // optimizer made it bigger, not smaller: Netlify served a 77 KB WebP
+          // upscaled to 828px, which held mobile LCP near 3 s on Slow 4G.
+          // tests/seo.test.ts caps the file's size.
+          unoptimized
           alt="Cloud-connected self-storage facility gate and access control keypad"
           width={384}
           height={384}
