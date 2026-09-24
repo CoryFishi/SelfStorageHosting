@@ -35,7 +35,7 @@ export const ARTICLES: readonly Article[] = [
   {
     slug: "gate-not-syncing",
     headline: "Why Your Gate Isn't Syncing With Your Storage Software: A Diagnostic Guide",
-    title: "Gate Not Syncing With Storage Software",
+    title: "Gate Not Syncing to Storage Software",
     description:
       "Find out why gate codes stop matching your storage software, step by step, using the vendors' own troubleshooting documents.",
     datePublished: "2026-09-20",
@@ -51,7 +51,7 @@ export const ARTICLES: readonly Article[] = [
   {
     slug: "self-storage-gate-compatibility",
     headline: "Self-Storage Software and Gate Access Control: An Independent Compatibility Matrix",
-    title: "Self-Storage Gate Compatibility Matrix",
+    title: "Storage Gate Compatibility Matrix",
     description:
       "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
     datePublished: "2026-09-20",

@@ -6,7 +6,7 @@ import { ARTICLES, article, articlePath } from "@/lib/articles";
 import { ROUTES } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 import { isIsoDate } from "@/lib/dates";
-import { pageFiles } from "./helpers/pages";
+import { pageFiles, TITLE_BUDGET, TITLE_SUFFIX } from "./helpers/pages";
 
 // A /resources/<slug> route, as opposed to the /resources hub itself.
 const ARTICLE_ROUTE = /^\/resources\/[^/]+$/;
@@ -55,9 +55,10 @@ describe("article registry", () => {
       expect(new Set(values).size, `duplicate ${key}`).toBe(values.length);
     }
     for (const a of ARTICLES) {
-      // The layout appends " | Self Storage Hosting" (23 characters). 40 + 23
-      // keeps the full <title> near the width search results show.
-      expect(a.title.length, `${a.slug} title`).toBeLessThanOrEqual(40);
+      // The layout appends " | Self Storage Hosting". The whole <title> gets
+      // 60 characters, so the article's own part gets what the suffix leaves.
+      // This read 40 until 2026-09-23, which let two 61-character titles ship.
+      expect(a.title.length, `${a.slug} title`).toBeLessThanOrEqual(TITLE_BUDGET - TITLE_SUFFIX.length);
       expect(a.description.length, `${a.slug} description`).toBeLessThanOrEqual(155);
     }
   });

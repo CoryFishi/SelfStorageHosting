@@ -20,7 +20,7 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 export const metadata: Metadata = pageMeta({
   title: "About Us",
   description:
-    "Why we built cloud access control for independent self-storage operators, and how our FMS-to-gate bridges work.",
+    "Why we built cloud access control for independent self-storage operators, how our FMS-to-gate bridges work, and which gate hardware we integrate.",
   path: "/about-us",
 });
 

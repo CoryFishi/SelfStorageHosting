@@ -181,6 +181,8 @@ Four columns — Solutions, Resources, Company, Legal. Every current dead link r
 | `/contact` | — (conversion) | `Contact` | Talk to us about cloud access control hosting, facility websites or an FMS-to-gate integration. |
 | `/case-studies` | — | `Case Studies` | *(noindex)* |
 
+**Amended 2026-09-23 (SEO audit):** every indexable description is now 120–155 characters, and every rendered `<title>` suffix included is at most 60 (so an article's own title is at most 37). Six descriptions above (`/about-us`, `/resources`, `/events`, `/demo`, `/legal/privacy`, `/legal/accessibility`) were lengthened in their `page.tsx` without changing what they claim, and two article titles were shortened in `lib/articles.ts`. The code is the source of truth for the current wording; `tests/sitemap-coverage.test.ts` and `tests/rendered.test.ts` enforce the lengths.
+
 ### 5.1 Keyword traps — do not target
 
 - **Tenant-intent queries** (`storage units near me`, `self storage prices`) — wrong audience entirely; the buyer is the operator.

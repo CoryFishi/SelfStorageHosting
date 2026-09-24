@@ -8,7 +8,7 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 export const metadata: Metadata = pageMeta({
   title: "Request a Demo",
   description:
-    "See how cloud access control would work with your gate system and facility software. Book a tailored walkthrough.",
+    "See how cloud access control would work with your gate system and facility software. Book a tailored walkthrough and learn what happens next.",
   path: "/demo",
 });
 

@@ -15,7 +15,7 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 const A = article("gate-not-syncing");
 
 export const metadata: Metadata = pageMeta({
-  title: "Gate Not Syncing With Storage Software",
+  title: "Gate Not Syncing to Storage Software",
   description:
     "Find out why gate codes stop matching your storage software, step by step, using the vendors' own troubleshooting documents.",
   path: "/resources/gate-not-syncing",
@@ -94,7 +94,7 @@ export default function ArticlePage() {
         crumbs={[
           { name: "Home", path: "/" },
           { name: "Resources", path: "/resources" },
-          { name: "Gate Not Syncing With Storage Software", path: "/resources/gate-not-syncing" },
+          { name: "Gate Not Syncing to Storage Software", path: "/resources/gate-not-syncing" },
         ]}
       />
       <JsonLd data={articleSchema({ ...A, path: articlePath(A.slug) })} />

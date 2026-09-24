@@ -3,7 +3,14 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { ROUTES, indexableRoutes } from "@/lib/site";
 import { walkFrom } from "./helpers/walk";
-import { pageFiles, pageMetaArg } from "./helpers/pages";
+import {
+  pageFiles,
+  pageMetaArg,
+  TITLE_SUFFIX,
+  TITLE_BUDGET,
+  DESCRIPTION_MIN,
+  DESCRIPTION_MAX,
+} from "./helpers/pages";
 
 const APP_DIR = path.resolve(__dirname, "../app");
 
@@ -130,6 +137,8 @@ describe("canonical declarations", () => {
   });
 
   it("gives every built page a unique title and a unique description of at most 155 characters", () => {
+    const tooLong: string[] = [];
+    const tooShort: string[] = [];
     const pages = pageFiles();
     const seen = { title: new Map<string, string>(), description: new Map<string, string>() };
     for (const route of builtRoutes()) {
@@ -141,11 +150,20 @@ describe("canonical declarations", () => {
         const clash = seen[key].get(value);
         expect(clash, `${route} reuses the ${key} of ${clash}: "${value}"`).toBeUndefined();
         seen[key].set(value, route);
-        if (key === "description") {
-          expect(value.length, `${route} description is ${value.length} characters`).toBeLessThanOrEqual(155);
+        if (key === "title" && (value + TITLE_SUFFIX).length > TITLE_BUDGET) {
+          tooLong.push(`${route} title "${value + TITLE_SUFFIX}" is ${(value + TITLE_SUFFIX).length}`);
+        }
+        if (key === "description" && value.length > DESCRIPTION_MAX) {
+          tooLong.push(`${route} description is ${value.length}`);
+        }
+        // Noindex pages never show a snippet, so the floor is for indexable ones.
+        if (key === "description" && ROUTES[route].indexable && value.length < DESCRIPTION_MIN) {
+          tooShort.push(`${route} description is ${value.length}`);
         }
       }
     }
     expect(seen.title.size).toBe(builtRoutes().length);
+    expect(tooLong, `over ${TITLE_BUDGET} (title with suffix) or ${DESCRIPTION_MAX} (description)`).toEqual([]);
+    expect(tooShort, `indexable descriptions under ${DESCRIPTION_MIN} characters`).toEqual([]);
   });
 });
