@@ -26,10 +26,39 @@ describe("schema builders", () => {
     expect("contactPoint" in s).toBe(false);
   });
 
-  it("emits WebSite with name and url only, never a SearchAction", () => {
+  it("emits WebSite with name, url and creator, never a SearchAction", () => {
     const s = webSiteSchema() as Record<string, unknown>;
     expect(s["@type"]).toBe("WebSite");
     expect(s.potentialAction).toBeUndefined();
+    expect(Object.keys(s).sort()).toEqual(["@context", "@type", "creator", "name", "url"]);
+  });
+
+  it("names Kingpost Software as the WebSite's creator, joined to Kingpost's own @id", () => {
+    const { creator } = webSiteSchema() as { creator: Record<string, unknown> };
+    expect(creator).toEqual({
+      "@type": "Organization",
+      // The @id kingpostsoftware.com gives its own Organization node.
+      "@id": "https://www.kingpostsoftware.com/#organization",
+      name: "Kingpost Software LLC",
+      url: "https://www.kingpostsoftware.com/",
+    });
+    // No sameAs: Kingpost publishes no social profiles to point at.
+    expect("sameAs" in creator).toBe(false);
+  });
+
+  it("names Kingpost Software as the Organization's parent, the same node as the creator", () => {
+    // The owner confirmed on 2026-09-23 that Kingpost owns Self Storage Hosting.
+    const { parentOrganization } = organizationSchema() as {
+      parentOrganization: Record<string, unknown>;
+    };
+    const { creator } = webSiteSchema() as { creator: Record<string, unknown> };
+    expect(parentOrganization).toEqual({
+      "@type": "Organization",
+      "@id": "https://www.kingpostsoftware.com/#organization",
+      name: "Kingpost Software LLC",
+      url: "https://www.kingpostsoftware.com/",
+    });
+    expect(parentOrganization).toEqual(creator);
   });
 
   it("numbers breadcrumb positions from 1 and uses absolute item urls", () => {

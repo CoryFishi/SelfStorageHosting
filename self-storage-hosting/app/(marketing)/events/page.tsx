@@ -16,7 +16,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = pageMeta({
   title: "Industry Events",
   description:
-    "Confirmed self-storage industry conferences and trade shows, each linked to the organizer's own listing.",
+    "Confirmed self-storage industry conferences, trade shows and state association events, with dates, venues and a link to each organizer's own listing.",
   path: "/events",
 });
 

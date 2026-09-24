@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { pageMeta, canonicalFor } from "@/lib/seo";
+import { readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { SITE } from "@/lib/site";
+import { PKG_ROOT } from "./helpers/walk";
 
 describe("pageMeta", () => {
   it("never includes the brand in the title, since the template appends it", () => {
@@ -128,5 +131,36 @@ describe("pageMeta", () => {
   it("rejects a canonical path carrying a query or fragment", () => {
     expect(() => canonicalFor("/contact?ref=x")).toThrow();
     expect(() => canonicalFor("/contact#top")).toThrow();
+  });
+});
+
+describe("home page LCP image", () => {
+  // The hero is the largest element above the fold on a phone, so its bytes
+  // are the LCP. The optimizer served a 77 KB WebP upscaled to 828px from
+  // this 768px file; the page now serves the file itself, so the file is the
+  // whole budget. 30 KB keeps mobile LCP on Slow 4G clear of 2.5 s with room
+  // for a redraw; a full-colour re-export (the old file was 342 KB) fails it.
+  const HERO = path.join(PKG_ROOT, "public", "HeroImage.png");
+  const HOME = path.join(PKG_ROOT, "app", "(marketing)", "page.tsx");
+
+  it("stays under its byte budget", () => {
+    expect(statSync(HERO).size).toBeLessThanOrEqual(30 * 1024);
+  });
+
+  it("is served as the file, not through the image optimizer", () => {
+    const img = readFileSync(HOME, "utf8").match(/<Image\b[\s\S]*?\/>/)?.[0] ?? "";
+    expect(img, "the home page renders no <Image>").toContain('src="/HeroImage.png"');
+    expect(img).toMatch(/\bunoptimized\b/);
+    expect(img).toMatch(/fetchPriority="high"/);
+  });
+});
+
+describe("footer credit", () => {
+  it("links to Kingpost Software from the shared footer", () => {
+    const src = readFileSync(path.join(PKG_ROOT, "components", "Footer.tsx"), "utf8");
+    expect(src).toContain("href={SITE.builtBy.url}");
+    expect(src).toContain("Built by {SITE.builtBy.label}");
+    expect(SITE.builtBy.url).toBe("https://www.kingpostsoftware.com/");
+    expect(SITE.builtBy.label).toBe("Kingpost Software");
   });
 });

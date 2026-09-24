@@ -25,6 +25,19 @@ export const SITE = {
   // than the omission, and inviting Google to crawl a dead profile is worst.
   social: [] as string[],
   contactEmail: "",
+
+  // The company that owns, builds and maintains the site. The footer credits
+  // it, the WebSite JSON-LD names it as `creator` and the Organization names it
+  // as `parentOrganization` (the owner confirmed Kingpost owns Self Storage
+  // Hosting on 2026-09-23). `id` is the @id Kingpost's own homepage gives its
+  // Organization node, so search engines can join the two graphs into one
+  // entity. No sameAs: kingpostsoftware.com publishes no social profiles.
+  builtBy: {
+    label: "Kingpost Software",
+    legalName: "Kingpost Software LLC",
+    url: "https://www.kingpostsoftware.com/",
+    id: "https://www.kingpostsoftware.com/#organization",
+  },
 };
 
 export type NavLink = { href: string; label: string };

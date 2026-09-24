@@ -7,12 +7,13 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
 import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
-// Spec §5 fixes this title and description. The hub is a plain list: no
+// Spec §5 fixes this title and description (the description lengthened
+// 2026-09-23 to clear the 120-character floor tests/sitemap-coverage.test.ts sets). The hub is a plain list: no
 // ItemList or CollectionPage JSON-LD, which earn no rich result here.
 export const metadata: Metadata = pageMeta({
   title: "Resources",
   description:
-    "Practical guides on self-storage access control, gate-to-software syncing and migrating off end-of-life hardware.",
+    "Practical guides on self-storage access control, gate-to-software syncing and migrating off end-of-life hardware, each cited to the vendors' own documents.",
   path: "/resources",
 });
 

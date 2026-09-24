@@ -403,3 +403,65 @@ describe.skipIf(!RUN)("rendered HTML", () => {
     }
   });
 });
+
+// Added by the 2026-09-23 SEO audit. Each of these was measured on the live
+// site before it was fixed; they check the built HTML, where a source-level
+// check could pass while the page renders something else.
+describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
+  const indexable = built.filter((r) => ROUTES[r].indexable);
+
+  it.each(built)("%s renders a <title> of at most 60 characters", (r) => {
+    // Decoded first: an apostrophe renders as &#x27; and would count as six.
+    const title = decodeEntities(read(r).match(/<title>([^<]*)<\/title>/)?.[1] ?? "");
+    expect(title.length, `${r}: "${title}"`).toBeGreaterThan(0);
+    expect(title.length, `${r}: "${title}"`).toBeLessThanOrEqual(60);
+  });
+
+  it.each(indexable)("%s renders a meta description of 120 to 160 characters", (r) => {
+    const desc = decodeEntities(read(r).match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "");
+    expect(desc.length, `${r}: "${desc}"`).toBeGreaterThanOrEqual(120);
+    expect(desc.length, `${r}: "${desc}"`).toBeLessThanOrEqual(160);
+  });
+
+  it.each(built)("%s credits Kingpost Software in the footer", (r) => {
+    const footer = visible(read(r)).match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? "";
+    const credit = footer.match(/<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/"[^>]*>([\s\S]*?)<\/a>/);
+    expect(credit, `${r} has no Kingpost link in its <footer>`).not.toBeNull();
+    expect(rowText(credit![1])).toBe("Built by Kingpost Software");
+  });
+
+  it.each(["/", "/solutions"])("%s links every guide, each by its own title", (r) => {
+    const html = visible(read(r));
+    // Everything outside nav, header and footer: the page's own content.
+    const main = html.match(/<main\b[\s\S]*?<\/main>/)?.[0] ?? "";
+    expect(ARTICLES.length).toBe(5);
+    for (const a of ARTICLES) {
+      const anchors = [...main.matchAll(new RegExp(`<a\\b[^>]*href="${articlePath(a.slug)}"[^>]*>([\\s\\S]*?)</a>`, "g"))].map(
+        (m) => rowText(m[1])
+      );
+      expect(anchors, `${r} does not link ${articlePath(a.slug)} by its title`).toContain(a.title);
+    }
+  });
+
+  it("serves the home page's LCP image as the lean file, not the optimizer's upscale", () => {
+    // React writes the attribute as fetchPriority, so match either case.
+    const img = read("/").match(/<img\b[^>]*fetchpriority="high"[^>]*>/i)?.[0] ?? "";
+    expect(img, "home has no fetchpriority=high image").not.toBe("");
+    expect(img).toContain('src="/HeroImage.png"');
+    expect(img).not.toContain("/_next/image");
+  });
+
+  it("names Kingpost as the WebSite creator and the Organization's parent on every page", () => {
+    for (const r of built) {
+      const blocks = jsonLd(read(r)) as { "@type"?: string }[];
+      const site = blocks.find((b) => b["@type"] === "WebSite") as
+        | { creator?: { "@id"?: string } }
+        | undefined;
+      const org = blocks.find((b) => b["@type"] === "Organization") as
+        | { parentOrganization?: { "@id"?: string } }
+        | undefined;
+      expect(site?.creator?.["@id"], r).toBe("https://www.kingpostsoftware.com/#organization");
+      expect(org?.parentOrganization?.["@id"], r).toBe("https://www.kingpostsoftware.com/#organization");
+    }
+  });
+});

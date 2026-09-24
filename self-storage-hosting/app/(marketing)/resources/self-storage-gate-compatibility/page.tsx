@@ -15,7 +15,7 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 const A = article("self-storage-gate-compatibility");
 
 export const metadata: Metadata = pageMeta({
-  title: "Self-Storage Gate Compatibility Matrix",
+  title: "Storage Gate Compatibility Matrix",
   description:
     "Which gate systems Storable Edge, Storable Easy and Sitelink by Storable list as integrations, next to the gate makers' own lists. Dated and sourced.",
   path: "/resources/self-storage-gate-compatibility",
@@ -182,7 +182,7 @@ export default function ArticlePage() {
         crumbs={[
           { name: "Home", path: "/" },
           { name: "Resources", path: "/resources" },
-          { name: "Self-Storage Gate Compatibility Matrix", path: "/resources/self-storage-gate-compatibility" },
+          { name: "Storage Gate Compatibility Matrix", path: "/resources/self-storage-gate-compatibility" },
         ]}
       />
       <JsonLd data={articleSchema({ ...A, path: articlePath(A.slug) })} />

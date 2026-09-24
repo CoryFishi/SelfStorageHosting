@@ -18,7 +18,7 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 export const metadata: Metadata = pageMeta({
   title: "Accessibility Statement",
   description:
-    "How this website is built and checked for accessibility, its known limitations, and how to tell us about a barrier.",
+    "How this website is built and checked for accessibility, the standard it aims for, its known limitations, and how to tell us about a barrier you meet.",
   path: "/legal/accessibility",
 });
 

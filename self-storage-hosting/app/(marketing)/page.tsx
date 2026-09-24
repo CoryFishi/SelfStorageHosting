@@ -5,6 +5,7 @@ import { BiRightArrowAlt } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
 import { OUTAGE_BEHAVIOR } from "@/lib/claims";
 import Faq, { type FaqItem } from "@/components/Faq";
+import GuideLinks from "@/components/GuideLinks";
 import { FOCUS_RING, FOCUS_RING_LIGHT } from "@/components/ui/focus";
 
 export const metadata: Metadata = pageMeta({
@@ -82,6 +83,12 @@ export default function HomePage() {
         </div>
         <Image
           src="/HeroImage.png"
+          // The LCP element on mobile. public/HeroImage.png is a 16-colour PNG
+          // of about 14 KB at 768px, twice the rendered 384px. The image
+          // optimizer made it bigger, not smaller: Netlify served a 77 KB WebP
+          // upscaled to 828px, which held mobile LCP near 3 s on Slow 4G.
+          // tests/seo.test.ts caps the file's size.
+          unoptimized
           alt="Cloud-connected self-storage facility gate and access control keypad"
           width={384}
           height={384}
@@ -125,6 +132,11 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      <GuideLinks
+        heading="Guides for self-storage operators"
+        intro="Plain answers to the gate and access control problems operators ask us about most, each one cited to the vendors' own documents."
+      />
 
       <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
         <h2 className="text-center text-2xl font-extrabold sm:text-3xl">FAQs</h2>

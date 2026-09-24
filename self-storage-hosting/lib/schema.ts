@@ -49,6 +49,16 @@ export function assertNoForbiddenTypes(node: unknown): void {
   walk(node, "$");
 }
 
+// Kingpost Software, referenced by the @id its own site uses. See SITE.builtBy.
+function kingpostOrganization() {
+  return {
+    "@type": "Organization",
+    "@id": SITE.builtBy.id,
+    name: SITE.builtBy.legalName,
+    url: SITE.builtBy.url,
+  };
+}
+
 export function organizationSchema() {
   return {
     "@context": "https://schema.org",
@@ -57,6 +67,7 @@ export function organizationSchema() {
     url: SITE.url,
     logo: `${SITE.url}/Logo.png`,
     description: SITE.description,
+    parentOrganization: kingpostOrganization(),
     // Spec 7.2 calls for sameAs and contactPoint. Both are omitted rather than
     // stubbed while the owner facts are outstanding: an empty sameAs array and
     // a contactPoint with no reachable address are invalid structured data.
@@ -80,6 +91,8 @@ export function webSiteSchema() {
     "@type": "WebSite",
     name: SITE.name,
     url: SITE.url,
+    // The same company the footer's "Built by" link names.
+    creator: kingpostOrganization(),
   };
 }
 

@@ -1,7 +1,17 @@
 import path from "node:path";
+import { SITE } from "@/lib/site";
 import { PKG_ROOT, walkFrom } from "./walk";
 
 const APP_DIR = path.join(PKG_ROOT, "app");
+
+// The root layout's title template is `%s | ${SITE.name}`, so every page's
+// <title> is its pageMeta title plus this suffix. Search results show roughly
+// 60 characters of a title before truncating it; descriptions shorter than 120
+// leave most of their snippet to whatever Google chooses to write instead.
+export const TITLE_SUFFIX = ` | ${SITE.name}`;
+export const TITLE_BUDGET = 60;
+export const DESCRIPTION_MIN = 120;
+export const DESCRIPTION_MAX = 155;
 
 // Maps each routable URL to the page.tsx that serves it. Route groups like
 // (marketing) and (auth) do not appear in the URL.

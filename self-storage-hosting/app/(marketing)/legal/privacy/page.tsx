@@ -24,7 +24,7 @@ import { FOCUS_RING_LIGHT } from "@/components/ui/focus";
 export const metadata: Metadata = pageMeta({
   title: "Privacy Policy",
   description:
-    "What this website collects when you send a message or create an account, where it goes, and the one cookie it uses.",
+    "What this website collects when you send a message or create an account, where it goes, who handles it, the one cookie it uses, and your choices.",
   path: "/legal/privacy",
 });
 
