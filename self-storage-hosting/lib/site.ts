@@ -26,13 +26,12 @@ export const SITE = {
   social: [] as string[],
   contactEmail: "",
 
-  // The studio that builds and maintains the site. The footer credits it and
-  // the WebSite JSON-LD names it as `creator`. `id` is the @id Kingpost's own
-  // homepage gives its Organization node, so search engines can join the two
-  // graphs into one entity. It is deliberately NOT `parentOrganization` on the
-  // Organization: that would state who owns Self Storage Hosting, and the
-  // operating entity is still an owner input (spec 14 C, tests/legal.test.ts).
-  // No sameAs either: kingpostsoftware.com publishes no social profiles.
+  // The company that owns, builds and maintains the site. The footer credits
+  // it, the WebSite JSON-LD names it as `creator` and the Organization names it
+  // as `parentOrganization` (the owner confirmed Kingpost owns Self Storage
+  // Hosting on 2026-09-23). `id` is the @id Kingpost's own homepage gives its
+  // Organization node, so search engines can join the two graphs into one
+  // entity. No sameAs: kingpostsoftware.com publishes no social profiles.
   builtBy: {
     label: "Kingpost Software",
     legalName: "Kingpost Software LLC",

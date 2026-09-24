@@ -46,10 +46,19 @@ describe("schema builders", () => {
     expect("sameAs" in creator).toBe(false);
   });
 
-  it("does not claim who owns the site while that is an owner input", () => {
-    // spec 14 C. creator says who built it; parentOrganization would say who
-    // owns Self Storage Hosting, which tests/legal.test.ts keeps unstated.
-    expect("parentOrganization" in (organizationSchema() as Record<string, unknown>)).toBe(false);
+  it("names Kingpost Software as the Organization's parent, the same node as the creator", () => {
+    // The owner confirmed on 2026-09-23 that Kingpost owns Self Storage Hosting.
+    const { parentOrganization } = organizationSchema() as {
+      parentOrganization: Record<string, unknown>;
+    };
+    const { creator } = webSiteSchema() as { creator: Record<string, unknown> };
+    expect(parentOrganization).toEqual({
+      "@type": "Organization",
+      "@id": "https://www.kingpostsoftware.com/#organization",
+      name: "Kingpost Software LLC",
+      url: "https://www.kingpostsoftware.com/",
+    });
+    expect(parentOrganization).toEqual(creator);
   });
 
   it("numbers breadcrumb positions from 1 and uses absolute item urls", () => {

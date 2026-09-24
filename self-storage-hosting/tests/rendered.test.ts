@@ -451,12 +451,17 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(img).not.toContain("/_next/image");
   });
 
-  it("names Kingpost as the WebSite creator on every page", () => {
+  it("names Kingpost as the WebSite creator and the Organization's parent on every page", () => {
     for (const r of built) {
-      const site = jsonLd(read(r)).find((b) => (b as { "@type"?: string })["@type"] === "WebSite") as
+      const blocks = jsonLd(read(r)) as { "@type"?: string }[];
+      const site = blocks.find((b) => b["@type"] === "WebSite") as
         | { creator?: { "@id"?: string } }
         | undefined;
+      const org = blocks.find((b) => b["@type"] === "Organization") as
+        | { parentOrganization?: { "@id"?: string } }
+        | undefined;
       expect(site?.creator?.["@id"], r).toBe("https://www.kingpostsoftware.com/#organization");
+      expect(org?.parentOrganization?.["@id"], r).toBe("https://www.kingpostsoftware.com/#organization");
     }
   });
 });

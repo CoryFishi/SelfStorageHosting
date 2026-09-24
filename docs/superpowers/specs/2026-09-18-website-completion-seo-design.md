@@ -433,7 +433,7 @@ Also: the fifth bridge row (`AboutUsPage.tsx:96`, `"Your PMS" → OpenTech Allia
 
 **B. Security claims** — which of these can be substantiated: encryption at rest, RBAC, SSO-ready, signed device tokens, key rotation, per-facility isolation, audit exports? Anything unsubstantiated comes out.
 
-**C. Brand and legal** — legal entity name, social profile URLs for `sameAs`, privacy policy and terms content (or counsel).
+**C. Brand and legal** — legal entity name, social profile URLs for `sameAs`, privacy policy and terms content (or counsel). *Partly answered 2026-09-23: Kingpost Software LLC owns the site, and the Organization JSON-LD names it as `parentOrganization`. The legal pages still name no entity until counsel writes them.*
 
 **D. Infrastructure**
 - D1: canonical host — apex or `www`?
