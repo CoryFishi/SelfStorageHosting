@@ -5,16 +5,26 @@ import { walkFrom } from "./helpers/walk";
 
 const entries = Object.entries(SOURCES);
 
+// verifiedOn is the checker's local calendar date (see lib/sources.ts), so the
+// future check uses the local date too. Against the UTC date, a late-evening
+// US check stamped with tomorrow's UTC date would pass, and the pages would
+// print a day that has not happened yet.
+const now = new Date();
+const localToday = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
+  .map((n) => String(n).padStart(2, "0"))
+  .join("-");
+
 describe("cited sources", () => {
   it("has the sources this site cites", () => {
     expect(entries.length).toBeGreaterThanOrEqual(6);
   });
 
-  it.each(entries)("%s is https and carries a real verification date", (_key, s) => {
+  it.each(entries)("%s is https and carries a real verification date", (key, s) => {
     expect(new URL(s.url).protocol).toBe("https:");
     expect(s.verifiedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     // Round-trips only for a real calendar date: 2026-02-30 comes back as 03-02.
     expect(new Date(`${s.verifiedOn}T00:00:00Z`).toISOString().slice(0, 10)).toBe(s.verifiedOn);
+    expect(s.verifiedOn <= localToday, `${key} has a verifiedOn in the future: ${s.verifiedOn}`).toBe(true);
     expect(s.title.trim()).not.toBe("");
     expect(s.publisher.trim()).not.toBe("");
   });

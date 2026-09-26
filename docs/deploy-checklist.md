@@ -189,6 +189,25 @@ Each needs the owner's access or decision.
       source was last checked. Re-check them at the same time and update
       `verifiedOn`. Change a guide's `dateModified` only when the facts on
       it change, as `lib/articles.ts` says.
+- [ ] **Cited sources still answer — monthly and before each deploy.** In
+      `self-storage-hosting/`, run
+      `LINKCHECK=1 npx vitest run tests/source-status.test.ts`. It fetches
+      every URL in `lib/sources.ts` and fails on anything but a 200, on a
+      redirect, or on an HTML page where the title promises a PDF. It is
+      kept out of `npm test` and the build so a vendor outage cannot block
+      a deploy, which is why it has to be run by hand. Vendors move
+      documents without redirects: on 2026-09-25, 13 PTI PDFs had moved
+      from `/documents/...` to `/documents/current-products/...` or
+      `/documents/archived-products/...`. For each failure, find the
+      same document on the vendor's own document page, re-read every
+      sentence that cites it, then update `url` and `verifiedOn`. If the
+      vendor no longer publishes it, use a web.archive.org copy only if one
+      actually loads, and add "(archived copy)" to its title. If neither
+      exists, remove the `SOURCES` entry and every citation of it, and
+      re-check or remove each sentence it supported. An end-of-support date
+      that no longer rests on the vendor's own public notice must go
+      (spec §15.3). If a guide's text changes, bump its `dateModified` in
+      `lib/articles.ts`.
 - [ ] **Trademark owners we could not confirm.** `/legal/trademarks` names
       Revenue Control Systems, Eight IO, BearBox and Cubby Storage without an
       owner, because no first-party page for any of them was found. If counsel
