@@ -18,10 +18,10 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   digiGateManual: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/DigiGate_Install_Manual_1100_044___Ver2.5__.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/controllers/digigate-archive/DigiGate_Install_Manual_1100_044___Ver2.5__.pdf",
     title: "DigiGate installation manual, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiFacts: {
     url: "https://www.ptisecurity.com/us/en/facts",
@@ -36,10 +36,10 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiMigrationManual: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-current/FalconXT%20to%20CloudController%20Migration.pdf",
+    url: "https://www.ptisecurity.com/documents/current-products/controllers/FalconXT%20to%20CloudController%20Migration.pdf",
     title: "FalconXT to CloudController migration manual (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
 
   // Cited by the /resources articles. Titles are written in our words wherever
@@ -57,10 +57,10 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiCloudControllerManual: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-current/cloud-controller-user-manual-91924.pdf",
+    url: "https://www.ptisecurity.com/documents/current-products/controllers/cloud-controller-user-manual-91924.pdf",
     title: "CloudController user's manual (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiNextGenBlog: {
     url: "https://www.ptisecurity.com/us/en/about-us/articles-and-news/blogs/four-ways-the-next-gen-cloud-controller-improves-self-storage-security",
@@ -69,28 +69,28 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiComparisonChart: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-current/controller-comparison-chart.pdf",
+    url: "https://www.ptisecurity.com/documents/current-products/controllers/controller-comparison-chart.pdf",
     title: "Controller comparison chart (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiCloudFalconGuide: {
-    url: "https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-archive/StorLogix%20CLoud%20and%20FalconXT%20User%20Guide.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/storlogix-cloud/StorLogix%20CLoud%20and%20FalconXT%20User%20Guide.pdf",
     title: "StorLogix Cloud and FalconXT user guide, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiDesktopRequirements: {
-    url: "https://www.ptisecurity.com/documents/misc/misc-archive/Computer_System_Requirements___StorLogix_Desktop.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/misc/Computer_System_Requirements___StorLogix_Desktop.pdf",
     title: "Computer requirements for StorLogix Desktop, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiDesktopInstallGuide: {
-    url: "https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-archive/StorLogix_Desktop_Installation_Guide.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/storlogix-cloud/StorLogix_Desktop_Installation_Guide.pdf",
     title: "StorLogix Desktop installation guide, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiDesktopToCloudBlog: {
     url: "https://www.ptisecurity.com/us/en/about-us/articles-and-news/blogs/moving-from-desktop-to-cloud",
@@ -99,10 +99,10 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiCloudManual: {
-    url: "https://www.ptisecurity.com/documents/access-control/storlogix-cloud/storlogix-cloud-current/storlogix-user-manual_071423-1.pdf",
+    url: "https://www.ptisecurity.com/documents/current-products/storlogix-cloud/storlogix-user-manual_071423-1.pdf",
     title: "StorLogix Cloud user's manual (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiIntegrationsTable: {
     url: "https://www.ptisecurity.com/us/en/pti-partners/pms-integrations",
@@ -117,10 +117,10 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiKeypadMessages: {
-    url: "https://www.ptisecurity.com/documents/keypads/keypads-general/troubleshooting_keypad_messages.pdf",
+    url: "https://www.ptisecurity.com/documents/current-products/keypads/keypads-general/troubleshooting_keypad_messages.pdf",
     title: "Troubleshooting keypad messages (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiCloudAdapterGuide: {
     url: "https://www.ptisecurity.com/documents/litmos-docs/storlogix-cloud/StorLogix%20Cloud%20Adapter%20Installation%20Guide.pdf",
@@ -129,10 +129,10 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiEolNotice: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/End-of-Life-Notice_DigiTech-and-Falcon2000-with-Falcon-Base-Unit.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/controllers/digigate-archive/End-of-Life-Notice_DigiTech-and-Falcon2000-with-Falcon-Base-Unit.pdf",
     title: "End of life notice: DigiTech and Falcon 2000 with Falcon Base Unit (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiKnowledgeBase: {
     url: "https://www.ptisecurity.com/us/en/get_support/knowledgebase",
@@ -147,22 +147,22 @@ export const SOURCES = {
     verifiedOn: "2026-09-19",
   },
   ptiReplaceSyscon: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/falconxt-archive/Replacing_a_Digitech_System_Controller_with_a_Falcon_XT.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/controllers/falconxt-archive/Replacing_a_Digitech_System_Controller_with_a_Falcon_XT.pdf",
     title: "Replacing a Digitech system controller with a Falcon XT, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   ptiSendDigiGateFiles: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/Sending_Your_DigiGate_File_to_PTI_Security_Systems___Updated___V1.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/controllers/digigate-archive/Sending_Your_DigiGate_File_to_PTI_Security_Systems___Updated___V1.pdf",
     title: "Sending your DigiGate files to PTI Security Systems, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
   digiGateUsersGuide: {
-    url: "https://www.ptisecurity.com/documents/access-control/controllers/controllers-archive/digigate-archive/DigiGate_for_Windows_Users_Guide___Ver_3.6____1_.pdf",
+    url: "https://www.ptisecurity.com/documents/archived-products/access-control/controllers/digigate-archive/DigiGate_for_Windows_Users_Guide___Ver_3.6____1_.pdf",
     title: "DigiGate for Windows user's guide, archived (PDF)",
     publisher: "PTI Security Systems",
-    verifiedOn: "2026-09-19",
+    verifiedOn: "2026-09-26",
   },
 
   storableEasyThirdPartyGates: {
