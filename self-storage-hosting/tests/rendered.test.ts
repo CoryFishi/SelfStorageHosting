@@ -57,6 +57,7 @@ function rowText(rowHtml: string): string {
 
 type EventBlock = {
   name: string;
+  description?: string;
   url: string;
   startDate: string;
   endDate: string;
@@ -172,6 +173,14 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       ];
       for (const [field, value] of wanted) {
         expect(text, `${e.name}: ${field} "${value}" is missing from the visible row`).toContain(value);
+      }
+      // The description says only what the row shows: each ". "-separated
+      // part is a line of the row. (A part that itself contains ". " splits
+      // into pieces that are each still in the row.)
+      const parts = (e.description ?? "").split(". ");
+      expect(parts.length, `${e.name}: description "${e.description}"`).toBeGreaterThanOrEqual(4);
+      for (const part of parts) {
+        expect(text, `${e.name}: description part "${part}" is not in the visible row`).toContain(part);
       }
       expect(row, `${e.name}: no visible link to ${e.url}`).toContain(`href="${e.url}"`);
     }

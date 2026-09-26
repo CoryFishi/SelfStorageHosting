@@ -175,11 +175,17 @@ export function eventSchema(e: {
   address: PostalAddressInput;
   organizer: string;
   url: string;
+  /** What the event's visible row says; see eventDescription() in lib/events.ts. */
+  description: string;
 }) {
+  // No organizer url yet: an event's source is often the event's own site
+  // rather than its organizer's, so deriving one from it would be wrong. It
+  // needs its own verified field first.
   return {
     "@context": "https://schema.org",
     "@type": "Event",
     name: e.name,
+    description: e.description,
     startDate: e.startDate,
     endDate: e.endDate ?? e.startDate,
     // Every listed event was confirmed on its organizer's own page.

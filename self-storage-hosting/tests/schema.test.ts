@@ -144,7 +144,7 @@ describe("schema builders", () => {
     ).toThrow(/is before published/);
   });
 
-  it("emits Event with a postal address, an organizer and a status", () => {
+  it("emits Event with a postal address, an organizer, a status and a description", () => {
     const s = eventSchema({
       name: "Sample Conference",
       startDate: "2026-11-10",
@@ -153,11 +153,14 @@ describe("schema builders", () => {
       address: { addressLocality: "Springfield", addressRegion: "IL", addressCountry: "US" },
       organizer: "Sample Association",
       url: "https://example.org/conference",
+      description: "Sample Conference. November 10–12, 2026",
     });
     expect(s["@type"]).toBe("Event");
     expect(s.eventStatus).toBe("https://schema.org/EventScheduled");
     expect(s.location["@type"]).toBe("Place");
     expect(s.location.address).toMatchObject({ "@type": "PostalAddress", addressLocality: "Springfield" });
+    expect(s.description).toBe("Sample Conference. November 10–12, 2026");
+    // No url: none has been verified for any organizer.
     expect(s.organizer).toEqual({ "@type": "Organization", name: "Sample Association" });
   });
 });
@@ -209,6 +212,7 @@ describe("forbidden schema guard", () => {
           address: { addressLocality: "c", addressRegion: "r", addressCountry: "US" },
           organizer: "o",
           url: "https://example.org/",
+          description: "d",
         })
       )
     ).not.toThrow();

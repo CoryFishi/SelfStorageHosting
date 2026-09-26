@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { formatDate, formatDateRange, isIsoDate } from "@/lib/dates";
-import { EVENTS, upcomingEvents, type IndustryEvent } from "@/lib/events";
+import { EVENTS, upcomingEvents, eventPlace, eventDescription, type IndustryEvent } from "@/lib/events";
 import { PKG_ROOT } from "./helpers/walk";
 import { pageFiles } from "./helpers/pages";
 
@@ -85,6 +85,45 @@ describe("upcomingEvents", () => {
     const unordered = [ev("Alpha", "2026-11-10", "2026-11-12"), ev("Zeta", "2026-10-07", "2027-01-01")];
     expect(upcomingEvents("2026-01-01", unordered).map((e) => e.name)).toEqual(["Zeta", "Alpha"]);
     expect(unordered.map((e) => e.name)).toEqual(["Alpha", "Zeta"]);
+  });
+});
+
+describe("eventPlace", () => {
+  it("writes venue, street, city, and region with ZIP, naming no country for the US", () => {
+    const e: IndustryEvent = {
+      ...ev("x", "2026-10-07"),
+      address: {
+        streetAddress: "1 Main St",
+        addressLocality: "Springfield",
+        addressRegion: "IL",
+        postalCode: "62701",
+        addressCountry: "US",
+      },
+    };
+    expect(eventPlace(e)).toBe("Sample Hall, 1 Main St, Springfield, IL 62701");
+  });
+
+  it("skips what the organizer did not publish, and names a country outside the US", () => {
+    const e: IndustryEvent = {
+      ...ev("x", "2026-10-07"),
+      address: { addressLocality: "Gold Coast", addressRegion: "QLD", addressCountry: "AU" },
+    };
+    expect(eventPlace(e)).toBe("Sample Hall, Gold Coast, QLD, Australia");
+  });
+});
+
+describe("eventDescription", () => {
+  it("is the visible row's lines, in order, and nothing more", () => {
+    const e: IndustryEvent = { ...ev("Sample Summit", "2026-11-10", "2026-11-12"), detail: "Trade show November 11–12" };
+    expect(eventDescription(e)).toBe(
+      "Sample Summit. November 10–12, 2026. Trade show November 11–12. Sample Hall, Springfield, IL. Organizer: Sample Association"
+    );
+  });
+
+  it("leaves out a detail the organizer did not give", () => {
+    expect(eventDescription(ev("Sample Day", "2026-10-07"))).toBe(
+      "Sample Day. October 7, 2026. Sample Hall, Springfield, IL. Organizer: Sample Association"
+    );
   });
 });
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
 import { eventSchema } from "@/lib/schema";
-import { upcomingEvents, type IndustryEvent } from "@/lib/events";
+import { upcomingEvents, eventDescription, eventPlace } from "@/lib/events";
 import { formatDate, formatDateRange } from "@/lib/dates";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
@@ -21,14 +21,6 @@ export const metadata: Metadata = pageMeta({
 });
 
 const host = (url: string) => new URL(url).host.replace(/^www\./, "");
-
-function place(e: IndustryEvent): string {
-  const { streetAddress, addressLocality, addressRegion, postalCode, addressCountry } = e.address;
-  const country = addressCountry === "US" ? "" : addressCountry === "AU" ? ", Australia" : `, ${addressCountry}`;
-  const regionZip = postalCode ? `${addressRegion} ${postalCode}` : addressRegion;
-  const parts = [e.venue, streetAddress, addressLocality, regionZip].filter(Boolean);
-  return `${parts.join(", ")}${country}`;
-}
 
 export default function EventsPage() {
   // Today's date in UTC. An event drops off at the first regeneration after
@@ -78,12 +70,13 @@ export default function EventsPage() {
                     address: e.address,
                     organizer: e.organizer,
                     url: e.source,
+                    description: eventDescription(e),
                   })}
                 />
                 <h3 className="text-lg font-semibold">{e.name}</h3>
                 <p className="mt-1 font-medium text-text-900">{formatDateRange(e.startDate, e.endDate)}</p>
                 {e.detail && <p className="text-text-700">{e.detail}</p>}
-                <p className="mt-2 text-text-800">{place(e)}</p>
+                <p className="mt-2 text-text-800">{eventPlace(e)}</p>
                 <p className="text-text-800">Organizer: {e.organizer}</p>
                 <p className="mt-3 text-sm text-text-700">
                   Source:{" "}
