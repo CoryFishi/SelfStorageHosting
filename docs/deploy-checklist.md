@@ -134,10 +134,17 @@ Each needs owner access.
       and `/solutions/access-control-hosting` (BreadcrumbList). In Search
       Console, request indexing for the new indexable pages. `/sitemap.xml`
       already lists them.
-- [ ] **Run the tests before every deploy.** No CI runs them today:
-      `netlify.toml` runs only `npm run build`. Run `npm test` in
-      `self-storage-hosting/` and in `backend/` before each deploy,
-      or add both to a CI job.
+- [ ] **Run the tests before every deploy.** `.github/workflows/ci.yml`
+      runs the site's lint, `npm test`, `npm run build` and the rendered
+      check (`RENDERED=1`) on every pull request and on `main`.
+      `netlify.toml` still runs only `npm run build`, so CI protects a
+      deploy only if a red run blocks the merge. In GitHub, under Settings →
+      Branches (or Rules), require the `site` status check (shown on pull
+      requests as `ci / site`) on `main`.
+      Several tests compare data with today's date, so a red run with no
+      code change usually means the quarterly events review is due.
+      `backend/` is not in CI yet. Run `npm test` there by hand before
+      deploying it.
 
 ## Plan 3: after the resources pages deploy
 
