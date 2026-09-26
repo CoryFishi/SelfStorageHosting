@@ -41,6 +41,13 @@ Run after the first production deploy. Each needs owner access.
       preserve query string. The rule lives outside this repository and
       names the `www` host, so **it must change together with `SITE.url`**,
       like the redirect in #5.
+      The rule depends on **Always Use HTTPS staying off** in the zone
+      (SSL/TLS → Edge Certificates; off as of 2026-09-26, which is why the
+      upgrade hop comes from Netlify today). Cloudflare applies that setting
+      before it evaluates any Redirect Rule. If it is switched on, it
+      upgrades `http://` requests before the rule sees them, and the chain
+      goes back to two hops. The first hop would then come from Cloudflare
+      instead of Netlify.
       Verify: `curl -sI http://selfstoragehosting.com/resources/gate-not-syncing`
       answers one 301 with
       `Location: https://www.selfstoragehosting.com/resources/gate-not-syncing`,
