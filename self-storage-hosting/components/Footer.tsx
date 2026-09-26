@@ -43,7 +43,7 @@ export default function Footer() {
             owners. No affiliation or endorsement is implied.
           </p>
           <p className="text-xs text-accent-200">
-            <a href={SITE.builtBy.url} className={`hover:underline ${FOCUS_RING}`}>
+            <a href={SITE.builtBy.productUrl} className={`hover:underline ${FOCUS_RING}`}>
               Built by {SITE.builtBy.label}
             </a>
           </p>

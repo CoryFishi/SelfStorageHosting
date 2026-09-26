@@ -437,11 +437,29 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(desc.length, `${r}: "${desc}"`).toBeLessThanOrEqual(160);
   });
 
-  it.each(built)("%s credits Kingpost Software in the footer", (r) => {
+  it.each(built)("%s credits Kingpost Software in the footer, linking its page for this site", (r) => {
     const footer = visible(read(r)).match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? "";
-    const credit = footer.match(/<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/"[^>]*>([\s\S]*?)<\/a>/);
+    const credit = footer.match(
+      /<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/products\/selfstoragehosting"[^>]*>([\s\S]*?)<\/a>/
+    );
     expect(credit, `${r} has no Kingpost link in its <footer>`).not.toBeNull();
     expect(rowText(credit![1])).toBe("Built by Kingpost Software");
+  });
+
+  // The JSON-LD named Kingpost as parentOrganization while no page's own
+  // content said who owns the site.
+  it("/about-us says in its own content who owns and builds the site, with a link", () => {
+    const main = visible(read("/about-us")).match(/<main\b[\s\S]*?<\/main>/)?.[0] ?? "";
+    const link = main.match(
+      /<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/products\/selfstoragehosting"[^>]*>([\s\S]*?)<\/a>/
+    );
+    expect(link, "/about-us <main> has no link to Kingpost").not.toBeNull();
+    expect(link![0], "the ownership link must be followed").not.toMatch(/\brel="[^"]*nofollow/);
+    expect(rowText(link![1])).toBe("Kingpost Software LLC");
+    // rowText puts a space where the </a> was; a reader sees none before the comma.
+    expect(rowText(main).replace(/ ([,.])/g, "$1")).toContain(
+      "Self Storage Hosting is owned and built by Kingpost Software LLC, a custom software studio."
+    );
   });
 
   it.each(["/", "/solutions"])("%s links every guide, each by its own title", (r) => {

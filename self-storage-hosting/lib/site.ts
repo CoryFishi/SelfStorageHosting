@@ -33,15 +33,22 @@ export const SITE = {
   contactEmail: "",
 
   // The company that owns, builds and maintains the site. The footer credits
-  // it, the WebSite JSON-LD names it as `creator` and the Organization names it
-  // as `parentOrganization` (the owner confirmed Kingpost owns Self Storage
-  // Hosting on 2026-09-23). `id` is the @id Kingpost's own homepage gives its
-  // Organization node, so search engines can join the two graphs into one
-  // entity. No sameAs: kingpostsoftware.com publishes no social profiles.
+  // it, /about-us says so in its story, the WebSite JSON-LD names it as
+  // `creator` and the Organization names it as `parentOrganization` (the owner
+  // confirmed Kingpost owns Self Storage Hosting on 2026-09-23). `id` is the
+  // @id Kingpost's own homepage gives its Organization node, so search engines
+  // can join the two graphs into one entity. No sameAs: kingpostsoftware.com
+  // publishes no social profiles.
+  //
+  // Two URLs on purpose. `url` is Kingpost's home page, the Organization's
+  // own url in the JSON-LD. `productUrl` is Kingpost's page about this site,
+  // which the visible links (the footer credit and /about-us) point at, as
+  // Storatix and ManaArchive link their own product pages.
   builtBy: {
     label: "Kingpost Software",
     legalName: "Kingpost Software LLC",
     url: "https://www.kingpostsoftware.com/",
+    productUrl: "https://www.kingpostsoftware.com/products/selfstoragehosting",
     id: "https://www.kingpostsoftware.com/#organization",
   },
 };

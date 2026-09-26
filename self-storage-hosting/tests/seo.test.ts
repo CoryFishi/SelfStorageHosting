@@ -255,11 +255,18 @@ describe("home page LCP image", () => {
 });
 
 describe("footer credit", () => {
-  it("links to Kingpost Software from the shared footer", () => {
+  // The visible links go to Kingpost's page about this site, the way the
+  // Storatix and ManaArchive footers link theirs. The JSON-LD keeps Kingpost's
+  // home page as the Organization's url.
+  it("links to Kingpost's page for this site from the shared footer", () => {
     const src = readFileSync(path.join(PKG_ROOT, "components", "Footer.tsx"), "utf8");
-    expect(src).toContain("href={SITE.builtBy.url}");
+    expect(src).toContain("href={SITE.builtBy.productUrl}");
     expect(src).toContain("Built by {SITE.builtBy.label}");
-    expect(SITE.builtBy.url).toBe("https://www.kingpostsoftware.com/");
+    expect(SITE.builtBy.productUrl).toBe("https://www.kingpostsoftware.com/products/selfstoragehosting");
     expect(SITE.builtBy.label).toBe("Kingpost Software");
+  });
+
+  it("keeps Kingpost's home page as the url its Organization node carries", () => {
+    expect(SITE.builtBy.url).toBe("https://www.kingpostsoftware.com/");
   });
 });
