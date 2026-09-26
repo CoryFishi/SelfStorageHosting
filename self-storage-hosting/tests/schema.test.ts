@@ -26,11 +26,26 @@ describe("schema builders", () => {
     expect("contactPoint" in s).toBe(false);
   });
 
-  it("emits WebSite with name, url and creator, never a SearchAction", () => {
+  it("emits WebSite with name, url, publisher and creator, never a SearchAction", () => {
     const s = webSiteSchema() as Record<string, unknown>;
     expect(s["@type"]).toBe("WebSite");
     expect(s.potentialAction).toBeUndefined();
-    expect(Object.keys(s).sort()).toEqual(["@context", "@type", "creator", "name", "url"]);
+    expect(Object.keys(s).sort()).toEqual(["@context", "@id", "@type", "creator", "name", "publisher", "url"]);
+    expect(s["@id"]).toBe(`${SITE.url}/#website`);
+  });
+
+  // Before this, the page carried up to three unconnected "Self Storage
+  // Hosting" organizations: the Organization, and an Article's author and
+  // publisher. They are one entity and now say so.
+  it("joins the site's own Organization by @id wherever it is named", () => {
+    const orgId = `${SITE.url}/#organization`;
+    expect(organizationSchema()["@id"]).toBe(orgId);
+    expect(webSiteSchema().publisher).toEqual({ "@id": orgId });
+    const a = articleSchema({ headline: "h", description: "d", path: "/resources/x", datePublished: "2026-09-18" });
+    expect(a.author["@id"]).toBe(orgId);
+    expect(a.publisher["@id"]).toBe(orgId);
+    // Kingpost is a different organization with its own @id.
+    expect(organizationSchema().parentOrganization["@id"]).not.toBe(orgId);
   });
 
   it("names Kingpost Software as the WebSite's creator, joined to Kingpost's own @id", () => {
@@ -98,7 +113,12 @@ describe("schema builders", () => {
       path: "/resources/x",
       datePublished: "2026-09-18",
     }) as { author: unknown };
-    expect(s.author).toEqual({ "@type": "Organization", name: SITE.name, url: SITE.url });
+    expect(s.author).toEqual({
+      "@type": "Organization",
+      "@id": `${SITE.url}/#organization`,
+      name: SITE.name,
+      url: SITE.url,
+    });
   });
 
   it("refuses an article path outside /resources/<slug>", () => {

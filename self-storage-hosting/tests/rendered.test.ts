@@ -322,9 +322,23 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       const html = read(r);
       const articles = jsonLd(html).filter((b) => (b as { "@type"?: unknown })["@type"] === "Article");
       expect(articles.length, `${r} emits ${articles.length} Article blocks`).toBe(1);
-      const block = articles[0] as { headline: string; mainEntityOfPage: string; datePublished: string };
+      const block = articles[0] as {
+        headline: string;
+        mainEntityOfPage: string;
+        datePublished: string;
+        author: { "@id"?: string };
+        publisher: { "@id"?: string };
+      };
       expect(block.mainEntityOfPage).toBe(canonicalFor(r));
       expect(block.datePublished).toBe(a.datePublished);
+      // The author and publisher are the Organization the same page declares,
+      // joined by @id rather than restated as separate nodes.
+      const org = jsonLd(html).find((b) => (b as { "@type"?: unknown })["@type"] === "Organization") as
+        | { "@id"?: string }
+        | undefined;
+      expect(org?.["@id"], `${r} has no Organization @id`).toBe(`${SITE.url}/#organization`);
+      expect(block.author["@id"], `${r} Article author`).toBe(org!["@id"]);
+      expect(block.publisher["@id"], `${r} Article publisher`).toBe(org!["@id"]);
       const h1 = visible(html).match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? "";
       expect(block.headline, `${r}: the Article headline is not the visible h1`).toBe(rowText(h1));
       expect(html).toContain('<meta property="og:type" content="article"/>');

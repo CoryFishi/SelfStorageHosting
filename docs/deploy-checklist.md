@@ -12,8 +12,10 @@ Run after the first production deploy. Each needs owner access.
 - [x] #5  Apex/`www` — **settled in code on 2026-09-20 (78f0999), the other
       way round.** Rather than flip the edge, `SITE.url` moved to
       `https://www.selfstoragehosting.com`, so canonicals, the sitemap,
-      `metadataBase`, `og:url` and the JSON-LD `@id` now name the host that
-      actually serves. Nothing is left to do in the dashboard.
+      `metadataBase` and `og:url` now name the host that actually serves.
+      So do the site's own JSON-LD `@id`s, `SITE.url` + `/#organization`
+      and `/#website` (added 2026-09-25; before that no Self Storage
+      Hosting node had an `@id`). Nothing is left to do in the dashboard.
       **Do not make the apex the primary domain in Netlify.** Production is
       Netlify behind Cloudflare (responses carry `x-nf-request-id` and
       `Server: cloudflare`), Netlify lists `www.selfstoragehosting.com` as

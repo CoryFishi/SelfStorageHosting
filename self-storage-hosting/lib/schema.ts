@@ -49,6 +49,18 @@ export function assertNoForbiddenTypes(node: unknown): void {
   walk(node, "$");
 }
 
+// Self Storage Hosting's own nodes. Every page emits the Organization and the
+// WebSite from the root layout. The @ids let the WebSite's publisher and each
+// Article's author and publisher point at that one Organization, instead of
+// declaring three unconnected organizations that happen to share a name.
+const ORG_ID = `${SITE.url}/#organization`;
+const WEBSITE_ID = `${SITE.url}/#website`;
+
+// A reference to the Organization that organizationSchema() describes in full.
+function siteOrganization() {
+  return { "@type": "Organization", "@id": ORG_ID, name: SITE.name, url: SITE.url };
+}
+
 // Kingpost Software, referenced by the @id its own site uses. See SITE.builtBy.
 function kingpostOrganization() {
   return {
@@ -63,6 +75,7 @@ export function organizationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": ORG_ID,
     name: SITE.name,
     url: SITE.url,
     logo: `${SITE.url}/Logo.png`,
@@ -89,8 +102,10 @@ export function webSiteSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": WEBSITE_ID,
     name: SITE.name,
     url: SITE.url,
+    publisher: { "@id": ORG_ID },
     // The same company the footer's "Built by" link names.
     creator: kingpostOrganization(),
   };
@@ -136,10 +151,9 @@ export function articleSchema(a: {
     image: [`${SITE.url}${SITE.ogImage}`],
     // The articles are written by the company, not a named person, so the
     // author is the Organization. Inventing a byline would be a fabrication.
-    author: { "@type": "Organization", name: SITE.name, url: SITE.url },
+    author: siteOrganization(),
     publisher: {
-      "@type": "Organization",
-      name: SITE.name,
+      ...siteOrganization(),
       logo: { "@type": "ImageObject", url: `${SITE.url}/Logo.png` },
     },
   };
