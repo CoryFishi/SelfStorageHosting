@@ -3,6 +3,7 @@ import { pageMeta, canonicalFor, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { SITE } from "@/lib/site";
+import manifest from "@/app/manifest";
 import { PKG_ROOT } from "./helpers/walk";
 
 describe("pageMeta", () => {
@@ -170,6 +171,65 @@ describe("default share image", () => {
     // 300 KB leaves room for a redraw of the logo-and-name card without
     // inviting a full-bleed photo. It is 70 KB today.
     expect(statSync(OG).size).toBeLessThanOrEqual(300 * 1024);
+  });
+});
+
+describe("app icons", () => {
+  const APP = path.join(PKG_ROOT, "app");
+
+  // Google shows a site's favicon in results only when the home page links
+  // one, and wants it square and a multiple of 48 px. Next links app/icon.png
+  // from every page.
+  it("ships app/icon.png, square and a multiple of 48 px", () => {
+    const { width, height } = pngSize(path.join(APP, "icon.png"));
+    expect(width).toBe(height);
+    expect(width % 48).toBe(0);
+  });
+
+  it("ships a 180 px app/apple-icon.png with no transparency", () => {
+    const file = path.join(APP, "apple-icon.png");
+    expect(pngSize(file)).toEqual({ width: 180, height: 180 });
+    // IHDR colour type 2 is truecolour without alpha. iOS paints transparent
+    // pixels black on a home screen.
+    expect(readFileSync(file).readUInt8(25)).toBe(2);
+  });
+
+  // Browsers request /favicon.ico whatever the markup says. With no file that
+  // request fell through to the 404 page, which is not cached.
+  it("ships app/favicon.ico as a real ICO with 16, 32 and 48 px frames", () => {
+    const buf = readFileSync(path.join(APP, "favicon.ico"));
+    expect(buf.readUInt16LE(0), "ICONDIR reserved").toBe(0);
+    expect(buf.readUInt16LE(2), "ICONDIR type (1 = icon)").toBe(1);
+    const count = buf.readUInt16LE(4);
+    const sizes: number[] = [];
+    for (let i = 0; i < count; i++) {
+      const entry = 6 + i * 16;
+      const size = buf.readUInt8(entry) || 256;
+      expect(buf.readUInt8(entry + 1) || 256, `frame ${i} is not square`).toBe(size);
+      const length = buf.readUInt32LE(entry + 8);
+      const offset = buf.readUInt32LE(entry + 12);
+      expect(offset + length, `frame ${i} runs past the end of the file`).toBeLessThanOrEqual(buf.length);
+      // Each frame is stored as PNG, and its own header must agree with the
+      // directory entry.
+      const frame = buf.subarray(offset, offset + length);
+      expect(frame.subarray(0, 8).toString("hex"), `frame ${i} is not PNG data`).toBe("89504e470d0a1a0a");
+      expect([frame.readUInt32BE(16), frame.readUInt32BE(20)], `frame ${i}`).toEqual([size, size]);
+      sizes.push(size);
+    }
+    expect(sizes).toEqual(expect.arrayContaining([16, 32, 48]));
+  });
+
+  it("names only icons that exist, in the web app manifest", () => {
+    const m = manifest();
+    expect(m.name).toBe(SITE.name);
+    expect(m.icons?.length).toBeGreaterThan(0);
+    for (const icon of m.icons ?? []) {
+      const file = path.join(APP, icon.src.replace(/^\//, ""));
+      expect(pngSize(file), icon.src).toEqual({
+        width: Number(icon.sizes?.split("x")[0]),
+        height: Number(icon.sizes?.split("x")[1]),
+      });
+    }
   });
 });
 

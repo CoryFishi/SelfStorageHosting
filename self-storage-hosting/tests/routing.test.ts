@@ -38,6 +38,14 @@ describe("robots", () => {
     for (const p of ["/user/", "/api/"]) expect(disallow).toContain(p);
   });
 
+  // Google fetches the favicon and share image like any other URL; a blocked
+  // one is shown as a generic globe or not at all.
+  it("leaves the icons, the manifest and the share image crawlable", () => {
+    for (const p of ["/favicon.ico", "/icon.png", "/apple-icon.png", "/manifest.webmanifest", SITE.ogImage]) {
+      expect(crawlable(p), p).toBe(true);
+    }
+  });
+
   // The rule this file previously had backwards twice. First it required
   // /case-studies to be disallowed while the page also carried noindex; then
   // it exempted everything under /user/ on the grounds that nothing links

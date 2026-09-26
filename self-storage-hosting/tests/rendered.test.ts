@@ -463,6 +463,16 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(html).toContain(`<meta name="twitter:image" content="${url}"/>`);
   });
 
+  // No page linked any icon, so results showed a generic one; /favicon.ico
+  // answered with the 404 page.
+  it.each([...built, "/_not-found"])("%s declares a favicon, an apple-touch-icon and the manifest", (r) => {
+    const html = read(r);
+    expect(html).toMatch(/<link rel="icon" href="\/favicon\.ico[?"]/);
+    expect(html).toMatch(/<link rel="icon" href="\/icon\.png[?"][^>]*sizes="192x192"/);
+    expect(html).toMatch(/<link rel="apple-touch-icon" href="\/apple-icon\.png[?"][^>]*sizes="180x180"/);
+    expect(html).toContain('<link rel="manifest" href="/manifest.webmanifest"');
+  });
+
   it("names Kingpost as the WebSite creator and the Organization's parent on every page", () => {
     for (const r of built) {
       const blocks = jsonLd(read(r)) as { "@type"?: string }[];
