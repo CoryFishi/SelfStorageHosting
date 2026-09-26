@@ -149,12 +149,12 @@ Each needs the owner's access or decision.
 - [ ] **Cited sources still answer — monthly and before each deploy.** In
       `self-storage-hosting/`, run
       `LINKCHECK=1 npx vitest run tests/source-status.test.ts`. It fetches
-      every URL in `lib/sources.ts` and fails on anything but a 200, or on
-      an HTML page where the title promises a PDF. It is kept out of
-      `npm test` and the build so a vendor outage cannot block a deploy,
-      which is why it has to be run by hand. Vendors move documents without
-      redirects: on 2026-09-25, 13 PTI PDFs had moved from `/documents/...`
-      to `/documents/current-products/...` or
+      every URL in `lib/sources.ts` and fails on anything but a 200, on a
+      redirect, or on an HTML page where the title promises a PDF. It is
+      kept out of `npm test` and the build so a vendor outage cannot block
+      a deploy, which is why it has to be run by hand. Vendors move
+      documents without redirects: on 2026-09-25, 13 PTI PDFs had moved
+      from `/documents/...` to `/documents/current-products/...` or
       `/documents/archived-products/...`. For each failure, find the
       same document on the vendor's own document page, re-read every
       sentence that cites it, then update `url` and `verifiedOn`. If the

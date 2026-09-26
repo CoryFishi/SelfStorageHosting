@@ -2,9 +2,10 @@ import { describe, it, expect } from "vitest";
 import { SOURCES } from "@/lib/sources";
 
 // Fetches every cited source over the network and checks it still answers.
-// Vendors move their documents without redirects: in September 2026 PTI moved
-// its whole /documents/ tree and thirteen cited PDFs went 404 overnight. A
-// plain `npm test` skips this, so a vendor outage can never block a deploy.
+// Vendors move their documents without warning: in September 2026 PTI moved
+// most of /documents/ under current-products/ and archived-products/, without
+// redirects, and thirteen cited PDFs went 404. A plain `npm test` skips this,
+// so a vendor outage can never block a deploy.
 // Run it monthly and before each deploy with:
 //   LINKCHECK=1 npx vitest run tests/source-status.test.ts
 const RUN = process.env.LINKCHECK === "1";
@@ -28,6 +29,12 @@ describe.skipIf(!RUN)("cited sources, fetched live", () => {
       // Headers are all this needs; don't download a 6 MB manual to read them.
       await res.body?.cancel();
       expect(res.status, `${key}: ${s.url} answered ${res.status}`).toBe(200);
+
+      // Redirects are followed so a moved page is reported by where it went,
+      // but a vendor that sends a removed document to its home page or a
+      // listing page answers 200 there too. So any redirect fails: re-read the
+      // document at its new address, then update url and verifiedOn.
+      expect(res.redirected, `${key}: ${s.url} now redirects to ${res.url}`).toBe(false);
 
       // A title ending "(PDF)" promises a PDF. A vendor that removes one often
       // serves an HTML "not found" page, sometimes with a 200, so the type is
