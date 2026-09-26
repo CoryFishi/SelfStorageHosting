@@ -159,8 +159,9 @@ Each needs owner access.
       deploy only if a red run blocks the merge. In GitHub, under Settings →
       Branches (or Rules), require the `site` status check (shown on pull
       requests as `ci / site`) on `main`.
-      Several tests compare data with today's date, so a red run with no
-      code change usually means the quarterly events review is due.
+      Only the rendered `/events` check goes red on its own, once every
+      listed event has passed; that means the quarterly events review is
+      due.
       `backend/` is not in CI yet. Run `npm test` there by hand before
       deploying it.
 
