@@ -153,7 +153,7 @@ Each needs the owner's access or decision.
       an HTML page where the title promises a PDF. It is kept out of
       `npm test` and the build so a vendor outage cannot block a deploy,
       which is why it has to be run by hand. Vendors move documents without
-      redirects: on 2026-09-26, 13 PTI PDFs had moved from `/documents/...`
+      redirects: on 2026-09-25, 13 PTI PDFs had moved from `/documents/...`
       to `/documents/current-products/...` or
       `/documents/archived-products/...`. For each failure, find the
       same document on the vendor's own document page, re-read every
