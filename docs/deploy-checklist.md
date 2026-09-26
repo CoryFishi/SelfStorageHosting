@@ -41,6 +41,12 @@ Run after the first production deploy. Each needs owner access.
       `curl -sI https://www.selfstoragehosting.com/about-us` still answers
       200. The second one proves the rule did not catch production. If the
       Netlify site is ever renamed, change the rule's `from` host with it.
+- [ ] Real 404s (spec 15.8) — after every deploy that touches routing,
+      `netlify.toml` or `public/`:
+      `curl -s -o /dev/null -w '%{http_code}\n' https://www.selfstoragehosting.com/does-not-exist`
+      must print `404`. A `200` means a catch-all rewrite is back and every
+      typo'd URL is a soft 404. `tests/routing.test.ts` guards the two files
+      such a rewrite would live in, but only a live request sees the status.
 
 ## Environment variables
 

@@ -463,6 +463,12 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(html).toContain(`<meta name="twitter:image" content="${url}"/>`);
   });
 
+  // Spec 15.8: an unknown URL gets the 404 page, and the 404 page stays out
+  // of the index. The 404 status itself is checked after a deploy.
+  it("keeps the 404 page out of the index", () => {
+    expect(read("/_not-found")).toContain('<meta name="robots" content="noindex"/>');
+  });
+
   // No page linked any icon, so results showed a generic one; /favicon.ico
   // answered with the 404 page.
   it.each([...built, "/_not-found"])("%s declares a favicon, an apple-touch-icon and the manifest", (r) => {
