@@ -18,6 +18,12 @@ export const SITE = {
     "Cloud-hosted access control and facility websites for independent self-storage operators.",
   locale: "en_US",
 
+  // The share image every page falls back to (lib/seo.ts DEFAULT_OG_IMAGE):
+  // 1200x630, the logo and the site name on the brand teal, nothing else. No
+  // third-party product name or mark belongs on it (spec 15.4). Relative, so
+  // metadataBase makes it absolute on the canonical host.
+  ogImage: "/og.png",
+
   // Spec §14 B and C: real social profile URLs and business contact details
   // are owner inputs that do not exist yet. Keep these empty until supplied —
   // organizationSchema() omits sameAs and contactPoint when they are, which is

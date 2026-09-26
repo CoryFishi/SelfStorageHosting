@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pageMeta, canonicalFor } from "@/lib/seo";
+import { pageMeta, canonicalFor, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { SITE } from "@/lib/site";
@@ -131,6 +131,45 @@ describe("pageMeta", () => {
   it("rejects a canonical path carrying a query or fragment", () => {
     expect(() => canonicalFor("/contact?ref=x")).toThrow();
     expect(() => canonicalFor("/contact#top")).toThrow();
+  });
+
+  // twitter:card is summary_large_image on every page, which renders as a
+  // bare link when no image is named. The live audit found none on any page.
+  it("gives every page the default share image, for Open Graph and Twitter alike", () => {
+    const m = pageMeta({ title: "a", description: "d", path: "/a" });
+    const want = { url: "/og.png", width: 1200, height: 630, alt: SITE.name };
+    expect(m.openGraph).toMatchObject({ images: [want] });
+    expect(m.twitter).toMatchObject({ card: "summary_large_image", images: [want] });
+    expect(DEFAULT_OG_IMAGE).toEqual(want);
+  });
+
+  it("lets a page name its own share image instead", () => {
+    const m = pageMeta({ title: "a", description: "d", path: "/a", image: "/other.png" });
+    expect(m.openGraph).toMatchObject({ images: [{ url: "/other.png" }] });
+    expect(m.twitter).toMatchObject({ images: [{ url: "/other.png" }] });
+  });
+});
+
+/** Width and height from a PNG's IHDR chunk, which always comes first. */
+function pngSize(file: string): { width: number; height: number } {
+  const buf = readFileSync(file);
+  expect(buf.subarray(0, 8).toString("hex"), `${file} is not a PNG`).toBe("89504e470d0a1a0a");
+  expect(buf.subarray(12, 16).toString("latin1")).toBe("IHDR");
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+describe("default share image", () => {
+  const OG = path.join(PKG_ROOT, "public", ...SITE.ogImage.split("/").filter(Boolean));
+
+  it("is the size the metadata says it is", () => {
+    expect(SITE.ogImage).toBe("/og.png");
+    expect(pngSize(OG)).toEqual({ width: DEFAULT_OG_IMAGE.width, height: DEFAULT_OG_IMAGE.height });
+  });
+
+  it("stays a light fetch for the networks that unfurl it", () => {
+    // 300 KB leaves room for a redraw of the logo-and-name card without
+    // inviting a full-bleed photo. It is 70 KB today.
+    expect(statSync(OG).size).toBeLessThanOrEqual(300 * 1024);
   });
 });
 

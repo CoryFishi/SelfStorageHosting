@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { SITE } from "@/lib/site";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { organizationSchema, webSiteSchema } from "@/lib/schema";
 import JsonLd from "@/components/JsonLd";
 import "./globals.css";
@@ -19,6 +20,10 @@ export const metadata: Metadata = {
     siteName: SITE.name,
     locale: SITE.locale,
     url: SITE.url,
+    // Only the 404 page, which has no metadata of its own, sees this. Every
+    // other page gets the same default from lib/seo.ts, because Next's
+    // metadata merge is shallow. Next copies it into twitter:image.
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: { card: "summary_large_image" },
 };

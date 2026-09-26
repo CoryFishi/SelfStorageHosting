@@ -80,6 +80,17 @@ describe("schema builders", () => {
     expect(s.dateModified).toBe("2026-09-18");
   });
 
+  it("gives an article the site's share image, as an absolute URL", () => {
+    // Google lists image as recommended for Article.
+    const s = articleSchema({
+      headline: "h",
+      description: "d",
+      path: "/resources/x",
+      datePublished: "2026-09-18",
+    });
+    expect(s.image).toEqual([`${SITE.url}/og.png`]);
+  });
+
   it("credits an article to the company, not an invented person", () => {
     const s = articleSchema({
       headline: "h",

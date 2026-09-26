@@ -451,6 +451,18 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(img).not.toContain("/_next/image");
   });
 
+  // Every page sent twitter:card summary_large_image with no image at all.
+  // The 404 page is included: it gets its metadata from the root layout
+  // alone, not from pageMeta().
+  it.each([...built, "/_not-found"])("%s renders an absolute og:image and twitter:image", (r) => {
+    const html = read(r);
+    const url = `${SITE.url}${SITE.ogImage}`;
+    expect(html).toContain(`<meta property="og:image" content="${url}"/>`);
+    expect(html).toContain('<meta property="og:image:width" content="1200"/>');
+    expect(html).toContain('<meta property="og:image:height" content="630"/>');
+    expect(html).toContain(`<meta name="twitter:image" content="${url}"/>`);
+  });
+
   it("names Kingpost as the WebSite creator and the Organization's parent on every page", () => {
     for (const r of built) {
       const blocks = jsonLd(read(r)) as { "@type"?: string }[];

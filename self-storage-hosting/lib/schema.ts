@@ -131,6 +131,9 @@ export function articleSchema(a: {
     mainEntityOfPage: canonicalFor(a.path),
     datePublished: a.datePublished,
     dateModified: a.dateModified ?? a.datePublished,
+    // Google recommends an image for Article. The guides have no figures of
+    // their own, so this is the same share image their og:image names.
+    image: [`${SITE.url}${SITE.ogImage}`],
     // The articles are written by the company, not a named person, so the
     // author is the Organization. Inventing a byline would be a fabrication.
     author: { "@type": "Organization", name: SITE.name, url: SITE.url },
