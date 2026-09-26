@@ -40,3 +40,17 @@
 # package.json would pin it and opt out of automatic adapter updates.
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# The site's default Netlify subdomain served every page as an indexable 200,
+# a full duplicate of production. Send it to the canonical host instead.
+# Only requests whose Host is exactly selfstoragehosting.netlify.app match:
+# deploy previews and branch deploys (deploy-preview-N--selfstoragehosting...)
+# have their own hostnames, and production arrives through Cloudflare with
+# Host www.selfstoragehosting.com, so neither is caught and nothing loops.
+# `force` because every path exists on the site; without it the page would
+# be served and the rule skipped.
+[[redirects]]
+  from = "https://selfstoragehosting.netlify.app/*"
+  to = "https://www.selfstoragehosting.com/:splat"
+  status = 301
+  force = true

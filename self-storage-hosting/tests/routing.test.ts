@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { SITE, ROUTES } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 import { ARTICLES, articlePath } from "@/lib/articles";
+import { PKG_ROOT } from "./helpers/walk";
 
 describe("robots", () => {
   const r = robots();
@@ -112,5 +115,41 @@ describe("sitemap", () => {
   it("covers exactly the indexable routes in the manifest", () => {
     const expected = Object.entries(ROUTES).filter(([, m]) => m.indexable && m.built).length;
     expect(urls.length).toBe(expected);
+  });
+});
+
+// Every [[redirects]] table in netlify.toml, as key -> value with quotes
+// stripped. Enough TOML for the flat tables Netlify redirects are; a table
+// ends at the next [header].
+function netlifyRedirects(): Record<string, string>[] {
+  const toml = readFileSync(path.join(PKG_ROOT, "netlify.toml"), "utf8");
+  const blocks: Record<string, string>[] = [];
+  let current: Record<string, string> | null = null;
+  for (const raw of toml.split(/\r?\n/)) {
+    const line = raw.replace(/#.*$/, "").trim();
+    if (line.startsWith("[")) {
+      current = line === "[[redirects]]" ? {} : null;
+      if (current) blocks.push(current);
+      continue;
+    }
+    const kv = current && line.match(/^([A-Za-z_]+)\s*=\s*(.+)$/);
+    if (current && kv) current[kv[1]] = kv[2].replace(/^"(.*)"$/, "$1");
+  }
+  return blocks;
+}
+
+describe("netlify.toml", () => {
+  // selfstoragehosting.netlify.app served the whole site as indexable 200s,
+  // a duplicate of production on a second host.
+  it("301s the default Netlify subdomain to the canonical host", () => {
+    const rule = netlifyRedirects().find((r) => r.from === "https://selfstoragehosting.netlify.app/*");
+    expect(rule, "no redirect from selfstoragehosting.netlify.app").toBeDefined();
+    expect(rule).toMatchObject({ to: `${SITE.url}/:splat`, status: "301", force: "true" });
+  });
+
+  it("never redirects the canonical host, which would loop", () => {
+    const host = new URL(SITE.url).host;
+    const bad = netlifyRedirects().filter((r) => r.from?.includes(host));
+    expect(bad).toEqual([]);
   });
 });

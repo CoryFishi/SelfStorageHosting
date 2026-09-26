@@ -32,6 +32,15 @@ Run after the first production deploy. Each needs owner access.
       confusion. The branch also deletes `public/_redirects`, whose
       `/* /index.html 200` SPA fallback would have routed every URL to a
       file Next.js never emits.
+- [ ] Netlify subdomain — `self-storage-hosting/netlify.toml` 301s
+      `selfstoragehosting.netlify.app` to the `www` host, which ends a
+      full indexable duplicate of the site. After the first deploy that
+      carries the rule, verify both:
+      `curl -sI https://selfstoragehosting.netlify.app/about-us` answers 301
+      with `Location: https://www.selfstoragehosting.com/about-us`, and
+      `curl -sI https://www.selfstoragehosting.com/about-us` still answers
+      200. The second one proves the rule did not catch production. If the
+      Netlify site is ever renamed, change the rule's `from` host with it.
 
 ## Environment variables
 
