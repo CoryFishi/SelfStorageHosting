@@ -160,8 +160,11 @@ Each needs the owner's access or decision.
       sentence that cites it, then update `url` and `verifiedOn`. If the
       vendor no longer publishes it, use a web.archive.org copy only if one
       actually loads, and add "(archived copy)" to its title. If neither
-      exists, leave the entry alone and decide what to do with the claims
-      that rest on it. Do not quietly delete it.
+      exists, remove the `SOURCES` entry and every citation of it, and
+      re-check or remove each sentence it supported. An end-of-support date
+      that no longer rests on the vendor's own public notice must go
+      (spec §15.3). If a guide's text changes, bump its `dateModified` in
+      `lib/articles.ts`.
 - [ ] **Trademark owners we could not confirm.** `/legal/trademarks` names
       Revenue Control Systems, Eight IO, BearBox and Cubby Storage without an
       owner, because no first-party page for any of them was found. If counsel
