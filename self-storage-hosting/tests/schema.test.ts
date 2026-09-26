@@ -95,15 +95,17 @@ describe("schema builders", () => {
     expect(s.dateModified).toBe("2026-09-18");
   });
 
-  it("gives an article the site's share image, as an absolute URL", () => {
-    // Google lists image as recommended for Article.
+  it("gives an article no image rather than the site's logo card", () => {
+    // Google asks for an Article image that represents the article, not a
+    // logo. og.png is the logo on a brand card and the guides have no
+    // figures of their own, so the recommended field stays out.
     const s = articleSchema({
       headline: "h",
       description: "d",
       path: "/resources/x",
       datePublished: "2026-09-18",
     });
-    expect(s.image).toEqual([`${SITE.url}/og.png`]);
+    expect(s).not.toHaveProperty("image");
   });
 
   it("credits an article to the company, not an invented person", () => {
