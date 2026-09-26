@@ -1,7 +1,8 @@
 // Third-party documents this site cites, each checked by hand on the date
 // given. Pages link these instead of restating vendor claims from memory.
 // When a URL moves or its content changes, fix it here, re-check every page
-// that cites it, and update verifiedOn.
+// that cites it, and update verifiedOn. tests/source-status.test.ts, run with
+// LINKCHECK=1, lists every URL that has stopped answering.
 export type Source = { url: string; title: string; publisher: string; verifiedOn: string };
 
 export const SOURCES = {
