@@ -27,6 +27,24 @@ Run after the first production deploy. Each needs owner access.
       Verify only: `curl -sI https://selfstoragehosting.com/` should 301 to
       the `www` host, and `curl -sI https://www.selfstoragehosting.com/`
       should answer 200.
+- [ ] #5b `http://` apex in one hop (Cloudflare, owner access). Today
+      `http://selfstoragehosting.com/…` takes two 301s: Netlify's HTTPS
+      upgrade to `https://selfstoragehosting.com/…`, then the apex→`www`
+      redirect. Harmless for crawling — no canonical, sitemap entry or
+      internal link uses it — but a backlink to the http apex spends an
+      extra hop. Netlify enforces HTTPS before any `netlify.toml` rule
+      runs, so the fix lives in Cloudflare, which sees the request first.
+      Cloudflare dashboard → selfstoragehosting.com → Rules → Redirect
+      Rules → create a Single Redirect: when `http.host eq
+      "selfstoragehosting.com"`, dynamic 301 to
+      `concat("https://www.selfstoragehosting.com", http.request.uri.path)`,
+      preserve query string. The rule lives outside this repository and
+      names the `www` host, so **it must change together with `SITE.url`**,
+      like the redirect in #5.
+      Verify: `curl -sI http://selfstoragehosting.com/resources/gate-not-syncing`
+      answers one 301 with
+      `Location: https://www.selfstoragehosting.com/resources/gate-not-syncing`,
+      and `curl -sI https://www.selfstoragehosting.com/` still answers 200.
 - [ ] Hosting (optional tidy-up): the Netlify dashboard still lists the
       Vite-era publish directory `dist`. It no longer matters —
       `self-storage-hosting/netlify.toml` sets `publish = ".next"` and
