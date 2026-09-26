@@ -11,6 +11,7 @@ import {
   BiRightArrowAlt,
 } from "react-icons/bi";
 import { pageMeta } from "@/lib/seo";
+import { SITE } from "@/lib/site";
 import { OUTAGE_BEHAVIOR, HARDWARE_INTEGRATIONS, FMS_BRIDGES } from "@/lib/claims";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CtaBand from "@/components/CtaBand";
@@ -139,6 +140,17 @@ export default function AboutUsPage() {
             scripts, or late-night truck rolls. We bring a clean cloud layer to
             self-storage so you can deploy faster, operate reliably, and
             integrate with the tools you already use.
+          </p>
+          {/* Ownership as the owner confirmed it on 2026-09-23 (lib/site.ts
+              builtBy), and "custom software studio" as Kingpost describes
+              itself. The Organization JSON-LD states the same fact as
+              parentOrganization; this is the visible statement of it. */}
+          <p className="mt-3 text-text-700">
+            {SITE.name} is owned and built by{" "}
+            <a href={SITE.builtBy.productUrl} className={`font-semibold underline ${FOCUS_RING_LIGHT}`}>
+              {SITE.builtBy.legalName}
+            </a>
+            , a custom software studio.
           </p>
         </div>
 

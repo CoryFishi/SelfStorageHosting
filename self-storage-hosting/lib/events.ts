@@ -1,4 +1,5 @@
 import type { PostalAddressInput } from "./schema";
+import { formatDateRange } from "./dates";
 
 // Self-storage industry events, each confirmed on its organizer's own page on
 // verifiedOn (Appendix A.1). Only confirmed events belong here. Dates are
@@ -206,4 +207,25 @@ export function upcomingEvents(today: string, events: readonly IndustryEvent[] =
   return events
     .filter((e) => (e.endDate ?? e.startDate) >= today)
     .sort((a, b) => (a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0));
+}
+
+/** The venue line /events shows: venue, street, city, region and ZIP, country outside the US. */
+export function eventPlace(e: IndustryEvent): string {
+  const { streetAddress, addressLocality, addressRegion, postalCode, addressCountry } = e.address;
+  const country = addressCountry === "US" ? "" : addressCountry === "AU" ? ", Australia" : `, ${addressCountry}`;
+  const regionZip = postalCode ? `${addressRegion} ${postalCode}` : addressRegion;
+  const parts = [e.venue, streetAddress, addressLocality, regionZip].filter(Boolean);
+  return `${parts.join(", ")}${country}`;
+}
+
+/**
+ * The Event JSON-LD description: the lines of the event's visible row on
+ * /events, in order, and nothing else. Google recommends a description; one
+ * that says more than the row would be structured data the page does not
+ * show. tests/rendered.test.ts checks every part against the built row.
+ */
+export function eventDescription(e: IndustryEvent): string {
+  return [e.name, formatDateRange(e.startDate, e.endDate), e.detail, eventPlace(e), `Organizer: ${e.organizer}`]
+    .filter(Boolean)
+    .join(". ");
 }

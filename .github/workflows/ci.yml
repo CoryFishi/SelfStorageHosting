@@ -1,0 +1,57 @@
+name: ci
+
+# Runs the site's checks on every pull request and on main. Netlify's build
+# runs `npm run build` only (self-storage-hosting/netlify.toml), so without
+# this nothing runs the SEO, link, content-policy or Kingpost-credit tests
+# before a deploy. Kept out of the Netlify build on purpose: a failing check
+# here blocks a merge, not a deploy that is already approved.
+#
+# Date-dependent check: only the rendered /events check can turn red with no
+# code change, once every listed event has passed. That means lib/events.ts
+# is due its quarterly review (docs/deploy-checklist.md), not that the code
+# broke. The unit tests that read today's date (events, articles, legal
+# dates, vendors) only reject dates in the future, so time passing cannot
+# fail them.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: self-storage-hosting
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # No engines field or .nvmrc in the package; 24 is the line
+          # @types/node targets. next@16 needs 20.9 or later.
+          node-version: 24
+          cache: npm
+          cache-dependency-path: self-storage-hosting/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      # `next build` also type-checks, tests/ included.
+      - run: npm run build
+        env:
+          # lib/site.ts falls back to this when unset; pinned so a repository
+          # variable can never point the canonicals somewhere else here.
+          NEXT_PUBLIC_SITE_URL: https://www.selfstoragehosting.com
+      # Checks the HTML the build just wrote: canonicals, robots, share image,
+      # icons, the Kingpost credit, JSON-LD. A plain `npm test` skips these.
+      - name: rendered HTML
+        run: npx vitest run tests/rendered.test.ts
+        env:
+          RENDERED: "1"

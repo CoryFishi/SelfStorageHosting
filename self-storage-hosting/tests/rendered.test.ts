@@ -57,6 +57,7 @@ function rowText(rowHtml: string): string {
 
 type EventBlock = {
   name: string;
+  description?: string;
   url: string;
   startDate: string;
   endDate: string;
@@ -172,6 +173,14 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       ];
       for (const [field, value] of wanted) {
         expect(text, `${e.name}: ${field} "${value}" is missing from the visible row`).toContain(value);
+      }
+      // The description says only what the row shows: each ". "-separated
+      // part is a line of the row. (A part that itself contains ". " splits
+      // into pieces that are each still in the row.)
+      const parts = (e.description ?? "").split(". ");
+      expect(parts.length, `${e.name}: description "${e.description}"`).toBeGreaterThanOrEqual(4);
+      for (const part of parts) {
+        expect(text, `${e.name}: description part "${part}" is not in the visible row`).toContain(part);
       }
       expect(row, `${e.name}: no visible link to ${e.url}`).toContain(`href="${e.url}"`);
     }
@@ -322,9 +331,23 @@ describe.skipIf(!RUN)("rendered HTML", () => {
       const html = read(r);
       const articles = jsonLd(html).filter((b) => (b as { "@type"?: unknown })["@type"] === "Article");
       expect(articles.length, `${r} emits ${articles.length} Article blocks`).toBe(1);
-      const block = articles[0] as { headline: string; mainEntityOfPage: string; datePublished: string };
+      const block = articles[0] as {
+        headline: string;
+        mainEntityOfPage: string;
+        datePublished: string;
+        author: { "@id"?: string };
+        publisher: { "@id"?: string };
+      };
       expect(block.mainEntityOfPage).toBe(canonicalFor(r));
       expect(block.datePublished).toBe(a.datePublished);
+      // The author and publisher are the Organization the same page declares,
+      // joined by @id rather than restated as separate nodes.
+      const org = jsonLd(html).find((b) => (b as { "@type"?: unknown })["@type"] === "Organization") as
+        | { "@id"?: string }
+        | undefined;
+      expect(org?.["@id"], `${r} has no Organization @id`).toBe(`${SITE.url}/#organization`);
+      expect(block.author["@id"], `${r} Article author`).toBe(org!["@id"]);
+      expect(block.publisher["@id"], `${r} Article publisher`).toBe(org!["@id"]);
       const h1 = visible(html).match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? "";
       expect(block.headline, `${r}: the Article headline is not the visible h1`).toBe(rowText(h1));
       expect(html).toContain('<meta property="og:type" content="article"/>');
@@ -423,11 +446,29 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(desc.length, `${r}: "${desc}"`).toBeLessThanOrEqual(160);
   });
 
-  it.each(built)("%s credits Kingpost Software in the footer", (r) => {
+  it.each(built)("%s credits Kingpost Software in the footer, linking its page for this site", (r) => {
     const footer = visible(read(r)).match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? "";
-    const credit = footer.match(/<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/"[^>]*>([\s\S]*?)<\/a>/);
+    const credit = footer.match(
+      /<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/products\/selfstoragehosting"[^>]*>([\s\S]*?)<\/a>/
+    );
     expect(credit, `${r} has no Kingpost link in its <footer>`).not.toBeNull();
     expect(rowText(credit![1])).toBe("Built by Kingpost Software");
+  });
+
+  // The JSON-LD named Kingpost as parentOrganization while no page's own
+  // content said who owns the site.
+  it("/about-us says in its own content who owns and builds the site, with a link", () => {
+    const main = visible(read("/about-us")).match(/<main\b[\s\S]*?<\/main>/)?.[0] ?? "";
+    const link = main.match(
+      /<a\b[^>]*href="https:\/\/www\.kingpostsoftware\.com\/products\/selfstoragehosting"[^>]*>([\s\S]*?)<\/a>/
+    );
+    expect(link, "/about-us <main> has no link to Kingpost").not.toBeNull();
+    expect(link![0], "the ownership link must be followed").not.toMatch(/\brel="[^"]*nofollow/);
+    expect(rowText(link![1])).toBe("Kingpost Software LLC");
+    // rowText puts a space where the </a> was; a reader sees none before the comma.
+    expect(rowText(main).replace(/ ([,.])/g, "$1")).toContain(
+      "Self Storage Hosting is owned and built by Kingpost Software LLC, a custom software studio."
+    );
   });
 
   it.each(["/", "/solutions"])("%s links every guide, each by its own title", (r) => {
@@ -449,6 +490,34 @@ describe.skipIf(!RUN)("rendered HTML: audit findings", () => {
     expect(img, "home has no fetchpriority=high image").not.toBe("");
     expect(img).toContain('src="/HeroImage.png"');
     expect(img).not.toContain("/_next/image");
+  });
+
+  // Every page sent twitter:card summary_large_image with no image at all.
+  // The 404 page is included: it gets its metadata from the root layout
+  // alone, not from pageMeta().
+  it.each([...built, "/_not-found"])("%s renders an absolute og:image and twitter:image", (r) => {
+    const html = read(r);
+    const url = `${SITE.url}${SITE.ogImage}`;
+    expect(html).toContain(`<meta property="og:image" content="${url}"/>`);
+    expect(html).toContain('<meta property="og:image:width" content="1200"/>');
+    expect(html).toContain('<meta property="og:image:height" content="630"/>');
+    expect(html).toContain(`<meta name="twitter:image" content="${url}"/>`);
+  });
+
+  // Spec 15.8: an unknown URL gets the 404 page, and the 404 page stays out
+  // of the index. The 404 status itself is checked after a deploy.
+  it("keeps the 404 page out of the index", () => {
+    expect(read("/_not-found")).toContain('<meta name="robots" content="noindex"/>');
+  });
+
+  // No page linked any icon, so results showed a generic one; /favicon.ico
+  // answered with the 404 page.
+  it.each([...built, "/_not-found"])("%s declares a favicon, an apple-touch-icon and the manifest", (r) => {
+    const html = read(r);
+    expect(html).toMatch(/<link rel="icon" href="\/favicon\.ico[?"]/);
+    expect(html).toMatch(/<link rel="icon" href="\/icon\.png[?"][^>]*sizes="192x192"/);
+    expect(html).toMatch(/<link rel="apple-touch-icon" href="\/apple-icon\.png[?"][^>]*sizes="180x180"/);
+    expect(html).toContain('<link rel="manifest" href="/manifest.webmanifest"');
   });
 
   it("names Kingpost as the WebSite creator and the Organization's parent on every page", () => {

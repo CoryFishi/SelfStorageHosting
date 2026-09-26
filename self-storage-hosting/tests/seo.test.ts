@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { pageMeta, canonicalFor } from "@/lib/seo";
+import { pageMeta, canonicalFor, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { SITE } from "@/lib/site";
+import manifest from "@/app/manifest";
 import { PKG_ROOT } from "./helpers/walk";
 
 describe("pageMeta", () => {
@@ -132,6 +133,104 @@ describe("pageMeta", () => {
     expect(() => canonicalFor("/contact?ref=x")).toThrow();
     expect(() => canonicalFor("/contact#top")).toThrow();
   });
+
+  // twitter:card is summary_large_image on every page, which renders as a
+  // bare link when no image is named. The live audit found none on any page.
+  it("gives every page the default share image, for Open Graph and Twitter alike", () => {
+    const m = pageMeta({ title: "a", description: "d", path: "/a" });
+    const want = { url: "/og.png", width: 1200, height: 630, alt: SITE.name };
+    expect(m.openGraph).toMatchObject({ images: [want] });
+    expect(m.twitter).toMatchObject({ card: "summary_large_image", images: [want] });
+    expect(DEFAULT_OG_IMAGE).toEqual(want);
+  });
+
+  it("lets a page name its own share image instead", () => {
+    const m = pageMeta({ title: "a", description: "d", path: "/a", image: "/other.png" });
+    expect(m.openGraph).toMatchObject({ images: [{ url: "/other.png" }] });
+    expect(m.twitter).toMatchObject({ images: [{ url: "/other.png" }] });
+  });
+});
+
+/** Width and height from a PNG's IHDR chunk, which always comes first. */
+function pngSize(file: string): { width: number; height: number } {
+  const buf = readFileSync(file);
+  expect(buf.subarray(0, 8).toString("hex"), `${file} is not a PNG`).toBe("89504e470d0a1a0a");
+  expect(buf.subarray(12, 16).toString("latin1")).toBe("IHDR");
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+describe("default share image", () => {
+  const OG = path.join(PKG_ROOT, "public", ...SITE.ogImage.split("/").filter(Boolean));
+
+  it("is the size the metadata says it is", () => {
+    expect(SITE.ogImage).toBe("/og.png");
+    expect(pngSize(OG)).toEqual({ width: DEFAULT_OG_IMAGE.width, height: DEFAULT_OG_IMAGE.height });
+  });
+
+  it("stays a light fetch for the networks that unfurl it", () => {
+    // 300 KB leaves room for a redraw of the logo-and-name card without
+    // inviting a full-bleed photo. It is 70 KB today.
+    expect(statSync(OG).size).toBeLessThanOrEqual(300 * 1024);
+  });
+});
+
+describe("app icons", () => {
+  const APP = path.join(PKG_ROOT, "app");
+
+  // Google shows a site's favicon in results only when the home page links
+  // one, and wants it square and a multiple of 48 px. Next links app/icon.png
+  // from every page.
+  it("ships app/icon.png, square and a multiple of 48 px", () => {
+    const { width, height } = pngSize(path.join(APP, "icon.png"));
+    expect(width).toBe(height);
+    expect(width % 48).toBe(0);
+  });
+
+  it("ships a 180 px app/apple-icon.png with no transparency", () => {
+    const file = path.join(APP, "apple-icon.png");
+    expect(pngSize(file)).toEqual({ width: 180, height: 180 });
+    // IHDR colour type 2 is truecolour without alpha. iOS paints transparent
+    // pixels black on a home screen.
+    expect(readFileSync(file).readUInt8(25)).toBe(2);
+  });
+
+  // Browsers request /favicon.ico whatever the markup says. With no file that
+  // request fell through to the 404 page, which is not cached.
+  it("ships app/favicon.ico as a real ICO with 16, 32 and 48 px frames", () => {
+    const buf = readFileSync(path.join(APP, "favicon.ico"));
+    expect(buf.readUInt16LE(0), "ICONDIR reserved").toBe(0);
+    expect(buf.readUInt16LE(2), "ICONDIR type (1 = icon)").toBe(1);
+    const count = buf.readUInt16LE(4);
+    const sizes: number[] = [];
+    for (let i = 0; i < count; i++) {
+      const entry = 6 + i * 16;
+      const size = buf.readUInt8(entry) || 256;
+      expect(buf.readUInt8(entry + 1) || 256, `frame ${i} is not square`).toBe(size);
+      const length = buf.readUInt32LE(entry + 8);
+      const offset = buf.readUInt32LE(entry + 12);
+      expect(offset + length, `frame ${i} runs past the end of the file`).toBeLessThanOrEqual(buf.length);
+      // Each frame is stored as PNG, and its own header must agree with the
+      // directory entry.
+      const frame = buf.subarray(offset, offset + length);
+      expect(frame.subarray(0, 8).toString("hex"), `frame ${i} is not PNG data`).toBe("89504e470d0a1a0a");
+      expect([frame.readUInt32BE(16), frame.readUInt32BE(20)], `frame ${i}`).toEqual([size, size]);
+      sizes.push(size);
+    }
+    expect(sizes).toEqual(expect.arrayContaining([16, 32, 48]));
+  });
+
+  it("names only icons that exist, in the web app manifest", () => {
+    const m = manifest();
+    expect(m.name).toBe(SITE.name);
+    expect(m.icons?.length).toBeGreaterThan(0);
+    for (const icon of m.icons ?? []) {
+      const file = path.join(APP, icon.src.replace(/^\//, ""));
+      expect(pngSize(file), icon.src).toEqual({
+        width: Number(icon.sizes?.split("x")[0]),
+        height: Number(icon.sizes?.split("x")[1]),
+      });
+    }
+  });
 });
 
 describe("home page LCP image", () => {
@@ -156,11 +255,18 @@ describe("home page LCP image", () => {
 });
 
 describe("footer credit", () => {
-  it("links to Kingpost Software from the shared footer", () => {
+  // The visible links go to Kingpost's page about this site, the way the
+  // Storatix and ManaArchive footers link theirs. The JSON-LD keeps Kingpost's
+  // home page as the Organization's url.
+  it("links to Kingpost's page for this site from the shared footer", () => {
     const src = readFileSync(path.join(PKG_ROOT, "components", "Footer.tsx"), "utf8");
-    expect(src).toContain("href={SITE.builtBy.url}");
+    expect(src).toContain("href={SITE.builtBy.productUrl}");
     expect(src).toContain("Built by {SITE.builtBy.label}");
-    expect(SITE.builtBy.url).toBe("https://www.kingpostsoftware.com/");
+    expect(SITE.builtBy.productUrl).toBe("https://www.kingpostsoftware.com/products/selfstoragehosting");
     expect(SITE.builtBy.label).toBe("Kingpost Software");
+  });
+
+  it("keeps Kingpost's home page as the url its Organization node carries", () => {
+    expect(SITE.builtBy.url).toBe("https://www.kingpostsoftware.com/");
   });
 });

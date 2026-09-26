@@ -64,13 +64,20 @@ function articleTimes(opts: PageMetaOpts): { publishedTime?: string; modifiedTim
   return modifiedTime === undefined ? { publishedTime } : { publishedTime, modifiedTime };
 }
 
+/** public/og.png. tests/seo.test.ts checks the file really is this size. */
+export const DEFAULT_OG_IMAGE = { url: SITE.ogImage, width: 1200, height: 630, alt: SITE.name };
+
 export function pageMeta(opts: PageMetaOpts): Metadata {
   const { title, description, path, ogType = "website", image } = opts;
   // Default from the route manifest so a page cannot ship indexable when
   // ROUTES says otherwise; an explicit `noindex` still wins.
   const noindex = opts.noindex ?? ROUTES[path]?.indexable === false;
   const url = canonicalFor(path);
-  const images = image ? [{ url: image }] : undefined;
+  // Every page gets an image: twitter:card is summary_large_image, which has
+  // nothing to show without one. Next merges metadata shallowly, so a page's
+  // openGraph replaces the root layout's whole; the default has to live here.
+  // Twitter reuses the same list.
+  const images = [image ? { url: image } : DEFAULT_OG_IMAGE];
 
   return {
     title,

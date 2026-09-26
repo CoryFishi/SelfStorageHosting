@@ -12,8 +12,10 @@ Run after the first production deploy. Each needs owner access.
 - [x] #5  Apex/`www` — **settled in code on 2026-09-20 (78f0999), the other
       way round.** Rather than flip the edge, `SITE.url` moved to
       `https://www.selfstoragehosting.com`, so canonicals, the sitemap,
-      `metadataBase`, `og:url` and the JSON-LD `@id` now name the host that
-      actually serves. Nothing is left to do in the dashboard.
+      `metadataBase` and `og:url` now name the host that actually serves.
+      So do the site's own JSON-LD `@id`s, `SITE.url` + `/#organization`
+      and `/#website` (added 2026-09-25; before that no Self Storage
+      Hosting node had an `@id`). Nothing is left to do in the dashboard.
       **Do not make the apex the primary domain in Netlify.** Production is
       Netlify behind Cloudflare (responses carry `x-nf-request-id` and
       `Server: cloudflare`), Netlify lists `www.selfstoragehosting.com` as
@@ -25,6 +27,24 @@ Run after the first production deploy. Each needs owner access.
       Verify only: `curl -sI https://selfstoragehosting.com/` should 301 to
       the `www` host, and `curl -sI https://www.selfstoragehosting.com/`
       should answer 200.
+- [ ] #5b `http://` apex in one hop (Cloudflare, owner access). Today
+      `http://selfstoragehosting.com/…` takes two 301s: Netlify's HTTPS
+      upgrade to `https://selfstoragehosting.com/…`, then the apex→`www`
+      redirect. Harmless for crawling — no canonical, sitemap entry or
+      internal link uses it — but a backlink to the http apex spends an
+      extra hop. Netlify enforces HTTPS before any `netlify.toml` rule
+      runs, so the fix lives in Cloudflare, which sees the request first.
+      Cloudflare dashboard → selfstoragehosting.com → Rules → Redirect
+      Rules → create a Single Redirect: when `http.host eq
+      "selfstoragehosting.com"`, dynamic 301 to
+      `concat("https://www.selfstoragehosting.com", http.request.uri.path)`,
+      preserve query string. The rule lives outside this repository and
+      names the `www` host, so **it must change together with `SITE.url`**,
+      like the redirect in #5.
+      Verify: `curl -sI http://selfstoragehosting.com/resources/gate-not-syncing`
+      answers one 301 with
+      `Location: https://www.selfstoragehosting.com/resources/gate-not-syncing`,
+      and `curl -sI https://www.selfstoragehosting.com/` still answers 200.
 - [ ] Hosting (optional tidy-up): the Netlify dashboard still lists the
       Vite-era publish directory `dist`. It no longer matters —
       `self-storage-hosting/netlify.toml` sets `publish = ".next"` and
@@ -32,6 +52,21 @@ Run after the first production deploy. Each needs owner access.
       confusion. The branch also deletes `public/_redirects`, whose
       `/* /index.html 200` SPA fallback would have routed every URL to a
       file Next.js never emits.
+- [ ] Netlify subdomain — `self-storage-hosting/netlify.toml` 301s
+      `selfstoragehosting.netlify.app` to the `www` host, which ends a
+      full indexable duplicate of the site. After the first deploy that
+      carries the rule, verify both:
+      `curl -sI https://selfstoragehosting.netlify.app/about-us` answers 301
+      with `Location: https://www.selfstoragehosting.com/about-us`, and
+      `curl -sI https://www.selfstoragehosting.com/about-us` still answers
+      200. The second one proves the rule did not catch production. If the
+      Netlify site is ever renamed, change the rule's `from` host with it.
+- [ ] Real 404s (spec 15.8) — after every deploy that touches routing,
+      `netlify.toml` or `public/`:
+      `curl -s -o /dev/null -w '%{http_code}\n' https://www.selfstoragehosting.com/does-not-exist`
+      must print `404`. A `200` means a catch-all rewrite is back and every
+      typo'd URL is a soft 404. `tests/routing.test.ts` guards the two files
+      such a rewrite would live in, but only a live request sees the status.
 
 ## Environment variables
 
@@ -117,10 +152,18 @@ Each needs owner access.
       and `/solutions/access-control-hosting` (BreadcrumbList). In Search
       Console, request indexing for the new indexable pages. `/sitemap.xml`
       already lists them.
-- [ ] **Run the tests before every deploy.** No CI runs them today:
-      `netlify.toml` runs only `npm run build`. Run `npm test` in
-      `self-storage-hosting/` and in `backend/` before each deploy,
-      or add both to a CI job.
+- [ ] **Run the tests before every deploy.** `.github/workflows/ci.yml`
+      runs the site's lint, `npm test`, `npm run build` and the rendered
+      check (`RENDERED=1`) on every pull request and on `main`.
+      `netlify.toml` still runs only `npm run build`, so CI protects a
+      deploy only if a red run blocks the merge. In GitHub, under Settings →
+      Branches (or Rules), require the `site` status check (shown on pull
+      requests as `ci / site`) on `main`.
+      Only the rendered `/events` check goes red on its own, once every
+      listed event has passed; that means the quarterly events review is
+      due.
+      `backend/` is not in CI yet. Run `npm test` there by hand before
+      deploying it.
 
 ## Plan 3: after the resources pages deploy
 

@@ -18,6 +18,12 @@ export const SITE = {
     "Cloud-hosted access control and facility websites for independent self-storage operators.",
   locale: "en_US",
 
+  // The share image every page falls back to (lib/seo.ts DEFAULT_OG_IMAGE):
+  // 1200x630, the logo and the site name on the brand teal, nothing else. No
+  // third-party product name or mark belongs on it (spec 15.4). Relative, so
+  // metadataBase makes it absolute on the canonical host.
+  ogImage: "/og.png",
+
   // Spec §14 B and C: real social profile URLs and business contact details
   // are owner inputs that do not exist yet. Keep these empty until supplied —
   // organizationSchema() omits sameAs and contactPoint when they are, which is
@@ -27,15 +33,22 @@ export const SITE = {
   contactEmail: "",
 
   // The company that owns, builds and maintains the site. The footer credits
-  // it, the WebSite JSON-LD names it as `creator` and the Organization names it
-  // as `parentOrganization` (the owner confirmed Kingpost owns Self Storage
-  // Hosting on 2026-09-23). `id` is the @id Kingpost's own homepage gives its
-  // Organization node, so search engines can join the two graphs into one
-  // entity. No sameAs: kingpostsoftware.com publishes no social profiles.
+  // it, /about-us says so in its story, the WebSite JSON-LD names it as
+  // `creator` and the Organization names it as `parentOrganization` (the owner
+  // confirmed Kingpost owns Self Storage Hosting on 2026-09-23). `id` is the
+  // @id Kingpost's own homepage gives its Organization node, so search engines
+  // can join the two graphs into one entity. No sameAs: kingpostsoftware.com
+  // publishes no social profiles.
+  //
+  // Two URLs on purpose. `url` is Kingpost's home page, the Organization's
+  // own url in the JSON-LD. `productUrl` is Kingpost's page about this site,
+  // which the visible links (the footer credit and /about-us) point at, as
+  // Storatix and ManaArchive link their own product pages.
   builtBy: {
     label: "Kingpost Software",
     legalName: "Kingpost Software LLC",
     url: "https://www.kingpostsoftware.com/",
+    productUrl: "https://www.kingpostsoftware.com/products/selfstoragehosting",
     id: "https://www.kingpostsoftware.com/#organization",
   },
 };

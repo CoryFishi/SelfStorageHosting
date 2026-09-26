@@ -26,11 +26,26 @@ describe("schema builders", () => {
     expect("contactPoint" in s).toBe(false);
   });
 
-  it("emits WebSite with name, url and creator, never a SearchAction", () => {
+  it("emits WebSite with name, url, publisher and creator, never a SearchAction", () => {
     const s = webSiteSchema() as Record<string, unknown>;
     expect(s["@type"]).toBe("WebSite");
     expect(s.potentialAction).toBeUndefined();
-    expect(Object.keys(s).sort()).toEqual(["@context", "@type", "creator", "name", "url"]);
+    expect(Object.keys(s).sort()).toEqual(["@context", "@id", "@type", "creator", "name", "publisher", "url"]);
+    expect(s["@id"]).toBe(`${SITE.url}/#website`);
+  });
+
+  // Before this, the page carried up to three unconnected "Self Storage
+  // Hosting" organizations: the Organization, and an Article's author and
+  // publisher. They are one entity and now say so.
+  it("joins the site's own Organization by @id wherever it is named", () => {
+    const orgId = `${SITE.url}/#organization`;
+    expect(organizationSchema()["@id"]).toBe(orgId);
+    expect(webSiteSchema().publisher).toEqual({ "@id": orgId });
+    const a = articleSchema({ headline: "h", description: "d", path: "/resources/x", datePublished: "2026-09-18" });
+    expect(a.author["@id"]).toBe(orgId);
+    expect(a.publisher["@id"]).toBe(orgId);
+    // Kingpost is a different organization with its own @id.
+    expect(organizationSchema().parentOrganization["@id"]).not.toBe(orgId);
   });
 
   it("names Kingpost Software as the WebSite's creator, joined to Kingpost's own @id", () => {
@@ -80,6 +95,19 @@ describe("schema builders", () => {
     expect(s.dateModified).toBe("2026-09-18");
   });
 
+  it("gives an article no image rather than the site's logo card", () => {
+    // Google asks for an Article image that represents the article, not a
+    // logo. og.png is the logo on a brand card and the guides have no
+    // figures of their own, so the recommended field stays out.
+    const s = articleSchema({
+      headline: "h",
+      description: "d",
+      path: "/resources/x",
+      datePublished: "2026-09-18",
+    });
+    expect(s).not.toHaveProperty("image");
+  });
+
   it("credits an article to the company, not an invented person", () => {
     const s = articleSchema({
       headline: "h",
@@ -87,7 +115,12 @@ describe("schema builders", () => {
       path: "/resources/x",
       datePublished: "2026-09-18",
     }) as { author: unknown };
-    expect(s.author).toEqual({ "@type": "Organization", name: SITE.name, url: SITE.url });
+    expect(s.author).toEqual({
+      "@type": "Organization",
+      "@id": `${SITE.url}/#organization`,
+      name: SITE.name,
+      url: SITE.url,
+    });
   });
 
   it("refuses an article path outside /resources/<slug>", () => {
@@ -113,7 +146,7 @@ describe("schema builders", () => {
     ).toThrow(/is before published/);
   });
 
-  it("emits Event with a postal address, an organizer and a status", () => {
+  it("emits Event with a postal address, an organizer, a status and a description", () => {
     const s = eventSchema({
       name: "Sample Conference",
       startDate: "2026-11-10",
@@ -122,11 +155,14 @@ describe("schema builders", () => {
       address: { addressLocality: "Springfield", addressRegion: "IL", addressCountry: "US" },
       organizer: "Sample Association",
       url: "https://example.org/conference",
+      description: "Sample Conference. November 10–12, 2026",
     });
     expect(s["@type"]).toBe("Event");
     expect(s.eventStatus).toBe("https://schema.org/EventScheduled");
     expect(s.location["@type"]).toBe("Place");
     expect(s.location.address).toMatchObject({ "@type": "PostalAddress", addressLocality: "Springfield" });
+    expect(s.description).toBe("Sample Conference. November 10–12, 2026");
+    // No url: none has been verified for any organizer.
     expect(s.organizer).toEqual({ "@type": "Organization", name: "Sample Association" });
   });
 });
@@ -178,6 +214,7 @@ describe("forbidden schema guard", () => {
           address: { addressLocality: "c", addressRegion: "r", addressCountry: "US" },
           organizer: "o",
           url: "https://example.org/",
+          description: "d",
         })
       )
     ).not.toThrow();

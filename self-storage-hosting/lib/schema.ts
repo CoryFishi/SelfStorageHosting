@@ -49,6 +49,18 @@ export function assertNoForbiddenTypes(node: unknown): void {
   walk(node, "$");
 }
 
+// Self Storage Hosting's own nodes. Every page emits the Organization and the
+// WebSite from the root layout. The @ids let the WebSite's publisher and each
+// Article's author and publisher point at that one Organization, instead of
+// declaring three unconnected organizations that happen to share a name.
+const ORG_ID = `${SITE.url}/#organization`;
+const WEBSITE_ID = `${SITE.url}/#website`;
+
+// A reference to the Organization that organizationSchema() describes in full.
+function siteOrganization() {
+  return { "@type": "Organization", "@id": ORG_ID, name: SITE.name, url: SITE.url };
+}
+
 // Kingpost Software, referenced by the @id its own site uses. See SITE.builtBy.
 function kingpostOrganization() {
   return {
@@ -63,6 +75,7 @@ export function organizationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": ORG_ID,
     name: SITE.name,
     url: SITE.url,
     logo: `${SITE.url}/Logo.png`,
@@ -89,8 +102,10 @@ export function webSiteSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": WEBSITE_ID,
     name: SITE.name,
     url: SITE.url,
+    publisher: { "@id": ORG_ID },
     // The same company the footer's "Built by" link names.
     creator: kingpostOrganization(),
   };
@@ -131,12 +146,16 @@ export function articleSchema(a: {
     mainEntityOfPage: canonicalFor(a.path),
     datePublished: a.datePublished,
     dateModified: a.dateModified ?? a.datePublished,
+    // No image. Google lists it as recommended, not required, and asks for
+    // one that represents the article rather than a logo. The guides have no
+    // figures of their own, and og.png is the logo on a brand card, so it
+    // stays og:image and twitter:image only. Add an image here when a guide
+    // has a figure of its own.
     // The articles are written by the company, not a named person, so the
     // author is the Organization. Inventing a byline would be a fabrication.
-    author: { "@type": "Organization", name: SITE.name, url: SITE.url },
+    author: siteOrganization(),
     publisher: {
-      "@type": "Organization",
-      name: SITE.name,
+      ...siteOrganization(),
       logo: { "@type": "ImageObject", url: `${SITE.url}/Logo.png` },
     },
   };
@@ -158,11 +177,17 @@ export function eventSchema(e: {
   address: PostalAddressInput;
   organizer: string;
   url: string;
+  /** What the event's visible row says; see eventDescription() in lib/events.ts. */
+  description: string;
 }) {
+  // No organizer url yet: an event's source is often the event's own site
+  // rather than its organizer's, so deriving one from it would be wrong. It
+  // needs its own verified field first.
   return {
     "@context": "https://schema.org",
     "@type": "Event",
     name: e.name,
+    description: e.description,
     startDate: e.startDate,
     endDate: e.endDate ?? e.startDate,
     // Every listed event was confirmed on its organizer's own page.
